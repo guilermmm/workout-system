@@ -1,14 +1,5 @@
-import type {
-  GetServerSidePropsContext,
-  InferGetServerSidePropsType,
-} from "next";
-import { type NextPage } from "next";
-import { getServerSession } from "next-auth/next";
-import { getProviders, signIn, signOut, useSession } from "next-auth/react";
-import Head from "next/head";
+import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
-import Link from "next/link";
-import { authOptions } from "../server/auth";
 import { api } from "../utils/api";
 
 const Home = () => {
@@ -18,37 +9,18 @@ const Home = () => {
     enabled: sessionData?.user != null,
   });
 
-  const workouts = api.workoutRouter.getWorkouts.useQuery({
-    userId: sessionData?.user.id!,
-  });
+  const workouts = api.workoutRouter.getWorkouts.useQuery(
+    { userId: sessionData?.user.id ?? "" },
+    { enabled: sessionData?.user != null },
+  );
 
-  if (sessionData?.user == null) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400">
-        <div className="flex h-64 w-64 items-center justify-center bg-white text-6xl font-bold">
-          LOGO
-        </div>
-        <div>
-          <div className="rounded-full bg-blue-600 p-3 font-medium text-white">
-            <button onClick={() => signIn("google")}>
-              <div className="flex items-center justify-center">
-                <Image
-                  width={48}
-                  height={48}
-                  alt="Google"
-                  src="/google.svg"
-                  className="leading-0 rounded-full bg-white"
-                />
-                <span className="mx-3">Entrar com Google</span>
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
+  return sessionData?.user == null ? (
+    <Startup />
+  ) : user.isLoading || workouts.isLoading ? (
+    <Loading />
+  ) : user.isError || workouts.isError ? (
+    <Error />
+  ) : (
     <div className="min-h-full bg-gray-100">
       <div className="flex items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
@@ -59,12 +31,12 @@ const Home = () => {
             alt="Foto de perfil"
             className="rounded-full"
           />
-          <h1 className="ml-4 text-lg text-blue-700">
+          <h1 className="ml-4 text-lg font-medium text-blue-700">
             Olá, <span className="font-bold">{sessionData?.user.name}</span>!
           </h1>
         </div>
         <button
-          className="rounded-full p-2 text-blue-700 transition-colors hover:bg-gold-200"
+          className="rounded-full p-2 text-blue-700 transition-colors hover:bg-white"
           onClick={() => signOut()}
         >
           <svg
@@ -83,20 +55,16 @@ const Home = () => {
       </div>
       <div className="mx-4">
         <div className="mx-2 mt-6 mb-4 w-fit">
-          <h1 className="text-xl font-medium text-slate-800">
-            Fichas de Treino
-          </h1>
+          <h1 className="text-xl font-medium text-slate-800">Fichas de Treino</h1>
           <div className="h-1 bg-gold-500"></div>
         </div>
         <div className="even flex flex-col flex-wrap sm:flex-row">
-          {workouts.data?.map((workout) => (
+          {workouts.data.map(workout => (
             <WorkoutCard
               key={workout.id}
               name={workout.name}
-              description={capitalize(
-                join(Array.from(new Set(workout.muscleGroups)))
-              )}
-              recommended={user.data?.nextWorkoutId === workout.id}
+              description={capitalize(join(Array.from(new Set(workout.muscleGroups))))}
+              recommended={user.data!.nextWorkoutId === workout.id}
             />
           ))}
         </div>
@@ -119,7 +87,7 @@ const capitalize = (string: string) => {
 
 const classList = (...classes: (string | Record<string, boolean>)[]) => {
   return classes
-    .map((c) => {
+    .map(c => {
       return typeof c === "string"
         ? c
         : Object.entries(c)
@@ -166,17 +134,73 @@ const WorkoutCard = ({ name, description, recommended = false }: Props) => {
 
 export default Home;
 
-const AuthShowcase: React.FC = () => {
-  const { data: sessionData } = useSession();
-
+const Startup = () => {
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <button
-        className="rounded-full bg-gold-500 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-        onClick={sessionData ? () => void signOut() : () => void signIn()}
-      >
-        {sessionData ? "Sign out" : "Sign in"}
-      </button>
+    <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400">
+      <div className="flex h-64 w-64 items-center justify-center bg-white text-6xl font-bold">
+        LOGO
+      </div>
+      <div>
+        <div className="font-medium text-white">
+          <button
+            onClick={() => signIn("google")}
+            className="block rounded-full bg-blue-600 p-3 transition-colors hover:bg-blue-500"
+          >
+            <div className="flex items-center justify-center">
+              <Image
+                width={40}
+                height={40}
+                alt="Google"
+                src="/google.svg"
+                className="leading-0 rounded-full bg-white"
+              />
+              <span className="mx-3">Entrar com Google</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Loading = () => {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400">
+      <div className="flex h-64 w-64 items-center justify-center bg-white text-6xl font-bold">
+        LOGO
+      </div>
+      <div className="flex items-center justify-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 100 100"
+          fill="currentColor"
+          className="h-64 w-64 text-blue-500"
+        >
+          <path
+            fillRule="evenodd"
+            d="M73,50c0-12.7-10.3-23-23-23S27,37.3,27,50 M30.9,50c0-10.5,8.5-19.1,19.1-19.1S69.1,39.5,69.1,50"
+          >
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              dur="1s"
+              from="0 50 50"
+              to="360 50 50"
+              repeatCount="indefinite"
+            />
+          </path>
+        </svg>
+      </div>
+    </div>
+  );
+};
+
+const Error = () => {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400">
+      <div className="flex items-center justify-center">
+        <div className="text-2xl font-medium text-white">Ocorreu um erro</div>
+      </div>
     </div>
   );
 };
