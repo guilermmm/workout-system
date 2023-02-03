@@ -15,26 +15,38 @@ datasource db {
 }
 
 model Exercise {
-    id          String   @id @default(cuid())
+    id          String              @id @default(cuid())
     name        String
-    description String
-    sets        Int
-    reps        Int
-    weight      Int
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    muscleGroup String
+    hasSets     Boolean
+    workouts    ExerciseInWorkout[]
+    createdAt   DateTime            @default(now())
+    updatedAt   DateTime            @updatedAt
+}
+
+model ExerciseInWorkout {
+    id          String   @id @default(cuid())
+    exercise    Exercise @relation(fields: [exerciseId], references: [id])
+    exerciseId  String
     workout     Workout  @relation(fields: [workoutId], references: [id])
     workoutId   String
+    sets        Int
+    reps        Int
+    weight      Int?
+    time        Int
+    description String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
 }
 
 model Workout {
-    id        String     @id @default(cuid())
+    id        String              @id @default(cuid())
     name      String
-    exercises Exercise[]
-    createdAt DateTime   @default(now())
-    updatedAt DateTime   @updatedAt
-    user      User       @relation(fields: [userId], references: [id])
+    createdAt DateTime            @default(now())
+    updatedAt DateTime            @updatedAt
+    user      User                @relation(fields: [userId], references: [id])
     userId    String
+    exercises ExerciseInWorkout[]
 }
 
 // Necessary for Next auth
@@ -67,7 +79,7 @@ model Session {
 model User {
     id            String    @id @default(cuid())
     name          String?
-    email         String?   @unique
+    email         String    @unique
     emailVerified DateTime?
     image         String?
     accounts      Account[]
