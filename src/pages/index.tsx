@@ -1,52 +1,35 @@
-import { type NextPage } from "next";
-import Head from "next/head";
-import Link from "next/link";
-import { signIn, signOut, useSession, getProviders } from "next-auth/react";
 import type {
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
 } from "next";
+import { type NextPage } from "next";
 import { getServerSession } from "next-auth/next";
-import authOptions from "./api/auth/[...nextauth]";
-import { api } from "../utils/api";
+import { getProviders, signIn, signOut, useSession } from "next-auth/react";
+import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
+import { authOptions } from "../server/auth";
+import { api } from "../utils/api";
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
-
-  // If the user is already logged in, redirect.
-  // Note: Make sure not to redirect to the same page
-  // To avoid an infinite loop!
-  if (session) {
-    return { redirect: { destination: "/" } };
-  }
-
-  const providers = await getProviders();
-
-  return {
-    props: { providers: Object.values(providers ?? {}) },
-  };
-}
-
-const Home = ({
-  providers,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+const Home = () => {
   const { data: sessionData } = useSession();
 
-  const user = api.app.getUser.useQuery();
+  const user = api.app.getUser.useQuery(undefined, {
+    enabled: sessionData?.user != null,
+  });
 
   const workouts = api.workoutRouter.getWorkouts.useQuery({
     userId: sessionData?.user.id!,
   });
 
-  if (sessionData == null) {
+  if (sessionData?.user == null) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400">
         <div className="flex h-64 w-64 items-center justify-center bg-white text-6xl font-bold">
           LOGO
         </div>
         <div>
-          <div className="rounded-full bg-blue-600 px-6 py-4 font-medium text-white">
+          <div className="rounded-full bg-blue-600 p-3 font-medium text-white">
             <button onClick={() => signIn("google")}>
               <div className="flex items-center justify-center">
                 <Image
@@ -56,7 +39,7 @@ const Home = ({
                   src="/google.svg"
                   className="leading-0 rounded-full bg-white"
                 />
-                {/* <span>Entrar com Google</span> */}
+                <span className="mx-3">Entrar com Google</span>
               </div>
             </button>
           </div>
@@ -72,8 +55,8 @@ const Home = ({
           <Image
             width={64}
             height={64}
-            src={sessionData?.user!.image!}
-            alt="mulhe"
+            src={sessionData.user.image ?? ""}
+            alt="Foto de perfil"
             className="rounded-full"
           />
           <h1 className="ml-4 text-lg text-blue-700">
