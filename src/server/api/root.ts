@@ -1,5 +1,5 @@
 import { createTRPCRouter } from "./trpc";
-import { appRouter as app } from "./routers/appRouter";
+import { appRouter } from "./routers/appRouter";
 import { workoutRouter } from "./routers/workoutRouter";
 import { exerciseRouter } from "./routers/exerciseRouter";
 import { exerciseInWorkoutRouter } from "./routers/exerciseInWorkoutRouter";
@@ -9,12 +9,12 @@ import { exerciseInWorkoutRouter } from "./routers/exerciseInWorkoutRouter";
  *
  * All routers added in /api/routers should be manually added here
  */
-export const appRouter = createTRPCRouter({
-  app,
-  workoutRouter,
-  exerciseRouter,
-  exerciseInWorkoutRouter,
+export const router = createTRPCRouter({
+  app: appRouter,
+  workout: workoutRouter,
+  exercise: exerciseRouter,
+  exerciseinWorkout: exerciseInWorkoutRouter,
 });
 
 // export type definition of API
-export type AppRouter = typeof appRouter;
+export type AppRouter = typeof router;
