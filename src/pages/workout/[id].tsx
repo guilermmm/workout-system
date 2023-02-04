@@ -120,8 +120,9 @@ const Footer = () => {
       setStarted(true);
       const now = new Date();
       const elapsed = new Date();
-      elapsed.setSeconds(now.getSeconds() - new Date(timeStarted).getSeconds());
-      console.log(elapsed.getSeconds() + " aqui carai 2");
+      elapsed.setSeconds(
+        elapsed.getSeconds() + (now.getTime() - new Date(timeStarted).getTime()) / 1000,
+      );
       reset(elapsed, true);
     }
   }, [started]);
