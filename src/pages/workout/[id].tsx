@@ -2,7 +2,7 @@ import { Exercise, ExerciseInWorkout } from "@prisma/client";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useStopwatch, useTimer } from "react-timer-hook";
-import { classList } from "../../utils";
+import { classList, useLocalStorage } from "../../utils";
 import { api } from "../../utils/api";
 
 const Workout = () => {
@@ -51,7 +51,7 @@ const Workout = () => {
         ))}
       </div>
       <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-md">
-        <Footer />
+        <Footer id={id} />
       </div>
     </div>
   );
@@ -107,41 +107,97 @@ const ExerciseCard = ({ exercise }: { exercise: ExerciseInWorkout & { exercise: 
   );
 };
 
-const Footer = () => {
-  const [started, setStarted] = useState(false);
+const Footer = ({ id }: { id: string }) => {
+  type State = "not-started" | "started" | "finished";
 
-  const { seconds, minutes, hours, start, reset } = useStopwatch({ autoStart: false });
+  const [state, setState] = useState<State>("not-started");
+
+  const [storage, setStorage] = useLocalStorage<
+    Record<string, { startedAt: string; finishedAt: string }>
+  >("workout-times", {});
+
+  const { seconds, minutes, hours, start, reset, pause } = useStopwatch({ autoStart: false });
 
   useEffect(() => {
-    const timeStarted = localStorage.getItem("startedTime");
-    console.log(timeStarted + " aqui carai ");
+    const timeStarted = storage[id]?.startedAt;
+    const timeFinished = storage[id]?.finishedAt;
 
-    if (timeStarted) {
-      setStarted(true);
+    if (timeStarted && !timeFinished) {
+      setState("started");
       const now = new Date();
       const elapsed = new Date();
       elapsed.setSeconds(
         elapsed.getSeconds() + (now.getTime() - new Date(timeStarted).getTime()) / 1000,
       );
       reset(elapsed, true);
+    } else if (timeStarted && timeFinished) {
+      setState("not-started");
+      const elapsed = new Date();
+      elapsed.setSeconds(
+        elapsed.getSeconds() +
+          (new Date(timeFinished).getTime() - new Date(timeStarted).getTime()) / 1000,
+      );
+      reset(elapsed, false);
     }
-  }, [started]);
+  }, []);
 
   return (
-    <div className="flex justify-between">
-      <div className="flex flex-col">
-        <div className="text-sm text-gray-500">Treino {!started ? "não" : ""} iniciado</div>
-        <div className="text-start">
+    <div className="flex items-center justify-between">
+      {state === "not-started" ? (
+        <div className="font-medium text-slate-900/50">
           {fix(hours)}h {fix(minutes)}min {fix(seconds)}s
         </div>
-      </div>
-      {started ? (
+      ) : state === "started" ? (
+        <div className="font-medium text-slate-900">
+          {fix(hours)}h {fix(minutes)}min {fix(seconds)}s
+        </div>
+      ) : (
+        <div className="font-medium text-green-600">
+          {fix(hours)}h {fix(minutes)}min {fix(seconds)}s
+        </div>
+      )}
+      {state === "not-started" ? (
+        <button
+          className="flex items-center gap-3 rounded-full border-2 border-blue-600 bg-white px-6 py-2 font-medium text-blue-600"
+          onClick={() => {
+            setState("started");
+            reset(undefined, true);
+            setStorage({
+              [id]: {
+                startedAt: new Date().toISOString(),
+                finishedAt: "",
+              },
+            });
+          }}
+        >
+          Iniciar treino
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="h-8 w-8"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </button>
+      ) : state === "started" ? (
         <button
           className="flex items-center gap-3 rounded-full border-2 border-slate-900 bg-gold-500 px-6 py-2 font-medium text-slate-900"
           onClick={() => {
-            setStarted(false);
-            reset(undefined, false);
-            localStorage.removeItem("startedTime");
+            setState("finished");
+            pause();
+            setStorage({
+              [id]: {
+                startedAt: storage[id]!.startedAt,
+                finishedAt: new Date().toISOString(),
+              },
+            });
           }}
         >
           Concluir treino
@@ -161,34 +217,15 @@ const Footer = () => {
           </svg>
         </button>
       ) : (
-        <button
-          className="flex items-center gap-3 rounded-full border-2 border-blue-600 bg-white px-6 py-2 font-medium text-blue-600"
-          onClick={() => {
-            setStarted(true);
-            localStorage.setItem("startedTime", new Date().toISOString());
-          }}
-        >
-          Iniciar treino
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.25}
-            stroke="currentColor"
-            className="h-8 w-8"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </button>
+        <div className="flex items-center border-2 border-transparent px-6 py-2 font-medium text-green-600">
+          Treino finalizado
+          <div className="h-8"></div>
+        </div>
       )}
     </div>
   );
 };
 
-const fix = (num: number) => (num < 10 ? `0${num}` : num);
+const fix = (num: number) => num.toString().padStart(2, "0");
 
 export default Workout;

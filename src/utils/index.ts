@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 export const join = (array: string[], separator = ", ") => {
   return array.length === 0
     ? ""
@@ -21,4 +23,31 @@ export const classList = (...classes: (string | Record<string, boolean>)[]) => {
     })
     .flat()
     .join(" ");
+};
+
+export const useLocalStorage = <T extends object>(key: string, initialValue: T) => {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.log(error);
+      return initialValue;
+    }
+  });
+
+  const setValue = (value: Partial<T> | ((val: T) => Partial<T>)) => {
+    const newValue = value instanceof Function ? value(storedValue) : value;
+    const valueToStore = { ...storedValue, ...newValue };
+
+    setStoredValue(valueToStore);
+
+    try {
+      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  return [storedValue, setValue] as const;
 };
