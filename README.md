@@ -35,3 +35,4 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [ ] usuario contar as series
 - [ ] ficha pessoal do aluno
 - [ ] permitir apenas um timer ativo por vez
+- [ ] permitir que o professor faça o treino do aluno mesmo antes dele logar a primeira vez, e quando logar já tiver tudo bonitin

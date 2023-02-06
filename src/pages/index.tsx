@@ -1,8 +1,11 @@
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { capitalize, classList, join } from "../utils";
 import { api } from "../utils/api";
+import { useDebounce } from "use-debounce";
+import { User } from "@prisma/client";
 
 const Home = () => {
   const { data: sessionData } = useSession();
@@ -15,6 +18,15 @@ const Home = () => {
     { userId: sessionData?.user.id ?? "" },
     { enabled: sessionData?.user != null },
   );
+
+  const [selectedTab, setSelectedTab] = useState(user.data?.isInstructor ? "manage" : "workouts");
+  const [searchInput, setSearchInput] = useState("");
+
+  const [debouncedInput] = useDebounce(searchInput, 500);
+
+  const users = api.app.searchUsers.useQuery(debouncedInput, {
+    enabled: selectedTab === "manage",
+  });
 
   return sessionData?.user == null ? (
     <Startup />
@@ -56,20 +68,55 @@ const Home = () => {
         </button>
       </div>
       <div className="mx-4">
-        <div className="mx-2 mt-6 mb-4 w-fit">
-          <h1 className="text-xl font-medium text-slate-800">Fichas de Treino</h1>
-          <div className="h-1 bg-gold-500"></div>
+        <div className="flex">
+          <button onClick={() => setSelectedTab("manage")} className="mx-2 mt-6 mb-4 w-fit">
+            <h1 className="text-xl font-medium text-slate-800">Gerenciar treinos</h1>
+            <div
+              className={classList("h-1", {
+                "bg-gold-500": selectedTab === "manage",
+                "bg-slate-300": selectedTab !== "manage",
+              })}
+            ></div>
+          </button>
+          <button onClick={() => setSelectedTab("workouts")} className="mx-2 mt-6 mb-4 w-fit">
+            <h1 className="text-xl font-medium text-slate-800">Suas fichas de treino</h1>
+            <div
+              className={classList("h-1", {
+                "bg-gold-500": selectedTab === "workouts",
+                "bg-slate-300": selectedTab !== "workouts",
+              })}
+            ></div>
+          </button>
         </div>
-        <div className="even flex flex-col flex-wrap sm:flex-row">
-          {workouts.data.map(workout => (
-            <WorkoutCard
-              key={workout.id}
-              id={workout.id}
-              name={workout.name}
-              description={capitalize(join(Array.from(new Set(workout.muscleGroups))))}
-              recommended={user.data!.nextWorkoutId === workout.id}
-            />
-          ))}
+
+        <div className="flex flex-col flex-wrap items-stretch sm:flex-row">
+          {selectedTab === "workouts" ? (
+            workouts.data.map(workout => (
+              <WorkoutCard
+                key={workout.id}
+                id={workout.id}
+                name={workout.name}
+                description={capitalize(join(Array.from(new Set(workout.muscleGroups))))}
+                recommended={user.data!.nextWorkoutId === workout.id}
+              />
+            ))
+          ) : (
+            <div className="flex flex-1 flex-col gap-4">
+              <div>
+                <input
+                  type="text"
+                  className="w-full rounded-full border-2 p-4"
+                  value={searchInput}
+                  onChange={e => setSearchInput(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col flex-wrap items-stretch gap-2 sm:flex-row">
+                {users.data &&
+                  users.data.map(user => <UserCard key={user.id} user={user}></UserCard>)}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -85,8 +132,11 @@ type Props = {
 
 const WorkoutCard = ({ id, name, description, recommended = false }: Props) => {
   return (
-    <Link href={`/workout/${id}`}>
-      <div className="m-2 flex min-w-fit flex-1 flex-col justify-center rounded-md bg-blue-500 p-6 pt-4 pl-3 text-white shadow-lg transition-colors hover:bg-blue-600">
+    <Link
+      href={`/workout/${id}`}
+      className="m-2 flex min-w-fit flex-1 flex-col justify-center rounded-md bg-blue-500 p-6 pt-4 pl-3 text-white shadow-lg transition-colors hover:bg-blue-600"
+    >
+      <div>
         {recommended && (
           <div className="flex text-sm font-medium text-gold-500">
             <svg
@@ -110,6 +160,29 @@ const WorkoutCard = ({ id, name, description, recommended = false }: Props) => {
           </div>
           <div className="text-sm font-thin opacity-90">{description}</div>
         </div>
+      </div>
+    </Link>
+  );
+};
+
+const UserCard = ({ user }: { user: User }) => {
+  return (
+    <Link
+      href={`/manage/${user.id}`}
+      className="flex flex-1 flex-row items-center rounded-md border-2 border-gold-400 bg-slate-50 p-3"
+    >
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white">
+        <Image
+          width={64}
+          height={64}
+          alt="User"
+          src={user.image ?? ""}
+          className="h-16 w-16 rounded-full"
+        />
+      </div>
+      <div className="ml-4">
+        <div className="truncate text-xl font-medium">{user.name}</div>
+        <div className="text-sm text-slate-900/70">{user.email}</div>
       </div>
     </Link>
   );

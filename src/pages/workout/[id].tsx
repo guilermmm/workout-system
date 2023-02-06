@@ -1,7 +1,7 @@
 import { Exercise, ExerciseInWorkout } from "@prisma/client";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useStopwatch, useTimer } from "react-timer-hook";
+import { useStopwatch } from "react-timer-hook";
 import { classList, useLocalStorage } from "../../utils";
 import { api } from "../../utils/api";
 
