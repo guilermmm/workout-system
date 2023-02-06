@@ -1,11 +1,12 @@
+import type { User } from "@prisma/client";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useState } from "react";
+import { useDebounce } from "use-debounce";
 import { capitalize, classList, join } from "../utils";
 import { api } from "../utils/api";
-import { useDebounce } from "use-debounce";
-import { User } from "@prisma/client";
 
 const Home = () => {
   const { data: sessionData } = useSession();
@@ -19,17 +20,12 @@ const Home = () => {
     { enabled: sessionData?.user != null },
   );
 
-  const [selectedTab, setSelectedTab] = useState(user.data?.isInstructor ? "manage" : "workouts");
-  const [searchInput, setSearchInput] = useState("");
-
-  const [debouncedInput] = useDebounce(searchInput, 500);
-
-  const users = api.app.searchUsers.useQuery(debouncedInput, {
-    enabled: selectedTab === "manage",
-  });
+  const [selectedTab, setSelectedTab] = useState<"manage" | "workouts">(
+    user.data?.isInstructor ? "manage" : "workouts",
+  );
 
   return sessionData?.user == null ? (
-    <Startup />
+    <SignIn />
   ) : user.isLoading || workouts.isLoading ? (
     <Loading />
   ) : user.isError || workouts.isError ? (
@@ -46,12 +42,12 @@ const Home = () => {
             className="rounded-full"
           />
           <h1 className="ml-4 text-lg font-medium text-blue-700">
-            Olá, <span className="font-bold">{sessionData?.user.name}</span>!
+            Olá, <span className="font-bold">{sessionData.user.name}</span>!
           </h1>
         </div>
         <button
           className="rounded-full p-2 text-blue-700 transition-colors hover:bg-white"
-          onClick={() => signOut()}
+          onClick={() => void signOut()}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -69,15 +65,17 @@ const Home = () => {
       </div>
       <div className="mx-4">
         <div className="flex">
-          <button onClick={() => setSelectedTab("manage")} className="mx-2 mt-6 mb-4 w-fit">
-            <h1 className="text-xl font-medium text-slate-800">Gerenciar treinos</h1>
-            <div
-              className={classList("h-1", {
-                "bg-gold-500": selectedTab === "manage",
-                "bg-slate-300": selectedTab !== "manage",
-              })}
-            ></div>
-          </button>
+          {user.data?.isInstructor && (
+            <button onClick={() => setSelectedTab("manage")} className="mx-2 mt-6 mb-4 w-fit">
+              <h1 className="text-xl font-medium text-slate-800">Gerenciar treinos</h1>
+              <div
+                className={classList("h-1", {
+                  "bg-gold-500": selectedTab === "manage",
+                  "bg-slate-300": selectedTab !== "manage",
+                })}
+              />
+            </button>
+          )}
           <button onClick={() => setSelectedTab("workouts")} className="mx-2 mt-6 mb-4 w-fit">
             <h1 className="text-xl font-medium text-slate-800">Suas fichas de treino</h1>
             <div
@@ -85,10 +83,9 @@ const Home = () => {
                 "bg-gold-500": selectedTab === "workouts",
                 "bg-slate-300": selectedTab !== "workouts",
               })}
-            ></div>
+            />
           </button>
         </div>
-
         <div className="flex flex-col flex-wrap items-stretch sm:flex-row">
           {selectedTab === "workouts" ? (
             workouts.data.map(workout => (
@@ -101,21 +98,7 @@ const Home = () => {
               />
             ))
           ) : (
-            <div className="flex flex-1 flex-col gap-4">
-              <div>
-                <input
-                  type="text"
-                  className="w-full rounded-full border-2 p-4"
-                  value={searchInput}
-                  onChange={e => setSearchInput(e.target.value)}
-                />
-              </div>
-
-              <div className="flex flex-col flex-wrap items-stretch gap-2 sm:flex-row">
-                {users.data &&
-                  users.data.map(user => <UserCard key={user.id} user={user}></UserCard>)}
-              </div>
-            </div>
+            <ManagementTab />
           )}
         </div>
       </div>
@@ -123,14 +106,16 @@ const Home = () => {
   );
 };
 
-type Props = {
+export default Home;
+
+type WorkoutCardProps = {
   id: string;
   name: string;
   description: string;
   recommended?: boolean;
 };
 
-const WorkoutCard = ({ id, name, description, recommended = false }: Props) => {
+const WorkoutCard = ({ id, name, description, recommended = false }: WorkoutCardProps) => {
   return (
     <Link
       href={`/workout/${id}`}
@@ -165,32 +150,68 @@ const WorkoutCard = ({ id, name, description, recommended = false }: Props) => {
   );
 };
 
+const ManagementTab = () => {
+  const [searchInput, setSearchInput] = useState("");
+
+  const [debouncedInput] = useDebounce(searchInput, 500);
+
+  const users = api.app.searchUsers.useQuery(debouncedInput);
+
+  return (
+    <div className="flex flex-1 flex-col gap-4">
+      <div className="relative my-2">
+        <input
+          type="text"
+          className="h-12 w-full rounded-full border-2 pl-4 pr-12"
+          value={searchInput}
+          onChange={e => setSearchInput(e.target.value)}
+        />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+          className="absolute right-4 top-3 h-6 w-6"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+          />
+        </svg>
+      </div>
+      <div className="flex flex-col flex-wrap items-stretch gap-2 sm:flex-row">
+        {users.data && users.data.map(user => <UserCard key={user.id} user={user} />)}
+      </div>
+    </div>
+  );
+};
+
 const UserCard = ({ user }: { user: User }) => {
   return (
     <Link
       href={`/manage/${user.id}`}
-      className="flex flex-1 flex-row items-center rounded-md border-2 border-gold-400 bg-slate-50 p-3"
+      className="flex flex-1 flex-row items-center rounded-md bg-slate-50 p-3 shadow-md transition-shadow hover:shadow-xl"
     >
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
         <Image
-          width={64}
-          height={64}
-          alt="User"
+          width={48}
+          height={48}
+          alt={`Foto de perfil de ${user.name!}`}
           src={user.image ?? ""}
-          className="h-16 w-16 rounded-full"
+          className="h-12 w-12 rounded-full"
         />
       </div>
       <div className="ml-4">
-        <div className="truncate text-xl font-medium">{user.name}</div>
-        <div className="text-sm text-slate-900/70">{user.email}</div>
+        <div className="truncate text-lg font-medium text-slate-800">{user.name}</div>
+        <div className="truncate text-sm text-slate-500">{user.email}</div>
       </div>
     </Link>
   );
 };
 
-export default Home;
-
-const Startup = () => {
+const SignIn = () => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400">
       <div className="flex h-64 w-64 items-center justify-center bg-white text-6xl font-bold">
@@ -199,7 +220,7 @@ const Startup = () => {
       <div>
         <div className="font-medium text-white">
           <button
-            onClick={() => signIn("google")}
+            onClick={() => void signIn("google")}
             className="block rounded-full bg-blue-600 p-3 transition-colors hover:bg-blue-500"
           >
             <div className="flex items-center justify-center">
@@ -252,10 +273,18 @@ const Loading = () => {
 };
 
 const Error = () => {
+  const router = useRouter();
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400">
       <div className="flex items-center justify-center">
         <div className="text-2xl font-medium text-white">Ocorreu um erro</div>
+        <button
+          className="border-2 border-white px-6 py-3 text-2xl font-medium text-slate-900"
+          onClick={router.reload}
+        >
+          Recarregar
+        </button>
       </div>
     </div>
   );

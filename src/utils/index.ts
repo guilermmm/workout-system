@@ -5,7 +5,7 @@ export const join = (array: string[], separator = ", ") => {
     ? ""
     : array.length === 1
     ? array[0]!
-    : array.slice(0, -1).join(separator) + " e " + array.slice(-1);
+    : array.slice(0, -1).join(separator) + " e " + array.slice(-1)[0]!;
 };
 
 export const capitalize = (string: string) => {
@@ -29,7 +29,7 @@ export const useLocalStorage = <T extends object>(key: string, initialValue: T) 
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      return item ? (JSON.parse(item) as T) : initialValue;
     } catch (error) {
       console.log(error);
       return initialValue;

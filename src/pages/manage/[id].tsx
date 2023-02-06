@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { capitalize, join, useLocalStorage } from "../../utils";
+import { capitalize, join } from "../../utils";
 import { api } from "../../utils/api";
 
 const Manage = () => {
@@ -10,7 +8,7 @@ const Manage = () => {
   const instructor = api.app.getUser.useQuery();
 
   if (instructor.data?.isInstructor === false) {
-    router.push("/");
+    void router.push("/");
   }
 
   const { id } = router.query as { id: string };
@@ -46,7 +44,6 @@ const Manage = () => {
               />
             </svg>
           </button>
-
           <h1 className="ml-4 text-xl font-medium text-blue-700">
             Treinos ativos de <span className="font-bold">{user.data?.name}</span>
           </h1>
@@ -55,48 +52,48 @@ const Manage = () => {
       <div className="mt-8 flex flex-col flex-wrap items-stretch sm:flex-row">
         {workouts.data.map(workout => (
           <WorkoutCard
+            key={workout.id}
             id={workout.id}
             name={workout.name}
             description={capitalize(join(Array.from(new Set(workout.muscleGroups))))}
           />
         ))}
       </div>
-      <div className="fixed bottom-0 left-0 right-0 bg-inherit p-4 shadow-md">
-        <button className=" flex w-full justify-center rounded-md bg-blue-500 p-3 text-white transition-colors hover:bg-blue-600">
+      <div className="fixed bottom-0 right-0 p-4">
+        <button className="flex w-full justify-center rounded-full bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
             stroke="currentColor"
-            className="ml-2 inline-block h-6 w-6"
+            className="h-10 w-10"
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          Criar novo Treino
         </button>
       </div>
     </div>
   );
 };
 
-type Props = {
+type WorkoutCardProps = {
   id: string;
   name: string;
   description: string;
 };
 
-const WorkoutCard = ({ id, name, description }: Props) => {
+const WorkoutCard = ({ id, name, description }: WorkoutCardProps) => {
   return (
-    <div className="m-2 flex min-w-fit flex-1 justify-between rounded-md bg-blue-500 p-6 pt-4 pl-3 text-white shadow-lg transition-colors hover:bg-blue-600">
+    <div className="m-2 flex min-w-fit flex-1 justify-between rounded-md bg-blue-500 p-6 text-white shadow-lg transition-colors hover:bg-blue-600">
       <div className="ml-5">
         <div className="text-xl">
           Treino <span className="font-medium">{name}</span>
         </div>
         <div className="text-sm font-thin opacity-90">{description}</div>
       </div>
-      <div className="flex justify-center">
-        <button className="rounded-full p-2 text-white transition-colors hover:bg-white hover:text-blue-700">
+      <div className="flex justify-center gap-2">
+        <button className="h-12 w-12 rounded-full p-3 text-gold-400 transition-colors hover:bg-white hover:text-gold-600">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -112,7 +109,7 @@ const WorkoutCard = ({ id, name, description }: Props) => {
             />
           </svg>
         </button>
-        <button className="rounded-full p-2 text-white transition-colors hover:bg-white hover:text-blue-700">
+        <button className="h-12 w-12 rounded-full p-3 text-red-400 transition-colors hover:bg-white hover:text-red-500">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"

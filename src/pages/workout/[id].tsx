@@ -1,4 +1,4 @@
-import { Exercise, ExerciseInWorkout } from "@prisma/client";
+import type { Exercise, ExerciseInWorkout } from "@prisma/client";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
@@ -39,7 +39,6 @@ const Workout = () => {
               />
             </svg>
           </button>
-
           <h1 className="ml-4 text-xl font-medium text-blue-700">
             Treino <span className="font-bold">{workout.data.name}</span>
           </h1>
@@ -47,7 +46,7 @@ const Workout = () => {
       </div>
       <div>
         {workout.data.exercises.map(exercise => (
-          <ExerciseCard exercise={exercise} />
+          <ExerciseCard key={exercise.id} exercise={exercise} />
         ))}
       </div>
       <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-md">
@@ -70,11 +69,11 @@ const ExerciseCard = ({ exercise }: { exercise: ExerciseInWorkout & { exercise: 
         <div className="mr-5 text-sm">
           {exercise.exercise.hasSets ? (
             <>
-              <div>{exercise.sets} séries</div>
-              <div>{exercise.reps} repetições</div>
+              <div className="font-medium text-slate-700">{exercise.sets} séries</div>
+              <div className="font-medium text-slate-700">{exercise.reps} repetições</div>
             </>
           ) : (
-            <>{exercise.time}</>
+            <div className="font-medium text-slate-700">{exercise.time}</div>
           )}
         </div>
         <button
@@ -116,7 +115,7 @@ const Footer = ({ id }: { id: string }) => {
     Record<string, { startedAt: string; finishedAt: string }>
   >("workout-times", {});
 
-  const { seconds, minutes, hours, start, reset, pause } = useStopwatch({ autoStart: false });
+  const { seconds, minutes, hours, reset, pause } = useStopwatch({ autoStart: false });
 
   useEffect(() => {
     const timeStarted = storage[id]?.startedAt;
@@ -139,88 +138,90 @@ const Footer = ({ id }: { id: string }) => {
       );
       reset(elapsed, false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="flex items-center justify-between">
       {state === "not-started" ? (
-        <div className="font-medium text-slate-900/50">
-          {fix(hours)}h {fix(minutes)}min {fix(seconds)}s
-        </div>
-      ) : state === "started" ? (
-        <div className="font-medium text-slate-900">
-          {fix(hours)}h {fix(minutes)}min {fix(seconds)}s
-        </div>
-      ) : (
-        <div className="font-medium text-green-600">
-          {fix(hours)}h {fix(minutes)}min {fix(seconds)}s
-        </div>
-      )}
-      {state === "not-started" ? (
-        <button
-          className="flex items-center gap-3 rounded-full border-2 border-blue-600 bg-white px-6 py-2 font-medium text-blue-600"
-          onClick={() => {
-            setState("started");
-            reset(undefined, true);
-            setStorage({
-              [id]: {
-                startedAt: new Date().toISOString(),
-                finishedAt: "",
-              },
-            });
-          }}
-        >
-          Iniciar treino
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="h-8 w-8"
+        <>
+          <div className="font-medium text-slate-900/50">
+            {fix(hours)}h {fix(minutes)}min {fix(seconds)}s
+          </div>
+          <button
+            className="flex items-center gap-3 rounded-full border-2 border-blue-600 bg-white px-6 py-2 font-medium text-blue-600"
+            onClick={() => {
+              setState("started");
+              reset(undefined, true);
+              setStorage({
+                [id]: {
+                  startedAt: new Date().toISOString(),
+                  finishedAt: "",
+                },
+              });
+            }}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </button>
+            Iniciar treino
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="h-8 w-8"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+        </>
       ) : state === "started" ? (
-        <button
-          className="flex items-center gap-3 rounded-full border-2 border-slate-900 bg-gold-500 px-6 py-2 font-medium text-slate-900"
-          onClick={() => {
-            setState("finished");
-            pause();
-            setStorage({
-              [id]: {
-                startedAt: storage[id]!.startedAt,
-                finishedAt: new Date().toISOString(),
-              },
-            });
-          }}
-        >
-          Concluir treino
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.25}
-            stroke="currentColor"
-            className="h-8 w-8"
+        <>
+          <div className="font-medium text-blue-600">
+            {fix(hours)}h {fix(minutes)}min {fix(seconds)}s
+          </div>
+          <button
+            className="flex items-center gap-3 rounded-full border-2 border-gold-200 bg-gold-500 px-6 py-2 font-medium text-slate-900"
+            onClick={() => {
+              setState("finished");
+              pause();
+              setStorage({
+                [id]: {
+                  startedAt: storage[id]!.startedAt,
+                  finishedAt: new Date().toISOString(),
+                },
+              });
+            }}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </button>
+            Concluir treino
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.25}
+              stroke="currentColor"
+              className="h-8 w-8"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+        </>
       ) : (
-        <div className="flex items-center border-2 border-transparent px-6 py-2 font-medium text-green-600">
-          Treino finalizado
-          <div className="h-8"></div>
-        </div>
+        <>
+          <div className="font-medium text-green-600">
+            {fix(hours)}h {fix(minutes)}min {fix(seconds)}s
+          </div>
+          <div className="flex items-center border-2 border-transparent px-6 py-2 font-medium text-green-600">
+            <div className="h-8">Treino finalizado</div>
+          </div>
+        </>
       )}
     </div>
   );
