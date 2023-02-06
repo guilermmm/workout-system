@@ -7,7 +7,7 @@ export const workoutRouter = createTRPCRouter({
       z.object({
         name: z.string(),
         userId: z.string(),
-      })
+      }),
     )
     .mutation(({ ctx, input }) => {
       return ctx.prisma.workout.create({
@@ -28,7 +28,7 @@ export const workoutRouter = createTRPCRouter({
         id: z.string(),
         name: z.string(),
         exercises: z.array(z.string()),
-      })
+      }),
     )
     .mutation(({ ctx, input }) => {
       return ctx.prisma.workout.update({
@@ -38,7 +38,7 @@ export const workoutRouter = createTRPCRouter({
         data: {
           name: input.name,
           exercises: {
-            connect: input.exercises.map((id) => ({ id })),
+            connect: input.exercises.map(id => ({ id })),
           },
         },
       });
@@ -74,34 +74,32 @@ export const workoutRouter = createTRPCRouter({
             },
           },
         })
-      ).map((workout) => {
+      ).map(workout => {
         return {
           id: workout.id,
           name: workout.name,
           createdAt: workout.createdAt,
           updatedAt: workout.updatedAt,
           userId: workout.userId,
-          muscleGroups: workout.exercises.map((exercise) => {
+          muscleGroups: workout.exercises.map(exercise => {
             return exercise.exercise.muscleGroup;
           }),
         };
       });
     }),
 
-  getWorkout: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(({ ctx, input }) => {
-      return ctx.prisma.workout.findUnique({
-        where: {
-          id: input.id,
-        },
-        include: {
-          exercises: {
-            include: {
-              exercise: true,
-            },
+  getWorkout: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
+    return ctx.prisma.workout.findUnique({
+      where: {
+        id: input.id,
+      },
+      include: {
+        exercises: {
+          include: {
+            exercise: true,
           },
         },
-      });
-    }),
+      },
+    });
+  }),
 });

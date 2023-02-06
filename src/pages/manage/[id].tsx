@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { capitalize, join } from "../../utils";
 import { api } from "../../utils/api";
@@ -52,6 +53,9 @@ const Manage = () => {
       <div className="mt-8 flex flex-col flex-wrap items-stretch sm:flex-row">
         {workouts.data.map(workout => (
           <WorkoutCard
+            onDelete={() => {
+              void workouts.refetch();
+            }}
             key={workout.id}
             id={workout.id}
             name={workout.name}
@@ -81,9 +85,16 @@ type WorkoutCardProps = {
   id: string;
   name: string;
   description: string;
+  onDelete: () => void;
 };
 
-const WorkoutCard = ({ id, name, description }: WorkoutCardProps) => {
+const WorkoutCard = ({ id, name, description, onDelete }: WorkoutCardProps) => {
+  const deleteWorkout = api.workout.deleteWorkout.useMutation({
+    onSuccess: () => {
+      onDelete();
+    },
+  });
+
   return (
     <div className="m-2 flex min-w-fit flex-1 justify-between rounded-md bg-blue-500 p-6 text-white shadow-lg transition-colors hover:bg-blue-600">
       <div className="ml-5">
@@ -93,7 +104,10 @@ const WorkoutCard = ({ id, name, description }: WorkoutCardProps) => {
         <div className="text-sm font-thin opacity-90">{description}</div>
       </div>
       <div className="flex justify-center gap-2">
-        <button className="h-12 w-12 rounded-full p-3 text-gold-400 transition-colors hover:bg-white hover:text-gold-600">
+        <Link
+          href={`/manage/edit/${id}`}
+          className="h-12 w-12 rounded-full p-3 text-gold-400 transition-colors hover:bg-white hover:text-gold-600"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -108,8 +122,13 @@ const WorkoutCard = ({ id, name, description }: WorkoutCardProps) => {
               d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
             />
           </svg>
-        </button>
-        <button className="h-12 w-12 rounded-full p-3 text-red-400 transition-colors hover:bg-white hover:text-red-500">
+        </Link>
+        <button
+          onClick={() => {
+            deleteWorkout.mutate({ id });
+          }}
+          className="h-12 w-12 rounded-full p-3 text-red-400 transition-colors hover:bg-white hover:text-red-500"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
