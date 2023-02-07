@@ -27,15 +27,18 @@ You can check out the [create-t3-app GitHub repository](https://github.com/t3-os
 
 Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
 
-## TODO?
+## BRAINSTORM
 
-- [X] trocar o nome da coluna hasSets por hasReps
+- [x] trocar o nome da coluna hasSets por hasReps
+- [x] timer no treino ativo
+- [x] quando concluir um treino, recomendar o próximo com base em ordem que o professor definiu
 - [ ] botar reps como string
-- [X] timer no treino ativo
 - [ ] pensar em opção para quem nao usa celular
 - [ ] usuario contar as series
 - [ ] ficha pessoal do aluno
 - [ ] permitir apenas um timer ativo por vez
 - [ ] permitir que o professor faça o treino do aluno mesmo antes dele logar a primeira vez, e quando logar já tiver tudo bonitin
 - [ ] permitir ao instrutor reorganizar a ordem dos exercícios de um treino
-- [ ] quando concluir um treino, recomendar o próximo com base em ordem alfabética
+- [ ] arrumar a tela de manage q ta quebrando
+- [ ] diminuir o tamanho de quase tudo
+- [ ] validacao de usuario

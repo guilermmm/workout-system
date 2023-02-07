@@ -54,9 +54,10 @@ const Manage = () => {
           <div className="flex flex-row items-center justify-between text-right">
             <div className="ml-4 flex flex-col">
               <h1 className="text-xl text-blue-700">
-                Treinos ativos de <span className="font-bold">{user.data.name}</span>
+                Treinos ativos de{" "}
+                <span className="font-bold">{user.data.name?.split(" ").at(0)}</span>
               </h1>
-              <p className="font-medium text-slate-700">{user.data.email}</p>
+              <p className="truncate font-medium text-slate-700">{user.data.email}</p>
             </div>
             <Image
               src={user.data.image ?? ""}

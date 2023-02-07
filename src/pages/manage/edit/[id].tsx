@@ -45,6 +45,10 @@ const EditWorkout = () => {
     onSuccess: () => workout.refetch(),
   });
 
+  const changeName = api.workout.changeWorkoutName.useMutation({
+    onSuccess: () => workout.refetch(),
+  });
+
   const [editedExercises, setEditedExercises] = useState<
     (ExerciseInWorkout & { exercise: Exercise })[]
   >([]);
@@ -73,6 +77,9 @@ const EditWorkout = () => {
       }, [] as { muscleGroup: string; exercises: Exercise[] }[]),
     [exercises.data],
   );
+
+  const [editingName, setEditingName] = useState(false);
+  const [workoutName, setWorkoutName] = useState(workout.data?.name ?? "");
 
   return workout.data == null || exercises.data == null ? (
     <Loading />
@@ -103,12 +110,10 @@ const EditWorkout = () => {
         {workout.data && (
           <div className="flex flex-row items-center justify-between text-right">
             <div className="ml-4 flex flex-col">
-              <h1 className="overflow-x-scroll text-xl text-blue-700">
+              <h1 className=" text-xl text-blue-700">
                 <span className="font-bold">{workout.data.user.name}</span>
               </h1>
-              <p className="overflow-x-scroll font-medium text-slate-700">
-                {workout.data.user.email}
-              </p>
+              <p className=" font-medium text-slate-700">{workout.data.user.email}</p>
             </div>
             <Image
               src={workout.data.user.image ?? ""}
@@ -122,9 +127,69 @@ const EditWorkout = () => {
       </div>
       <div className="my-4 mx-2 flex">
         <div>
-          <h1 className="text-xl font-medium text-slate-800">Treino {workout.data.name}</h1>
+          <h1 className="text-xl font-medium text-slate-800">
+            Treino{" "}
+            {editingName ? (
+              <input
+                type="text"
+                placeholder={workout.data.name}
+                className="w-20 text-center"
+                onChange={e => setWorkoutName(e.target.value)}
+              />
+            ) : (
+              workout.data.name
+            )}
+          </h1>
           <div className={"h-1 bg-gold-500"} />
         </div>
+        {editingName ? (
+          <button
+            onClick={() => {
+              if (workoutName !== "" && workoutName !== workout.data!.name)
+                changeName.mutate({ id: workout.data!.id, name: workoutName });
+
+              setEditingName(false);
+            }}
+            className="ml-2"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.25}
+              stroke="currentColor"
+              className="h-6 w-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+        ) : (
+          <button
+            className="ml-2"
+            onClick={() => {
+              setEditingName(true);
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+              className="h-6 w-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+              />
+            </svg>
+          </button>
+        )}
       </div>
       <div>
         {editedExercises.map(exercise => (
@@ -189,7 +254,7 @@ const EditWorkout = () => {
             onClick={() => {
               saveWorkout.mutate({
                 id,
-                name: workout.data!.name,
+                name: workoutName,
                 exercises: editedExercises,
                 delete: remove,
               });

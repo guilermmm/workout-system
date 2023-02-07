@@ -75,6 +75,22 @@ export const workoutRouter = createTRPCRouter({
       });
     }),
 
+  changeWorkoutName: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.prisma.workout.update({
+        where: { id: input.id },
+        data: {
+          name: input.name,
+        },
+      });
+    }),
+
   deleteWorkout: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(({ ctx, input }) => {
