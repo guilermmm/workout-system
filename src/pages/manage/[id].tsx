@@ -57,7 +57,9 @@ const Manage = () => {
                 Treinos ativos de{" "}
                 <span className="font-bold">{user.data.name?.split(" ").at(0)}</span>
               </h1>
-              <p className="truncate font-medium text-slate-700">{user.data.email}</p>
+              <p className="truncate font-medium text-slate-700">
+                {user.data.email.split("@").at(0)}@...
+              </p>
             </div>
             <Image
               src={user.data.image ?? ""}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import structuredClone from "@ungap/structured-clone";
 import deepEqual from "deep-equal";
 import Image from "next/image";
@@ -111,9 +112,11 @@ const EditWorkout = () => {
           <div className="flex flex-row items-center justify-between text-right">
             <div className="ml-4 flex flex-col">
               <h1 className=" text-xl text-blue-700">
-                <span className="font-bold">{workout.data.user.name}</span>
+                <span className="font-bold">{workout.data.user.name?.split(" ").at(0)}</span>
               </h1>
-              <p className=" font-medium text-slate-700">{workout.data.user.email}</p>
+              <p className=" font-medium text-slate-700">
+                {workout.data.user.email.split("@").at(0)}@...
+              </p>
             </div>
             <Image
               src={workout.data.user.image ?? ""}
@@ -254,7 +257,7 @@ const EditWorkout = () => {
             onClick={() => {
               saveWorkout.mutate({
                 id,
-                name: workoutName,
+                name: workout.data?.name!,
                 exercises: editedExercises,
                 delete: remove,
               });
