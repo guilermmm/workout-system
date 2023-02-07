@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
-import { capitalize, classList, join } from "../utils";
+import { capitalize, classList, join, useLocalStorage } from "../utils";
 import { api } from "../utils/api";
 
 const Home = () => {
@@ -15,13 +15,16 @@ const Home = () => {
     enabled: sessionData?.user != null,
   });
 
+  const id = user.data?.id ?? "";
+
   const workouts = api.workout.getWorkouts.useQuery(
     { userId: sessionData?.user.id ?? "" },
     { enabled: sessionData?.user != null },
   );
 
-  const [selectedTab, setSelectedTab] = useState<"manage" | "workouts">(
-    user.data?.isInstructor ? "manage" : "workouts",
+  const [selectedTab, setSelectedTab] = useLocalStorage<Record<string, "manage" | "workouts">>(
+    "workout-tab",
+    { [id]: user.data?.isInstructor ? "manage" : "workouts" },
   );
 
   return sessionData?.user == null ? (
@@ -66,28 +69,34 @@ const Home = () => {
       <div className="mx-4">
         <div className="flex">
           {user.data?.isInstructor && (
-            <button onClick={() => setSelectedTab("manage")} className="mx-2 mt-6 mb-4 w-fit">
+            <button
+              onClick={() => setSelectedTab({ [id]: "manage" })}
+              className="mx-2 mt-6 mb-4 w-fit"
+            >
               <h1 className="text-xl font-medium text-slate-800">Gerenciar treinos</h1>
               <div
                 className={classList("h-1", {
-                  "bg-gold-500": selectedTab === "manage",
-                  "bg-slate-300": selectedTab !== "manage",
+                  "bg-gold-500": selectedTab[id] === "manage",
+                  "bg-slate-300": selectedTab[id] !== "manage",
                 })}
               />
             </button>
           )}
-          <button onClick={() => setSelectedTab("workouts")} className="mx-2 mt-6 mb-4 w-fit">
+          <button
+            onClick={() => setSelectedTab({ [id]: "workouts" })}
+            className="mx-2 mt-6 mb-4 w-fit"
+          >
             <h1 className="text-xl font-medium text-slate-800">Suas fichas de treino</h1>
             <div
               className={classList("h-1", {
-                "bg-gold-500": selectedTab === "workouts",
-                "bg-slate-300": selectedTab !== "workouts",
+                "bg-gold-500": selectedTab[id] === "workouts",
+                "bg-slate-300": selectedTab[id] !== "workouts",
               })}
             />
           </button>
         </div>
         <div className="flex flex-col flex-wrap items-stretch sm:flex-row">
-          {selectedTab === "workouts" ? (
+          {selectedTab[id] === "workouts" ? (
             workouts.data.map(workout => (
               <WorkoutCard
                 key={workout.id}

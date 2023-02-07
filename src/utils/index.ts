@@ -25,7 +25,7 @@ export const classList = (...classes: (string | Record<string, boolean>)[]) => {
     .join(" ");
 };
 
-export const useLocalStorage = <T extends object>(key: string, initialValue: T) => {
+export const useLocalStorage = <T>(key: string, initialValue: T) => {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
@@ -38,7 +38,7 @@ export const useLocalStorage = <T extends object>(key: string, initialValue: T) 
 
   const setValue = (value: Partial<T> | ((val: T) => Partial<T>)) => {
     const newValue = value instanceof Function ? value(storedValue) : value;
-    const valueToStore = { ...storedValue, ...newValue };
+    const valueToStore = typeof newValue === "object" ? { ...storedValue, ...newValue } : newValue;
 
     setStoredValue(valueToStore);
 

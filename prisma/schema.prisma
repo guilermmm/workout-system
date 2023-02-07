@@ -18,7 +18,7 @@ model Exercise {
     id          String              @id @default(cuid())
     name        String
     muscleGroup String
-    hasSets     Boolean
+    hasReps     Boolean
     workouts    ExerciseInWorkout[]
     createdAt   DateTime            @default(now())
     updatedAt   DateTime            @updatedAt

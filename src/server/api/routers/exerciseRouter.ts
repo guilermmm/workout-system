@@ -1,21 +1,25 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const exerciseRouter = createTRPCRouter({
+  getExercises: publicProcedure.query(({ ctx }) => {
+    return ctx.prisma.exercise.findMany();
+  }),
+
   createExercise: protectedProcedure
     .input(
       z.object({
         name: z.string(),
         muscleGroup: z.string(),
-        hasSets: z.boolean(),
-      })
+        hasReps: z.boolean(),
+      }),
     )
     .mutation(({ ctx, input }) => {
       return ctx.prisma.exercise.create({
         data: {
           name: input.name,
           muscleGroup: input.muscleGroup,
-          hasSets: input.hasSets,
+          hasReps: input.hasReps,
         },
       });
     }),
@@ -26,8 +30,8 @@ export const exerciseRouter = createTRPCRouter({
         id: z.string(),
         name: z.string(),
         muscleGroup: z.string(),
-        hasSets: z.boolean(),
-      })
+        hasReps: z.boolean(),
+      }),
     )
     .mutation(({ ctx, input }) => {
       return ctx.prisma.exercise.update({
@@ -37,7 +41,7 @@ export const exerciseRouter = createTRPCRouter({
         data: {
           name: input.name,
           muscleGroup: input.muscleGroup,
-          hasSets: input.hasSets,
+          hasReps: input.hasReps,
         },
       });
     }),
