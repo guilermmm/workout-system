@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import Loading from "../../components/Loading";
 import { capitalize, join } from "../../utils";
 import { api } from "../../utils/api";
 
@@ -17,12 +18,16 @@ const Manage = () => {
 
   const workouts = api.workout.getWorkouts.useQuery({ userId: id });
 
+  const createWorkout = api.workout.createWorkout.useMutation({
+    onSuccess: () => {
+      void workouts.refetch();
+    },
+  });
+
   const user = api.app.getUserById.useQuery(id);
 
   return workouts.data == null ? (
-    <div className="min-h-full bg-slate-100">
-      <div className="text-xl">carregano carai</div>
-    </div>
+    <Loading />
   ) : (
     <div className="min-h-full bg-slate-100">
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
@@ -77,7 +82,15 @@ const Manage = () => {
         ))}
       </div>
       <div className="fixed bottom-0 right-0 p-4">
-        <button className="flex w-full justify-center rounded-full bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600">
+        <button
+          className="flex w-full justify-center rounded-full bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600"
+          onClick={() => {
+            createWorkout.mutate({
+              userId: id,
+              name: "Novo",
+            });
+          }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"

@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
+import Loading from "../../components/Loading";
 import { classList, useLocalStorage } from "../../utils";
 import { api } from "../../utils/api";
 
@@ -16,12 +17,10 @@ const Workout = () => {
   const { data: sessionData } = useSession();
 
   return workout.data == null ? (
-    <div className="min-h-full bg-slate-100">
-      <div className="text-xl">carregano carai</div>
-    </div>
+    <Loading />
   ) : (
     <div className="min-h-full bg-slate-100">
-      <div className="flex items-center justify-between bg-gold-500 p-2">
+      <div className="flex max-w-full items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
           <button
             className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"

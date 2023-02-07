@@ -3,6 +3,7 @@ import deepEqual from "deep-equal";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
+import Loading from "../../../components/Loading";
 import { api } from "../../../utils/api";
 
 type ExerciseInWorkout = {
@@ -74,9 +75,7 @@ const EditWorkout = () => {
   );
 
   return workout.data == null || exercises.data == null ? (
-    <div className="min-h-full bg-slate-100">
-      <div className="text-xl">carregano carai</div>
-    </div>
+    <Loading />
   ) : (
     <div className="min-h-full bg-slate-100">
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
@@ -100,27 +99,32 @@ const EditWorkout = () => {
               />
             </svg>
           </button>
-          <h1 className="ml-4 text-xl font-medium text-blue-700">
-            Treino <span className="font-bold">{workout.data.name}</span>
-          </h1>
         </div>
         {workout.data && (
           <div className="flex flex-row items-center justify-between text-right">
             <div className="ml-4 flex flex-col">
-              <h1 className="text-xl text-blue-700">
+              <h1 className="overflow-x-scroll text-xl text-blue-700">
                 <span className="font-bold">{workout.data.user.name}</span>
               </h1>
-              <p className="font-medium text-slate-700">{workout.data.user.email}</p>
+              <p className="overflow-x-scroll font-medium text-slate-700">
+                {workout.data.user.email}
+              </p>
             </div>
             <Image
               src={workout.data.user.image ?? ""}
               alt={`Foto de perfil de ${workout.data.user.name!}`}
               width={48}
               height={48}
-              className="ml-4 rounded-full"
+              className="ml-4 block rounded-full"
             />
           </div>
         )}
+      </div>
+      <div className="my-4 mx-2 flex">
+        <div>
+          <h1 className="text-xl font-medium text-slate-800">Treino {workout.data.name}</h1>
+          <div className={"h-1 bg-gold-500"} />
+        </div>
       </div>
       <div>
         {editedExercises.map(exercise => (
