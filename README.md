@@ -29,6 +29,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 
 ## TODO?
 
+- [ ] trocar o nome da coluna hasSets por hasReps
 - [ ] botar reps como string
 - [ ] timer no treino ativo
 - [ ] pensar em opção para quem nao usa celular

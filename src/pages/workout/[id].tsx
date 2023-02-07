@@ -66,14 +66,17 @@ const ExerciseCard = ({ exercise }: { exercise: ExerciseInWorkout & { exercise: 
         <div className="text-sm">{exercise.description}</div>
       </div>
       <div className="flex items-center justify-between">
-        <div className="mr-5 text-sm">
+        <div className="mr-5 w-20 text-sm">
           {exercise.exercise.hasSets ? (
-            <>
-              <div className="font-medium text-slate-700">{exercise.sets} séries</div>
-              <div className="font-medium text-slate-700">{exercise.reps} repetições</div>
-            </>
+            <div className="font-medium text-slate-700">
+              <div>{exercise.sets} séries</div>
+              <div>{exercise.reps} repetições</div>
+            </div>
           ) : (
-            <div className="font-medium text-slate-700">{exercise.time}</div>
+            <div className="font-medium text-slate-700">
+              <div>{exercise.sets} séries</div>
+              <div>{`${exercise.time}'`} tempo</div>
+            </div>
           )}
         </div>
         <button
