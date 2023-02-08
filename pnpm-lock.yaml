@@ -2,6 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@next-auth/prisma-adapter': ^1.0.5
+  '@paralleldrive/cuid2': ^2.0.1
   '@prisma/client': ^4.9.0
   '@tanstack/react-query': ^4.20.0
   '@trpc/client': ^10.9.0
@@ -38,6 +39,7 @@ specifiers:
 
 dependencies:
   '@next-auth/prisma-adapter': 1.0.5_bhr4w7ukx5lbzsw34gjyxlh3rq
+  '@paralleldrive/cuid2': 2.0.1
   '@prisma/client': 4.9.0_prisma@4.9.0
   '@tanstack/react-query': 4.24.4_biqbaboplfbrettd7655fr4n2y
   '@trpc/client': 10.9.1_@trpc+server@10.9.1
@@ -256,6 +258,10 @@ packages:
     dev: false
     optional: true
 
+  /@noble/hashes/1.2.0:
+    resolution: {integrity: sha512-FZfhjEDbT5GRswV3C6uvLPHMiVD6lQBmpoX5+eSiPaMTXte/IKqI5dykDxzZB/WBeK/CDuQRBWarPdi3FNY2zQ==}
+    dev: false
+
   /@nodelib/fs.scandir/2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -279,6 +285,12 @@ packages:
 
   /@panva/hkdf/1.0.2:
     resolution: {integrity: sha512-MSAs9t3Go7GUkMhpKC44T58DJ5KGk2vBo+h1cqQeqlMfdGkxaVB78ZWpv9gYi/g2fa4sopag9gJsNvS8XGgWJA==}
+    dev: false
+
+  /@paralleldrive/cuid2/2.0.1:
+    resolution: {integrity: sha512-fi9nN5kCPGv9pcKQjk9g3riSTVcwR5TCFAGPUStbR61b1nXZ07GvxeoyStELKsJDCji1lwuUiUwLtagNTBllQA==}
+    dependencies:
+      '@noble/hashes': 1.2.0
     dev: false
 
   /@pkgr/utils/2.3.1:

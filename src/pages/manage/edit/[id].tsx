@@ -6,6 +6,7 @@ import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import Loading from "../../../components/Loading";
 import { api } from "../../../utils/api";
+import cuid2, { init } from "@paralleldrive/cuid2";
 
 type ExerciseInWorkout = {
   id: string;
@@ -81,6 +82,8 @@ const EditWorkout = () => {
 
   const [editingName, setEditingName] = useState(false);
   const [workoutName, setWorkoutName] = useState(workout.data?.name ?? "");
+
+  const cuid = init({ length: 10 });
 
   return workout.data == null || exercises.data == null ? (
     <Loading />
@@ -218,7 +221,7 @@ const EditWorkout = () => {
               setEditedExercises([
                 ...editedExercises,
                 {
-                  id: "",
+                  id: cuid(),
                   workoutId: id,
                   description: "",
                   exerciseId: "",
