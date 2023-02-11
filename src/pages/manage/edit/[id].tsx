@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import Loading from "../../../components/Loading";
 import { api } from "../../../utils/api";
-import cuid2, { init } from "@paralleldrive/cuid2";
+import { init } from "@paralleldrive/cuid2";
 
 type ExerciseInWorkout = {
   id: string;
@@ -258,10 +258,17 @@ const EditWorkout = () => {
           <button
             className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600"
             onClick={() => {
+              const exercises = editedExercises.map(e => {
+                if (e.id.length == 10) {
+                  e.id = "";
+                }
+                return e;
+              });
+
               saveWorkout.mutate({
                 id,
                 name: workout.data?.name!,
-                exercises: editedExercises,
+                exercises,
                 delete: remove,
               });
             }}
