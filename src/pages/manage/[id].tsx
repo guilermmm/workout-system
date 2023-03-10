@@ -8,7 +8,7 @@ import { api } from "../../utils/api";
 const Manage = () => {
   const router = useRouter();
 
-  const instructor = api.app.getUser.useQuery();
+  const instructor = api.user.getSessionUser.useQuery();
 
   if (instructor.data?.isInstructor === false) {
     void router.push("/");
@@ -24,7 +24,7 @@ const Manage = () => {
     },
   });
 
-  const user = api.app.getUserById.useQuery(id);
+  const user = api.user.getUserById.useQuery(id);
 
   return workouts.data == null ? (
     <Loading />
