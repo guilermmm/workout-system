@@ -57,4 +57,22 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
   return next({ ctx: { session: { ...ctx.session, user: ctx.session.user } } });
 });
 
+const enforceUserIsAdmin = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.session || !ctx.session.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  const user = await ctx.prisma.user.findUnique({
+    where: { email: ctx.session.user.email ?? undefined },
+  });
+
+  if (!user || !user.isInstructor) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  return next({ ctx: { session: { ...ctx.session, user: ctx.session.user } } });
+});
+
 export const protectedProcedure = t.procedure.use(logProcedure).use(enforceUserIsAuthed);
+
+export const adminProcedure = t.procedure.use(logProcedure).use(enforceUserIsAdmin);
