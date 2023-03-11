@@ -1,19 +1,22 @@
 import type { User } from "@prisma/client";
-import { signOut, useSession } from "next-auth/react";
+import type { Session } from "next-auth";
+import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useDebounce } from "use-debounce";
-import Spinner from "../components/Spinner";
+import Spinner from "./Spinner";
 import { capitalize, classList, join } from "../utils";
 import { api } from "../utils/api";
 
-const Home = () => {
-  const { data: session } = useSession();
-
+const Home = ({ session }: { session: Session }) => {
   const [user] = api.user.getSessionUser.useSuspenseQuery();
 
-  const [workouts] = api.workout.getWorkouts.useSuspenseQuery({ userId: session?.user.id ?? "" });
+  if (!session) {
+    throw new Error("User is not authenticated");
+  }
+
+  const [workouts] = api.workout.getWorkouts.useSuspenseQuery({ userId: session.user.id ?? "" });
 
   return (
     <div className="min-h-full bg-slate-100">
@@ -22,12 +25,12 @@ const Home = () => {
           <Image
             width={64}
             height={64}
-            src={session?.user.image ?? ""}
+            src={session.user.image ?? ""}
             alt="Foto de perfil"
             className="rounded-full"
           />
           <h1 className="ml-4 text-lg font-medium text-blue-700">
-            Olá, <span className="font-bold">{session?.user.name}</span>!
+            Olá, <span className="font-bold">{session.user.name}</span>!
           </h1>
         </div>
         <button

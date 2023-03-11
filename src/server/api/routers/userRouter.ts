@@ -8,7 +8,7 @@ export const userRouter = createTRPCRouter({
     });
   }),
 
-  getUserById: protectedProcedure.input(z.string()).query(({ ctx, input }) => {
+  getUserById: adminProcedure.input(z.string()).query(({ ctx, input }) => {
     return ctx.prisma.user.findUniqueOrThrow({ where: { id: input } });
   }),
 

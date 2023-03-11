@@ -4,16 +4,16 @@ import { useRouter } from "next/router";
 import { Suspense, useState } from "react";
 import ErrorBoundary from "../components/ErrorBoundary";
 import Loading from "../components/Loading";
-import Home from "./home";
+import Home from "../components/Home";
 
 const Index = () => {
-  const { data: sessionData, status } = useSession();
+  const { data: session, status } = useSession();
 
   const [loading, setLoading] = useState(false);
 
   return status === "loading" || loading ? (
     <Loading />
-  ) : sessionData?.user == null ? (
+  ) : session?.user == null ? (
     <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400">
       <div className="flex h-64 w-64 items-center justify-center bg-white text-6xl font-bold">
         LOGO
@@ -44,7 +44,7 @@ const Index = () => {
   ) : (
     <ErrorBoundary fallback={<Error />}>
       <Suspense fallback={<Loading />}>
-        <Home />
+        <Home session={session} />
       </Suspense>
     </ErrorBoundary>
   );
@@ -69,3 +69,7 @@ const Error = () => {
     </div>
   );
 };
+
+export function getServerSideProps() {
+  return { props: {} };
+}

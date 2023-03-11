@@ -179,3 +179,7 @@ const WorkoutCard = ({ id, name, description, onDelete }: WorkoutCardProps) => {
 };
 
 export default Manage;
+
+export function getServerSideProps() {
+  return { props: {} };
+}
