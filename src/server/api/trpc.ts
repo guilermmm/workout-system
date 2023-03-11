@@ -35,13 +35,16 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
 
 export const createTRPCRouter = t.router;
 
-export const logProcedure = t.middleware(async ({ path, type, next }) => {
+export const logProcedure = t.middleware(async ({ path, type, next, ctx }) => {
   const start = Date.now();
-  const result = await next();
-  const durationMs = Date.now() - start;
-  result.ok
-    ? console.log("OK request timing:", { path, type, durationMs })
-    : console.log("Non-OK request timing", { path, type, durationMs });
+  const result = await next({ ctx });
+  const duration = Date.now() - start;
+  if (result.ok) {
+    console.log(`${type} '${path}': OK in ${duration}ms`);
+  } else {
+    console.log(`${type} '${path}': ERROR in ${duration}ms`);
+    console.log(result.error);
+  }
   return result;
 });
 
@@ -54,4 +57,4 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
   return next({ ctx: { session: { ...ctx.session, user: ctx.session.user } } });
 });
 
-export const protectedProcedure = t.procedure.use(enforceUserIsAuthed).use(logProcedure);
+export const protectedProcedure = t.procedure.use(logProcedure).use(enforceUserIsAuthed);
