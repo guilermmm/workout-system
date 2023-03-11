@@ -22,7 +22,7 @@ type ExerciseInWorkout = {
 type Exercise = {
   id: string;
   name: string;
-  muscleGroup: string;
+  category: string;
   hasReps: boolean;
 };
 
@@ -65,18 +65,18 @@ const EditWorkout = () => {
     refetchOnWindowFocus: false,
   });
 
-  const exerciseGroups = useMemo(
+  const exerciseCategories = useMemo(
     () =>
       exercises.data?.reduce((acc, exercise) => {
-        const muscleGroup = exercise.muscleGroup;
-        const group = acc.find(group => group.muscleGroup === muscleGroup);
+        const category = exercise.category;
+        const group = acc.find(group => group.category === category);
         if (group) {
           group.exercises.push(exercise);
         } else {
-          acc.push({ muscleGroup, exercises: [exercise] });
+          acc.push({ category, exercises: [exercise] });
         }
         return acc;
-      }, [] as { muscleGroup: string; exercises: Exercise[] }[]),
+      }, [] as { category: string; exercises: Exercise[] }[]),
     [exercises.data],
   );
 
@@ -211,7 +211,7 @@ const EditWorkout = () => {
               setEditedExercises(editedExercises.filter(e => e.id !== id));
               setRemove([...remove, id]);
             }}
-            exerciseGroups={exerciseGroups!}
+            exerciseCategories={exerciseCategories!}
           />
         ))}
         <div className="flex flex-row items-center justify-center">
@@ -228,7 +228,7 @@ const EditWorkout = () => {
                   exercise: {
                     id: "",
                     name: "",
-                    muscleGroup: "",
+                    category: "",
                     hasReps: true,
                   },
                   sets: 0,
@@ -299,10 +299,10 @@ type ExerciseCardProps = {
   exercise: ExerciseInWorkout & { exercise: Exercise };
   onEdit: (exercise: ExerciseInWorkout & { exercise: Exercise }) => void;
   onDelete: (id: string) => void;
-  exerciseGroups: { muscleGroup: string; exercises: Exercise[] }[];
+  exerciseCategories: { category: string; exercises: Exercise[] }[];
 };
 
-const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseGroups }: ExerciseCardProps) => {
+const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: ExerciseCardProps) => {
   return (
     <div
       className="m-2 flex justify-between gap-4 rounded-lg bg-white p-4 shadow-md"
@@ -313,7 +313,7 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseGroups }: ExerciseCa
           className="text-md w-fit border-b-2 p-1 font-medium text-blue-600 focus:border-blue-600 focus-visible:outline-none"
           value={exercise.exercise.id}
           onChange={e => {
-            const newExercise = exerciseGroups
+            const newExercise = exerciseCategories
               .flatMap(group => group.exercises)
               .find(exercise => exercise.id === e.target.value);
 
@@ -325,10 +325,10 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseGroups }: ExerciseCa
           <option className="font-medium text-slate-600" value="" disabled>
             Selecione um exercício
           </option>
-          {exerciseGroups.map(group => (
+          {exerciseCategories.map(group => (
             <optgroup
-              label={group.muscleGroup}
-              key={group.muscleGroup}
+              label={group.category}
+              key={group.category}
               className="my-2 block text-sm text-slate-700/70"
             >
               {group.exercises.map(e => (

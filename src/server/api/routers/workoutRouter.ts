@@ -103,7 +103,7 @@ export const workoutRouter = createTRPCRouter({
       return (
         await ctx.prisma.workout.findMany({
           where: { userId: input.userId },
-          include: { exercises: { include: { exercise: { select: { muscleGroup: true } } } } },
+          include: { exercises: { include: { exercise: { select: { category: true } } } } },
         })
       ).map(workout => {
         return {
@@ -112,7 +112,7 @@ export const workoutRouter = createTRPCRouter({
           createdAt: workout.createdAt,
           updatedAt: workout.updatedAt,
           userId: workout.userId,
-          muscleGroups: workout.exercises.map(exercise => exercise.exercise.muscleGroup),
+          categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
         };
       });
     }),

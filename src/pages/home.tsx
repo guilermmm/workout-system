@@ -76,7 +76,7 @@ const Home = () => {
                 key={workout.id}
                 id={workout.id}
                 name={workout.name}
-                description={capitalize(join(Array.from(new Set(workout.muscleGroups))))}
+                description={capitalize(join(workout.categories))}
                 recommended={user.nextWorkoutId === workout.id}
               />
             ))}

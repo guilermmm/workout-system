@@ -2,6 +2,12 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const exerciseRouter = createTRPCRouter({
+  getCategories: publicProcedure.query(async ({ ctx }) => {
+    const exercises = await ctx.prisma.exercise.findMany({});
+    const categories = exercises.map(exercise => exercise.category);
+    return [...new Set(categories)];
+  }),
+
   getExercises: publicProcedure.query(({ ctx }) => {
     return ctx.prisma.exercise.findMany();
   }),
@@ -10,7 +16,7 @@ export const exerciseRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string(),
-        muscleGroup: z.string(),
+        category: z.string(),
         hasReps: z.boolean(),
       }),
     )
@@ -18,7 +24,7 @@ export const exerciseRouter = createTRPCRouter({
       return ctx.prisma.exercise.create({
         data: {
           name: input.name,
-          muscleGroup: input.muscleGroup,
+          category: input.category,
           hasReps: input.hasReps,
         },
       });
@@ -29,7 +35,7 @@ export const exerciseRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         name: z.string(),
-        muscleGroup: z.string(),
+        category: z.string(),
         hasReps: z.boolean(),
       }),
     )
@@ -40,7 +46,7 @@ export const exerciseRouter = createTRPCRouter({
         },
         data: {
           name: input.name,
-          muscleGroup: input.muscleGroup,
+          category: input.category,
           hasReps: input.hasReps,
         },
       });

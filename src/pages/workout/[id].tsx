@@ -65,7 +65,7 @@ const ExerciseCard = ({ exercise }: { exercise: ExerciseInWorkout & { exercise: 
     <div className="m-2 flex justify-between rounded-lg bg-white p-4 shadow-md" key={exercise.id}>
       <div>
         <div className="text-md font-medium text-blue-600">{exercise.exercise.name}</div>
-        <div className="text-sm text-slate-600">{exercise.exercise.muscleGroup}</div>
+        <div className="text-sm text-slate-600">{exercise.exercise.category}</div>
         <div className="text-sm">{exercise.description}</div>{" "}
       </div>
       <div className="flex items-center justify-between">
