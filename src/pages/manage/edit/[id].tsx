@@ -408,3 +408,7 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: Exerci
 };
 
 export default EditWorkout;
+
+export function getServerSideProps() {
+  return { props: {} };
+}

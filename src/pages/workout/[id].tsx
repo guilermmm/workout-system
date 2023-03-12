@@ -233,3 +233,7 @@ const Footer = ({ userId, id }: { userId: string; id: string }) => {
 const fix = (num: number) => num.toString().padStart(2, "0");
 
 export default Workout;
+
+export function getServerSideProps() {
+  return { props: {} };
+}

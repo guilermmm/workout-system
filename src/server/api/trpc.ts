@@ -4,6 +4,7 @@ import { type Session } from "next-auth";
 import superjson from "superjson";
 import { getServerAuthSession } from "../auth";
 import { prisma } from "../db";
+import { env } from "../../env/server.mjs";
 
 type CreateContextOptions = {
   session: Session | null;
@@ -43,7 +44,7 @@ export const logProcedure = t.middleware(async ({ path, type, next, ctx }) => {
     console.log(`${type} '${path}': OK in ${duration}ms`);
   } else {
     console.log(`${type} '${path}': ERROR in ${duration}ms`);
-    console.log(result.error);
+    // console.log(result.error);
   }
   return result;
 });
@@ -62,12 +63,8 @@ const enforceUserIsAdmin = t.middleware(async ({ ctx, next }) => {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
-  const user = await ctx.prisma.user.findUnique({
-    where: { email: ctx.session.user.email ?? undefined },
-  });
-
-  if (!user || !user.isInstructor) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+  if (ctx.session.user.email !== env.ADMIN_EMAIL) {
+    throw new TRPCError({ code: "FORBIDDEN" });
   }
 
   return next({ ctx: { session: { ...ctx.session, user: ctx.session.user } } });

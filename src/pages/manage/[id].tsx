@@ -8,7 +8,7 @@ import { api } from "../../utils/api";
 const Manage = () => {
   const router = useRouter();
 
-  const instructor = api.user.getSessionUser.useQuery();
+  const instructor = api.user.getProfileBySession.useQuery();
 
   if (instructor.data?.isInstructor === false) {
     void router.push("/");
@@ -24,7 +24,7 @@ const Manage = () => {
     },
   });
 
-  const user = api.user.getUserById.useQuery(id);
+  const user = api.user.getProfileById.useQuery(id);
 
   return workouts.data == null ? (
     <Loading />
@@ -62,7 +62,7 @@ const Manage = () => {
               </p>
             </div>
             <Image
-              src={user.data.image ?? ""}
+              src={profiluser.data.image ?? ""}
               alt={`Foto de perfil de ${user.data.name!}`}
               width={48}
               height={48}

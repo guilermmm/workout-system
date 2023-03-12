@@ -1,23 +1,27 @@
-import type { User } from "@prisma/client";
+import type { Profile } from "@prisma/client";
+import type { GetServerSidePropsContext } from "next";
+import { getServerSession } from "next-auth/next";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useState } from "react";
-import { useDebounce } from "use-debounce";
-import Spinner from "./Spinner";
+import { Suspense } from "react";
 import { capitalize, classList, join } from "../utils";
 import { api } from "../utils/api";
+import { authOptions } from "../server/auth";
+import Spinner from "../components/Spinner";
+import Navbar from "../components/Navbar";
+import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
 
 const Home = ({ session }: { session: Session }) => {
-  const [user] = api.user.getSessionUser.useSuspenseQuery();
+  const [profile] = api.user.getProfileBySession.useSuspenseQuery();
 
   if (!session) {
     throw new Error("User is not authenticated");
   }
 
   return (
-    <div className="min-h-full bg-slate-100">
+    <div className="flex h-full flex-col bg-slate-100">
       <div className="flex items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
           <Image
@@ -35,43 +39,26 @@ const Home = ({ session }: { session: Session }) => {
           className="rounded-full p-2 text-blue-700 transition-colors hover:bg-white"
           onClick={() => void signOut()}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-6 w-6"
-          >
-            <path
-              fillRule="evenodd"
-              d="M7.5 3.75A1.5 1.5 0 006 5.25v13.5a1.5 1.5 0 001.5 1.5h6a1.5 1.5 0 001.5-1.5V15a.75.75 0 011.5 0v3.75a3 3 0 01-3 3h-6a3 3 0 01-3-3V5.25a3 3 0 013-3h6a3 3 0 013 3V9A.75.75 0 0115 9V5.25a1.5 1.5 0 00-1.5-1.5h-6zm10.72 4.72a.75.75 0 011.06 0l3 3a.75.75 0 010 1.06l-3 3a.75.75 0 11-1.06-1.06l1.72-1.72H9a.75.75 0 010-1.5h10.94l-1.72-1.72a.75.75 0 010-1.06z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <ArrowRightOnRectangleIcon />
         </button>
       </div>
-      <div className="mx-4">
-        <div className="flex">
-          <div className="mt-2 mb-1">
-            <h1 className="text-xl font-medium text-slate-800">
-              {user.isInstructor ? "Gerenciar treinos" : "Suas fichas de treino"}
-            </h1>
-            <div className="h-1 bg-gold-500" />
-          </div>
-        </div>
-        <div className="flex flex-col flex-wrap items-stretch sm:flex-row">
+      <div className="grow overflow-y-scroll">
+        <div className=" mx-4 flex flex-col flex-wrap items-stretch sm:flex-row">
           <Suspense fallback={<Spinner />}>
-            {user.isInstructor ? <ManagementTab /> : <WorkoutsTab user={user} />}
+            <WorkoutsTab profile={profile} />
           </Suspense>
         </div>
       </div>
+
+      <Navbar />
     </div>
   );
 };
 
 export default Home;
 
-const WorkoutsTab = ({ user }: { user: User }) => {
-  const [workouts] = api.workout.getWorkouts.useSuspenseQuery({ userId: user.id ?? "" });
+const WorkoutsTab = ({ profile }: { profile: Profile }) => {
+  const [workouts] = api.workout.getWorkouts.useSuspenseQuery({ profileId: profile.id ?? "" });
 
   return (
     <>
@@ -81,50 +68,10 @@ const WorkoutsTab = ({ user }: { user: User }) => {
           id={workout.id}
           name={workout.name}
           description={capitalize(join(workout.categories))}
-          recommended={user.nextWorkoutId === workout.id}
+          recommended={profile.nextWorkoutId === workout.id}
         />
       ))}
     </>
-  );
-};
-
-const ManagementTab = () => {
-  const [searchInput, setSearchInput] = useState("");
-
-  const [debouncedInput] = useDebounce(searchInput, 500);
-
-  const [users] = api.user.searchUsers.useSuspenseQuery(debouncedInput);
-
-  return (
-    <div className="flex flex-1 flex-col gap-4">
-      <div className="relative my-2">
-        <input
-          type="text"
-          className="h-12 w-full rounded-full border-2 pl-4 pr-12"
-          value={searchInput}
-          onChange={e => setSearchInput(e.target.value)}
-        />
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          className="absolute right-4 top-3 h-6 w-6"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-          />
-        </svg>
-      </div>
-      <div className="flex flex-col flex-wrap items-stretch gap-2 sm:flex-row">
-        {users.map(user => (
-          <UserCard key={user.id} user={user} />
-        ))}
-      </div>
-    </div>
   );
 };
 
@@ -170,25 +117,21 @@ const WorkoutCard = ({ id, name, description, recommended = false }: WorkoutCard
   );
 };
 
-const UserCard = ({ user }: { user: User }) => {
-  return (
-    <Link
-      href={`/manage/${user.id}`}
-      className="flex flex-1 flex-row items-center rounded-md bg-slate-50 p-3 shadow-md transition-shadow hover:shadow-xl"
-    >
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
-        <Image
-          width={48}
-          height={48}
-          alt={`Foto de perfil de ${user.name!}`}
-          src={user.image ?? ""}
-          className="h-12 w-12 rounded-full"
-        />
-      </div>
-      <div className="ml-4">
-        <div className="truncate text-lg font-medium text-slate-800">{user.name}</div>
-        <div className="truncate text-sm text-slate-500">{user.email}</div>
-      </div>
-    </Link>
-  );
-};
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {
+      session,
+    },
+  };
+}

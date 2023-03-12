@@ -1,19 +1,25 @@
 import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { Suspense, useState } from "react";
-import ErrorBoundary from "../components/ErrorBoundary";
+import { useState } from "react";
 import Loading from "../components/Loading";
-import Home from "../components/Home";
 
 const Index = () => {
   const { data: session, status } = useSession();
 
   const [loading, setLoading] = useState(false);
 
+  const router = useRouter();
+
+  if (session?.user.role === "admin") {
+    router.push("/dashboard");
+  } else if (session?.user.role === "user") {
+    router.push("/home");
+  }
+
   return status === "loading" || loading ? (
     <Loading />
-  ) : session?.user == null ? (
+  ) : (
     <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400">
       <div className="flex h-64 w-64 items-center justify-center bg-white text-6xl font-bold">
         LOGO
@@ -41,34 +47,10 @@ const Index = () => {
         </div>
       </div>
     </div>
-  ) : (
-    <ErrorBoundary fallback={<Error />}>
-      <Suspense fallback={<Loading />}>
-        <Home session={session} />
-      </Suspense>
-    </ErrorBoundary>
   );
 };
 
 export default Index;
-
-const Error = () => {
-  const router = useRouter();
-
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400">
-      <div className="flex items-center justify-center">
-        <div className="text-2xl font-medium text-white">Ocorreu um erro</div>
-        <button
-          className="border-2 border-white px-6 py-3 text-2xl font-medium text-slate-900"
-          onClick={router.reload}
-        >
-          Recarregar
-        </button>
-      </div>
-    </div>
-  );
-};
 
 export function getServerSideProps() {
   return { props: {} };

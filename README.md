@@ -29,16 +29,21 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 
 ## BRAINSTORM
 
-- [x] trocar o nome da coluna hasSets por hasReps
 - [x] timer no treino ativo
 - [x] quando concluir um treino, recomendar o próximo com base em ordem que o professor definiu
-- [ ] botar reps como string
-- [ ] pensar em opção para quem nao usa celular
-- [ ] usuario contar as series
+- [x] arrumar a tela de manage q ta quebrando
 - [ ] ficha pessoal do aluno
-- [ ] permitir apenas um timer ativo por vez
-- [ ] permitir que o professor faça o treino do aluno mesmo antes dele logar a primeira vez, e quando logar já tiver tudo bonitin
-- [ ] permitir ao instrutor reorganizar a ordem dos exercícios de um treino
-- [ ] arrumar a tela de manage q ta quebrando
-- [ ] diminuir o tamanho de quase tudo
+- [ ] admin criar os exercicios
+
 - [ ] validacao de usuario
+- [ ] permitir que o professor faça o treino do aluno mesmo antes dele logar a primeira vez, e quando logar já tiver tudo bonitin
+
+- [ ] botar calendariozinho na tela de treinos do aluno
+- [ ] permitir apenas um timer ativo por vez
+
+- [ ] permitir ao instrutor reorganizar a ordem dos exercícios de um treino
+- [ ] arrumar as categorias dos treinos
+- [ ] botar reps como string
+- [ ] usuario contar as series
+
+- [ ] pensar em opção para quem nao usa celular

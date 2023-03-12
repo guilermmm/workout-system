@@ -17,7 +17,7 @@ datasource db {
 model Exercise {
     id        String              @id @default(cuid())
     name      String
-    category  String              @map("muscleGroup")
+    category  String
     hasReps   Boolean
     workouts  ExerciseInWorkout[]
     createdAt DateTime            @default(now())
@@ -42,12 +42,24 @@ model ExerciseInWorkout {
 model Workout {
     id        String              @id @default(cuid())
     name      String
-    user      User                @relation("workouts", fields: [userId], references: [id])
-    userId    String
+    profile   Profile             @relation("workouts", fields: [profileId], references: [id])
+    profileId String
     exercises ExerciseInWorkout[]
     createdAt DateTime            @default(now())
     updatedAt DateTime            @updatedAt
 }
+
+model Profile {
+    id            String    @id @default(cuid())
+    email         String    @unique
+    user          User?     @relation(fields: [userId], references: [id])
+    userId        String?   @unique
+    isActive      Boolean   @default(true)
+    workouts      Workout[] @relation("workouts")
+    nextWorkoutId String?
+}
+
+// NEXT AUTH STUFF BELOW
 
 // Necessary for Next auth
 model Account {
@@ -84,10 +96,7 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    isInstructor  Boolean   @default(false)
-    isActive      Boolean   @default(true)
-    workouts      Workout[] @relation("workouts")
-    nextWorkoutId String?
+    profile       Profile?
 }
 
 model VerificationToken {

@@ -1,11 +1,14 @@
 import { type AppType } from "next/app";
 import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
-
 import { api } from "../utils/api";
+import Error from "../components/Error";
+import Loading from "../components/Loading";
+import ErrorBoundary from "../components/ErrorBoundary";
+import { Suspense } from "react";
+import Head from "next/head";
 
 import "../styles/globals.css";
-import Head from "next/head";
 
 const MyApp: AppType<{ session: Session | null }> = ({
   Component,
@@ -16,7 +19,11 @@ const MyApp: AppType<{ session: Session | null }> = ({
       <Head>
         <title>Workout Tracker</title>
       </Head>
-      <Component {...pageProps} />
+      <ErrorBoundary fallback={<Error />}>
+        <Suspense fallback={<Loading />}>
+          <Component {...pageProps} />
+        </Suspense>
+      </ErrorBoundary>
     </SessionProvider>
   );
 };

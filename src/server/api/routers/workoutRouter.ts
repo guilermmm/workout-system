@@ -7,14 +7,14 @@ export const workoutRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string(),
-        userId: z.string(),
+        profileId: z.string(),
       }),
     )
     .mutation(({ ctx, input }) => {
       return ctx.prisma.workout.create({
         data: {
           name: input.name,
-          user: { connect: { id: input.userId } },
+          profile: { connect: { id: input.profileId } },
         },
       });
     }),
@@ -98,11 +98,11 @@ export const workoutRouter = createTRPCRouter({
     }),
 
   getWorkouts: protectedProcedure
-    .input(z.object({ userId: z.string() }))
+    .input(z.object({ profileId: z.string() }))
     .query(async ({ ctx, input }) => {
       return (
         await ctx.prisma.workout.findMany({
-          where: { userId: input.userId },
+          where: { profileId: input.profileId },
           include: { exercises: { include: { exercise: { select: { category: true } } } } },
         })
       ).map(workout => {
@@ -111,7 +111,7 @@ export const workoutRouter = createTRPCRouter({
           name: workout.name,
           createdAt: workout.createdAt,
           updatedAt: workout.updatedAt,
-          userId: workout.userId,
+          profileId: workout.profileId,
           categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
         };
       });
@@ -122,16 +122,16 @@ export const workoutRouter = createTRPCRouter({
       where: { id: input.id },
       include: {
         exercises: { include: { exercise: true } },
-        user: true,
+        profile: true,
       },
     });
   }),
 
   recommendNext: protectedProcedure
-    .input(z.object({ userId: z.string(), lastWorkoutId: z.string() }))
+    .input(z.object({ profileId: z.string(), lastWorkoutId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const workouts = await ctx.prisma.workout.findMany({
-        where: { userId: input.userId },
+        where: { profileId: input.profileId },
       });
 
       workouts.sort((a, b) => {
@@ -145,8 +145,8 @@ export const workoutRouter = createTRPCRouter({
 
       const nextWorkout = workouts[lastWorkoutIndex + 1] ?? (workouts[0] as Workout);
 
-      return ctx.prisma.user.update({
-        where: { id: input.userId },
+      return ctx.prisma.profile.update({
+        where: { id: input.profileId },
         data: { nextWorkoutId: nextWorkout.id },
       });
     }),

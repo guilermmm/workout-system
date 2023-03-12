@@ -1,9 +1,5 @@
 import type { GetServerSidePropsContext } from "next";
-import {
-  getServerSession,
-  type NextAuthOptions,
-  type DefaultSession,
-} from "next-auth";
+import { getServerSession, type NextAuthOptions, type DefaultSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { env } from "../env/server.mjs";
@@ -20,7 +16,7 @@ declare module "next-auth" {
     user: {
       id: string;
       // ...other properties
-      // role: UserRole;
+      role: "admin" | "user";
     } & DefaultSession["user"];
   }
 
@@ -40,11 +36,35 @@ export const authOptions: NextAuthOptions = {
     session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;
-        // session.user.role = user.role; <-- put other properties on the session here
+
+        if (env.ADMIN_EMAIL === user.email) {
+          session.user.role = "admin";
+        } else {
+          session.user.role = "user";
+        }
       }
       return session;
     },
+
+    async signIn({ user }) {
+      if (user.email == null) {
+        return false;
+      }
+
+      if (user.email === env.ADMIN_EMAIL) {
+        return true;
+      }
+
+      const profile = await prisma.profile.findUnique({ where: { email: user.email } });
+
+      if (!profile) {
+        return false;
+      }
+
+      return true;
+    },
   },
+
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
