@@ -32,6 +32,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] timer no treino ativo
 - [x] quando concluir um treino, recomendar o próximo com base em ordem que o professor definiu
 - [x] arrumar a tela de manage q ta quebrando
+- [ ] diminuir o tamanho do JS da pagina /manage/edit/\[id\] (remover cuid)
 - [ ] ficha pessoal do aluno
 - [ ] admin criar os exercicios
 

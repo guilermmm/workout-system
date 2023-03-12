@@ -1,20 +1,20 @@
-import type { Exercise, ExerciseInWorkout } from "@prisma/client";
-import { useSession } from "next-auth/react";
+import type { Exercise, ExerciseInWorkout, Profile } from "@prisma/client";
+import type { GetServerSidePropsContext } from "next";
+import type { Session } from "next-auth";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
 import Loading from "../../components/Loading";
+import { getServerAuthSession } from "../../server/auth";
 import { classList, useLocalStorage } from "../../utils";
 import { api } from "../../utils/api";
 
-const Workout = () => {
+const Workout = ({ user }: { user: Session["user"] & { profile: Profile } }) => {
   const router = useRouter();
 
   const { id } = router.query as { id: string };
 
   const workout = api.workout.getWorkout.useQuery({ id });
-
-  const { data: sessionData } = useSession();
 
   return workout.data == null ? (
     <Loading />
@@ -52,7 +52,7 @@ const Workout = () => {
         ))}
       </div>
       <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-md">
-        {sessionData?.user && <Footer id={id} userId={sessionData.user.id} />}
+        <Footer id={id} profileId={user.profile.id} />
       </div>
     </div>
   );
@@ -106,7 +106,7 @@ const ExerciseCard = ({ exercise }: { exercise: ExerciseInWorkout & { exercise: 
   );
 };
 
-const Footer = ({ userId, id }: { userId: string; id: string }) => {
+const Footer = ({ id, profileId }: { id: string; profileId: string }) => {
   type State = "not-started" | "started" | "finished";
 
   const [state, setState] = useState<State>("not-started");
@@ -161,7 +161,7 @@ const Footer = ({ userId, id }: { userId: string; id: string }) => {
                   finishedAt: "",
                 },
               });
-              finishWorkout.mutate({ lastWorkoutId: id, userId: userId });
+              finishWorkout.mutate({ lastWorkoutId: id, profileId });
             }}
           >
             Iniciar treino
@@ -234,6 +234,12 @@ const fix = (num: number) => num.toString().padStart(2, "0");
 
 export default Workout;
 
-export function getServerSideProps() {
-  return { props: {} };
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  const session = await getServerAuthSession(ctx);
+
+  if (!session || session.user.role === "admin") {
+    return { redirect: { destination: "/", permanent: false } };
+  }
+
+  return { props: { user: session.user } };
 }

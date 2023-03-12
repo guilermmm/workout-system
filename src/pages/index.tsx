@@ -12,9 +12,9 @@ const Index = () => {
   const router = useRouter();
 
   if (session?.user.role === "admin") {
-    router.push("/dashboard");
+    void router.push("/dashboard");
   } else if (session?.user.role === "user") {
-    router.push("/home");
+    void router.push("/home");
   }
 
   return status === "loading" || loading ? (

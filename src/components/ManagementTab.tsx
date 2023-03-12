@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
 import { api } from "../utils/api";
-import { Profile, User } from "@prisma/client";
+import type { Profile, User } from "@prisma/client";
 import Link from "next/link";
 import Image from "next/image";
 

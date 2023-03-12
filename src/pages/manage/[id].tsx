@@ -1,22 +1,20 @@
+import type { GetServerSidePropsContext } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Loading from "../../components/Loading";
+import { env } from "../../env/server.mjs";
+import { getServerAuthSession } from "../../server/auth";
 import { capitalize, join } from "../../utils";
 import { api } from "../../utils/api";
 
 const Manage = () => {
   const router = useRouter();
 
-  const instructor = api.user.getProfileBySession.useQuery();
+  const { id: profileId } = router.query as { id: string };
 
-  if (instructor.data?.isInstructor === false) {
-    void router.push("/");
-  }
-
-  const { id } = router.query as { id: string };
-
-  const workouts = api.workout.getWorkouts.useQuery({ userId: id });
+  const profile = api.user.getProfileById.useQuery(profileId);
+  const workouts = api.workout.getWorkouts.useQuery({ profileId });
 
   const createWorkout = api.workout.createWorkout.useMutation({
     onSuccess: () => {
@@ -24,9 +22,7 @@ const Manage = () => {
     },
   });
 
-  const user = api.user.getProfileById.useQuery(id);
-
-  return workouts.data == null ? (
+  return profile.data == null || workouts.data == null ? (
     <Loading />
   ) : (
     <div className="min-h-full bg-slate-100">
@@ -50,20 +46,20 @@ const Manage = () => {
             />
           </svg>
         </button>
-        {user.data && (
+        {profile.data && (
           <div className="flex flex-row items-center justify-between text-right">
             <div className="ml-4 flex flex-col">
               <h1 className="text-xl text-blue-700">
                 Treinos ativos de{" "}
-                <span className="font-bold">{user.data.name?.split(" ").at(0)}</span>
+                <span className="font-bold">{profile.data.user?.name?.split(" ").at(0)}</span>
               </h1>
               <p className="truncate font-medium text-slate-700">
-                {user.data.email.split("@").at(0)}@...
+                {profile.data.email.split("@").at(0)}@...
               </p>
             </div>
             <Image
-              src={profiluser.data.image ?? ""}
-              alt={`Foto de perfil de ${user.data.name!}`}
+              src={profile.data.user?.image ?? ""}
+              alt={`Foto de perfil de ${profile.data.user?.name ?? profile.data.email}`}
               width={48}
               height={48}
               className="ml-4 rounded-full"
@@ -89,7 +85,7 @@ const Manage = () => {
           className="flex w-full justify-center rounded-full bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600"
           onClick={() => {
             createWorkout.mutate({
-              userId: id,
+              profileId,
               name: "Novo",
             });
           }}
@@ -180,6 +176,12 @@ const WorkoutCard = ({ id, name, description, onDelete }: WorkoutCardProps) => {
 
 export default Manage;
 
-export function getServerSideProps() {
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  const session = await getServerAuthSession(ctx);
+
+  if (!session || session.user.email !== env.ADMIN_EMAIL) {
+    return { redirect: { destination: "/", permanent: false } };
+  }
+
   return { props: {} };
 }

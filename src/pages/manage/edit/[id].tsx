@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import structuredClone from "@ungap/structured-clone";
 import deepEqual from "deep-equal";
 import Image from "next/image";
@@ -7,6 +6,9 @@ import { useMemo, useState } from "react";
 import Loading from "../../../components/Loading";
 import { api } from "../../../utils/api";
 import { init } from "@paralleldrive/cuid2";
+import { getServerAuthSession } from "../../../server/auth";
+import type { GetServerSidePropsContext } from "next";
+import { env } from "../../../env/server.mjs";
 
 type ExerciseInWorkout = {
   id: string;
@@ -115,15 +117,19 @@ const EditWorkout = () => {
           <div className="flex flex-row items-center justify-between text-right">
             <div className="ml-4 flex flex-col">
               <h1 className=" text-xl text-blue-700">
-                <span className="font-bold">{workout.data.user.name?.split(" ").at(0)}</span>
+                <span className="font-bold">
+                  {workout.data.profile.user?.name!.split(" ").at(0)}
+                </span>
               </h1>
               <p className=" font-medium text-slate-700">
-                {workout.data.user.email.split("@").at(0)}@...
+                {workout.data.profile.email.split("@").at(0)}@...
               </p>
             </div>
             <Image
-              src={workout.data.user.image ?? ""}
-              alt={`Foto de perfil de ${workout.data.user.name!}`}
+              src={workout.data.profile.user?.image ?? ""}
+              alt={`Foto de perfil de ${
+                workout.data.profile.user?.name ?? workout.data.profile.email
+              }`}
               width={48}
               height={48}
               className="ml-4 block rounded-full"
@@ -267,7 +273,7 @@ const EditWorkout = () => {
 
               saveWorkout.mutate({
                 id,
-                name: workout.data?.name!,
+                name: workout.data!.name,
                 exercises,
                 delete: remove,
               });
@@ -409,6 +415,12 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: Exerci
 
 export default EditWorkout;
 
-export function getServerSideProps() {
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  const session = await getServerAuthSession(ctx);
+
+  if (!session || session.user.email !== env.ADMIN_EMAIL) {
+    return { redirect: { destination: "/", permanent: false } };
+  }
+
   return { props: {} };
 }

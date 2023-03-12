@@ -122,7 +122,7 @@ export const workoutRouter = createTRPCRouter({
       where: { id: input.id },
       include: {
         exercises: { include: { exercise: true } },
-        profile: true,
+        profile: { include: { user: true } },
       },
     });
   }),

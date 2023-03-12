@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { env } from "../env/server.mjs";
 import { prisma } from "./db";
+import type { Profile } from "@prisma/client";
 
 /**
  * Module augmentation for `next-auth` types
@@ -16,8 +17,8 @@ declare module "next-auth" {
     user: {
       id: string;
       // ...other properties
-      role: "admin" | "user";
-    } & DefaultSession["user"];
+    } & ({ role: "admin" } | { role: "user"; profile: Profile }) &
+      DefaultSession["user"];
   }
 
   // interface User {
@@ -33,14 +34,16 @@ declare module "next-auth" {
  **/
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session({ session, user }) {
+    async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;
+
+        const profile = await prisma.profile.findUnique({ where: { email: session.user.email! } });
 
         if (env.ADMIN_EMAIL === user.email) {
           session.user.role = "admin";
         } else {
-          session.user.role = "user";
+          Object.assign(session.user, { role: "user", profile });
         }
       }
       return session;

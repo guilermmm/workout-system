@@ -1,14 +1,13 @@
 import type { GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth/next";
-import { env } from "../env/server.mjs";
-import { authOptions } from "../server/auth";
 import { signOut, useSession } from "next-auth/react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Suspense } from "react";
-import Spinner from "../components/Spinner";
-import Navbar from "../components/Navbar";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
-import dynamic from "next/dynamic";
+import Navbar from "../components/Navbar";
+import Spinner from "../components/Spinner";
+import { env } from "../env/server.mjs";
+import { getServerAuthSession } from "../server/auth";
 
 const ManagementTab = dynamic(() => import("../components/ManagementTab"), { ssr: false });
 
@@ -51,19 +50,12 @@ const Dashboard = () => {
 
 export default Dashboard;
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  const session = await getServerAuthSession(ctx);
 
   if (!session || session.user.email !== env.ADMIN_EMAIL) {
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
+    return { redirect: { destination: "/", permanent: false } };
   }
 
-  return {
-    props: { session },
-  };
+  return { props: {} };
 }
