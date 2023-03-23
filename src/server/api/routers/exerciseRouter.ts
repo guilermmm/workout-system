@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { adminProcedure, createTRPCRouter, publicProcedure } from "../trpc";
 
 export const exerciseRouter = createTRPCRouter({
   getCategories: publicProcedure.query(async ({ ctx }) => {
@@ -12,7 +12,7 @@ export const exerciseRouter = createTRPCRouter({
     return ctx.prisma.exercise.findMany();
   }),
 
-  createExercise: protectedProcedure
+  createExercise: adminProcedure
     .input(
       z.object({
         name: z.string(),
@@ -30,7 +30,7 @@ export const exerciseRouter = createTRPCRouter({
       });
     }),
 
-  updateExercise: protectedProcedure
+  updateExercise: adminProcedure
     .input(
       z.object({
         id: z.string(),
@@ -52,13 +52,11 @@ export const exerciseRouter = createTRPCRouter({
       });
     }),
 
-  deleteExercise: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(({ ctx, input }) => {
-      return ctx.prisma.exercise.delete({
-        where: {
-          id: input.id,
-        },
-      });
-    }),
+  deleteExercise: adminProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
+    return ctx.prisma.exercise.delete({
+      where: {
+        id: input.id,
+      },
+    });
+  }),
 });

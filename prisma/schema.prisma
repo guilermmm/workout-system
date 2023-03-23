@@ -15,13 +15,21 @@ datasource db {
 }
 
 model Exercise {
-    id        String              @id @default(cuid())
-    name      String
-    category  String
-    hasReps   Boolean
-    workouts  ExerciseInWorkout[]
-    createdAt DateTime            @default(now())
-    updatedAt DateTime            @updatedAt
+    id       String              @id @default(cuid())
+    name     String
+    category String
+    hasReps  Boolean
+    workouts ExerciseInWorkout[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+enum Method {
+    Standard
+    DropSet
+    RestPause
+    PeakContraction
 }
 
 model ExerciseInWorkout {
@@ -30,13 +38,24 @@ model ExerciseInWorkout {
     exerciseId  String
     workout     Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
     workoutId   String
-    sets        Int
-    reps        Int
-    weight      Int?
-    time        Int
+    sets        Json
     description String?
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    method      Method
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([workoutId])
+}
+
+enum WeekDay {
+    Monday
+    Tuesday
+    Wednesday
+    Thursday
+    Friday
+    Saturday
+    Sunday
 }
 
 model Workout {
@@ -45,21 +64,80 @@ model Workout {
     profile   Profile             @relation("workouts", fields: [profileId], references: [id])
     profileId String
     exercises ExerciseInWorkout[]
-    createdAt DateTime            @default(now())
-    updatedAt DateTime            @updatedAt
+    biSets    Json
+    days      WeekDay[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([profileId])
 }
 
 model Profile {
-    id            String    @id @default(cuid())
-    email         String    @unique
-    user          User?     @relation(fields: [userId], references: [id])
-    userId        String?   @unique
-    isActive      Boolean   @default(true)
-    workouts      Workout[] @relation("workouts")
-    nextWorkoutId String?
+    id               String            @id @default(cuid())
+    email            String            @unique
+    user             User?             @relation(fields: [userId], references: [id])
+    userId           String?           @unique
+    isActive         Boolean           @default(true)
+    workouts         Workout[]         @relation("workouts")
+    finishedWorkouts FinishedWorkout[]
+    datasheets       Datasheet[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Datasheet {
+    profileId String  @unique
+    profile   Profile @relation(fields: [profileId], references: [id])
+
+    weight     Int
+    height     Int
+    thorax     Int
+    waist      Int
+    abdomen    Int
+    hips       Int
+    rightThigh Int
+    leftThigh  Int
+    rightArm   Int
+    leftArm    Int
+    rightCalf  Int
+    leftCalf   Int
+
+    createdAt DateTime @default(now())
+
+    @@index([profileId])
+}
+
+model FinishedWorkout {
+    id        String   @id @default(cuid())
+    profile   Profile  @relation(fields: [profileId], references: [id])
+    profileId String
+    workoutId String
+    date      DateTime
+
+    @@index([profileId])
 }
 
 // NEXT AUTH STUFF BELOW
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
 
 // Necessary for Next auth
 model Account {

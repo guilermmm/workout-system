@@ -49,15 +49,6 @@ export const logProcedure = t.middleware(async ({ path, type, next, ctx }) => {
   return result;
 });
 
-export const publicProcedure = t.procedure.use(logProcedure);
-
-const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
-  if (!ctx.session || !ctx.session.user) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
-  }
-  return next({ ctx: { session: { ...ctx.session, user: ctx.session.user } } });
-});
-
 const enforceUserIsAdmin = t.middleware(async ({ ctx, next }) => {
   if (!ctx.session || !ctx.session.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
@@ -67,9 +58,37 @@ const enforceUserIsAdmin = t.middleware(async ({ ctx, next }) => {
     throw new TRPCError({ code: "FORBIDDEN" });
   }
 
-  return next({ ctx: { session: { ...ctx.session, user: ctx.session.user } } });
+  return next({
+    ctx: {
+      session: {
+        ...ctx.session,
+        user: ctx.session.user as typeof ctx.session.user & { role: "admin" },
+      },
+    },
+  });
 });
 
-export const protectedProcedure = t.procedure.use(logProcedure).use(enforceUserIsAuthed);
+const enforceUserIsNotAdmin = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.session || !ctx.session.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  if (ctx.session.user.email === env.ADMIN_EMAIL) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+
+  return next({
+    ctx: {
+      session: {
+        ...ctx.session,
+        user: ctx.session.user as typeof ctx.session.user & { role: "user" },
+      },
+    },
+  });
+});
+
+export const publicProcedure = t.procedure.use(logProcedure);
 
 export const adminProcedure = t.procedure.use(logProcedure).use(enforceUserIsAdmin);
+
+export const userProcedure = t.procedure.use(logProcedure).use(enforceUserIsNotAdmin);

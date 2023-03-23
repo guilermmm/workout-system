@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { adminProcedure, createTRPCRouter, protectedProcedure } from "../trpc";
+import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
-  getProfileBySession: protectedProcedure.query(async ({ ctx }) => {
+  getProfileBySession: userProcedure.query(async ({ ctx }) => {
     const profile = await ctx.prisma.profile.findUniqueOrThrow({
       where: { email: ctx.session.user.email! },
     });
@@ -43,11 +43,47 @@ export const userRouter = createTRPCRouter({
       return ctx.prisma.profile.create({ data: { email: input.email } });
     }),
 
-  deactivate: adminProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
-    return ctx.prisma.profile.update({ where: { userId: input.id }, data: { isActive: false } });
+  deactivate: adminProcedure
+    .input(z.object({ profileId: z.string() }))
+    .mutation(({ ctx, input: { profileId } }) => {
+      return ctx.prisma.profile.update({ where: { id: profileId }, data: { isActive: false } });
+    }),
+
+  activate: adminProcedure
+    .input(z.object({ profileId: z.string() }))
+    .mutation(({ ctx, input: { profileId } }) => {
+      return ctx.prisma.profile.update({ where: { id: profileId }, data: { isActive: true } });
+    }),
+
+  getLatestDatasheet: adminProcedure
+    .input(z.object({ profileId: z.string() }))
+    .query(async ({ ctx, input: { profileId } }) => {
+      return ctx.prisma.datasheet.findFirstOrThrow({
+        where: { profileId },
+        orderBy: { createdAt: "desc" },
+      });
+    }),
+
+  getDatasheets: adminProcedure
+    .input(z.object({ profileId: z.string() }))
+    .query(async ({ ctx, input: { profileId } }) => {
+      return ctx.prisma.datasheet.findMany({
+        where: { profileId },
+        orderBy: { createdAt: "desc" },
+      });
+    }),
+
+  getLatestDatasheetBySession: userProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.datasheet.findFirstOrThrow({
+      where: { profileId: ctx.session.user.profile.id },
+      orderBy: { createdAt: "desc" },
+    });
   }),
 
-  activate: adminProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
-    return ctx.prisma.profile.update({ where: { userId: input.id }, data: { isActive: true } });
+  getDatasheetsBySession: userProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.datasheet.findMany({
+      where: { profileId: ctx.session.user.profile.id },
+      orderBy: { createdAt: "desc" },
+    });
   }),
 });

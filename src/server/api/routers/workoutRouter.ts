@@ -1,41 +1,47 @@
-import type { Workout } from "@prisma/client";
+import { Method } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
 
 export const workoutRouter = createTRPCRouter({
-  createWorkout: protectedProcedure
-    .input(
-      z.object({
-        name: z.string(),
-        profileId: z.string(),
-      }),
-    )
+  createWorkout: adminProcedure
+    .input(z.object({ name: z.string(), profileId: z.string() }))
     .mutation(({ ctx, input }) => {
       return ctx.prisma.workout.create({
-        data: {
-          name: input.name,
-          profile: { connect: { id: input.profileId } },
-        },
+        data: { name: input.name, profile: { connect: { id: input.profileId } } },
       });
     }),
 
-  updateWorkout: protectedProcedure
+  updateWorkout: adminProcedure
     .input(
       z.object({
         id: z.string(),
         name: z.string(),
-        exercises: z.array(
-          z.object({
-            id: z.string(),
-            exerciseId: z.string(),
-            sets: z.number(),
-            reps: z.number(),
-            weight: z.number().nullish(),
-            time: z.number(),
-            description: z.string().nullish(),
-          }),
-        ),
-        delete: z.array(z.string()),
+        exercises: z.object({
+          create: z.array(
+            z.object({
+              exerciseId: z.string(),
+              sets: z
+                .array(z.object({ reps: z.number(), weight: z.number() }))
+                .or(z.array(z.object({ time: z.number(), weight: z.number() }))),
+              description: z.string().nullish(),
+              method: z.nativeEnum(Method),
+            }),
+          ),
+          update: z.array(
+            z.object({
+              id: z.string(),
+              exerciseId: z.string(),
+              sets: z
+                .array(z.object({ reps: z.number(), weight: z.number() }))
+                .or(z.array(z.object({ time: z.number(), weight: z.number() }))),
+              description: z.string().nullish(),
+              method: z.nativeEnum(Method),
+            }),
+          ),
+          delete: z.array(z.string()),
+        }),
+        biSets: z.array(z.tuple([z.string(), z.string()])),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -44,110 +50,67 @@ export const workoutRouter = createTRPCRouter({
         data: {
           name: input.name,
           exercises: {
-            connectOrCreate: input.exercises
-              .filter(exercise => exercise.id === "")
-              .map(exercise => ({
-                where: { id: exercise.id },
-                create: {
-                  sets: exercise.sets,
-                  reps: exercise.reps,
-                  weight: exercise.weight,
-                  time: exercise.time,
-                  description: exercise.description,
-                  exercise: { connect: { id: exercise.exerciseId } },
-                },
-              })),
-            updateMany: input.exercises
-              .filter(exercise => exercise.id !== "")
-              .map(exercise => ({
-                where: { id: exercise.id },
-                data: {
-                  sets: exercise.sets,
-                  reps: exercise.reps,
-                  weight: exercise.weight,
-                  time: exercise.time,
-                  description: exercise.description,
-                },
-              })),
-            deleteMany: input.delete.map(id => ({ id })),
+            createMany: { data: input.exercises.create },
+            updateMany: input.exercises.update.map(({ id, exerciseId, ...exercise }) => ({
+              where: { id },
+              data: { exercise: { connect: { id: exerciseId } }, ...exercise },
+            })),
+            deleteMany: input.exercises.delete.map(id => ({ id })),
           },
         },
       });
     }),
 
-  changeWorkoutName: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      return ctx.prisma.workout.update({
-        where: { id: input.id },
-        data: {
-          name: input.name,
-        },
-      });
-    }),
-
-  deleteWorkout: protectedProcedure
+  deleteWorkout: adminProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(({ ctx, input }) => {
-      return ctx.prisma.workout.delete({ where: { id: input.id } });
-    }),
+    .mutation(({ ctx, input }) => ctx.prisma.workout.delete({ where: { id: input.id } })),
 
-  getWorkouts: protectedProcedure
+  getWorkouts: adminProcedure
     .input(z.object({ profileId: z.string() }))
     .query(async ({ ctx, input }) => {
-      return (
-        await ctx.prisma.workout.findMany({
-          where: { profileId: input.profileId },
-          include: { exercises: { include: { exercise: { select: { category: true } } } } },
-        })
-      ).map(workout => {
-        return {
-          id: workout.id,
-          name: workout.name,
-          createdAt: workout.createdAt,
-          updatedAt: workout.updatedAt,
-          profileId: workout.profileId,
-          categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
-        };
+      const workouts = await ctx.prisma.workout.findMany({
+        where: { profileId: input.profileId },
+        include: { exercises: { include: { exercise: { select: { category: true } } } } },
       });
+      return workouts.map(workout => ({
+        ...workout,
+        categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
+      }));
     }),
 
-  getWorkout: protectedProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.prisma.workout.findUnique({
+  getWorkout: adminProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
+    return ctx.prisma.workout.findUniqueOrThrow({
       where: { id: input.id },
-      include: {
-        exercises: { include: { exercise: true } },
-        profile: { include: { user: true } },
-      },
+      include: { exercises: { include: { exercise: true } }, profile: { include: { user: true } } },
     });
   }),
 
-  recommendNext: protectedProcedure
-    .input(z.object({ profileId: z.string(), lastWorkoutId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const workouts = await ctx.prisma.workout.findMany({
-        where: { profileId: input.profileId },
+  getWorkoutsBySession: userProcedure.query(async ({ ctx }) => {
+    const workouts = await ctx.prisma.workout.findMany({
+      where: { profileId: ctx.session.user.profile.id },
+      include: { exercises: { include: { exercise: { select: { category: true } } } } },
+    });
+    return workouts.map(workout => ({
+      ...workout,
+      categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
+    }));
+  }),
+
+  getWorkoutBySession: userProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const workout = await ctx.prisma.workout.findUniqueOrThrow({
+        where: { id: input.id },
+        include: {
+          exercises: { include: { exercise: true } },
+          profile: { include: { user: true } },
+        },
       });
 
-      workouts.sort((a, b) => {
-        // sort by alphabetical order
-        if (a.name < b.name) return -1;
-        if (a.name > b.name) return 1;
-        return 0;
-      });
+      if (workout.profileId !== ctx.session.user.profile.id) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
 
-      const lastWorkoutIndex = workouts.findIndex(workout => workout.id === input.lastWorkoutId);
-
-      const nextWorkout = workouts[lastWorkoutIndex + 1] ?? (workouts[0] as Workout);
-
-      return ctx.prisma.profile.update({
-        where: { id: input.profileId },
-        data: { nextWorkoutId: nextWorkout.id },
-      });
+      return workout;
     }),
 });
