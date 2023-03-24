@@ -22,7 +22,7 @@ export const userRouter = createTRPCRouter({
 
   getProfileById: adminProcedure.input(z.string()).query(({ ctx, input }) => {
     return ctx.prisma.profile.findUniqueOrThrow({
-      where: { userId: input },
+      where: { id: input },
       include: { user: true },
     });
   }),

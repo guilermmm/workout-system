@@ -87,6 +87,7 @@ const Manage = () => {
             createWorkout.mutate({
               profileId,
               name: "Novo",
+              biSets: [],
             });
           }}
         >
