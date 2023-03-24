@@ -1,10 +1,9 @@
-import type { Profile } from "@prisma/client";
 import Link from "next/link";
 import { capitalize, classList, join } from "../utils";
 import { api } from "../utils/api";
 
-const WorkoutsTab = ({ profile }: { profile: Profile }) => {
-  const [workouts] = api.workout.getWorkouts.useSuspenseQuery({ profileId: profile.id ?? "" });
+const WorkoutsTab = () => {
+  const [workouts] = api.workout.getWorkoutsBySession.useSuspenseQuery();
 
   return (
     <>
@@ -14,7 +13,6 @@ const WorkoutsTab = ({ profile }: { profile: Profile }) => {
           id={workout.id}
           name={workout.name}
           description={capitalize(join(workout.categories))}
-          recommended={profile.nextWorkoutId === workout.id}
         />
       ))}
     </>

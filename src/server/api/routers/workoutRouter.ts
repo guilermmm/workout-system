@@ -1,14 +1,25 @@
 import { Method } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import type { ParsedExercise } from "../../../utils/types";
 import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
 
 export const workoutRouter = createTRPCRouter({
   createWorkout: adminProcedure
-    .input(z.object({ name: z.string(), profileId: z.string() }))
+    .input(
+      z.object({
+        name: z.string(),
+        profileId: z.string(),
+        biSets: z.array(z.tuple([z.string(), z.string()])),
+      }),
+    )
     .mutation(({ ctx, input }) => {
       return ctx.prisma.workout.create({
-        data: { name: input.name, profile: { connect: { id: input.profileId } } },
+        data: {
+          name: input.name,
+          profile: { connect: { id: input.profileId } },
+          biSets: input.biSets,
+        },
       });
     }),
 
@@ -78,16 +89,20 @@ export const workoutRouter = createTRPCRouter({
       }));
     }),
 
-  getWorkout: adminProcedure.input(z.object({ id: z.string() })).query(({ ctx, input }) => {
-    return ctx.prisma.workout.findUniqueOrThrow({
+  getWorkout: adminProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const workout = await ctx.prisma.workout.findUniqueOrThrow({
       where: { id: input.id },
       include: { exercises: { include: { exercise: true } }, profile: { include: { user: true } } },
     });
+
+    return workout as unknown as Omit<typeof workout, "exercises"> & {
+      exercises: ParsedExercise[];
+    };
   }),
 
   getWorkoutsBySession: userProcedure.query(async ({ ctx }) => {
     const workouts = await ctx.prisma.workout.findMany({
-      where: { profileId: ctx.session.user.profile.id },
+      where: { profile: { userId: ctx.session.user.id } },
       include: { exercises: { include: { exercise: { select: { category: true } } } } },
     });
     return workouts.map(workout => ({
@@ -103,11 +118,11 @@ export const workoutRouter = createTRPCRouter({
         where: { id: input.id },
         include: {
           exercises: { include: { exercise: true } },
-          profile: { include: { user: true } },
+          profile: { include: { user: { select: { id: true } } } },
         },
       });
 
-      if (workout.profileId !== ctx.session.user.profile.id) {
+      if (workout.profile.user?.id !== ctx.session.user.id) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
 

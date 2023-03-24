@@ -1,6 +1,4 @@
-import type { Exercise, ExerciseInWorkout, Profile } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
-import type { Session } from "next-auth";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
@@ -8,8 +6,9 @@ import Loading from "../../components/Loading";
 import { getServerAuthSession } from "../../server/auth";
 import { classList, useLocalStorage } from "../../utils";
 import { api } from "../../utils/api";
+import type { ParsedExercise } from "../../utils/types";
 
-const Workout = ({ user }: { user: Session["user"] & { profile: Profile } }) => {
+const Workout = () => {
   const router = useRouter();
 
   const { id } = router.query as { id: string };
@@ -47,18 +46,18 @@ const Workout = ({ user }: { user: Session["user"] & { profile: Profile } }) => 
         </div>
       </div>
       <div>
-        {workout.data.exercises.map(exercise => (
-          <ExerciseCard key={exercise.id} exercise={exercise} />
-        ))}
+        {workout.data.exercises.map(exercise => {
+          return <ExerciseCard key={exercise.id} exercise={exercise} />;
+        })}
       </div>
       <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-md">
-        <Footer id={id} profileId={user.profile.id} />
+        <Footer id={id} />
       </div>
     </div>
   );
 };
 
-const ExerciseCard = ({ exercise }: { exercise: ExerciseInWorkout & { exercise: Exercise } }) => {
+const ExerciseCard = ({ exercise }: { exercise: ParsedExercise }) => {
   const [completed, setCompleted] = useState(false);
 
   return (
@@ -66,17 +65,18 @@ const ExerciseCard = ({ exercise }: { exercise: ExerciseInWorkout & { exercise: 
       <div>
         <div className="text-md font-medium text-blue-600">{exercise.exercise.name}</div>
         <div className="text-sm text-slate-600">{exercise.exercise.category}</div>
-        <div className="text-sm">{exercise.description}</div>{" "}
+        <div className="text-sm">{exercise.description}</div>
+        {/* q porra é essa aq --->> */}{" "}
       </div>
       <div className="flex items-center justify-between">
         <div className="mr-5 text-right text-sm">
           <div className="font-medium text-slate-700">
-            <div className="font-medium text-slate-700">{exercise.sets} séries</div>
-            {exercise.exercise.hasReps ? (
+            <div className="font-medium text-slate-700">{exercise.sets.length} séries</div>
+            {/* {exercise.exercise.hasReps ? (
               <div className="font-medium text-slate-700">{exercise.reps} repetições</div>
             ) : (
               <div className="font-medium text-slate-700">{exercise.time} segundos</div>
-            )}
+            )} */}
           </div>
         </div>
         <button
@@ -106,7 +106,7 @@ const ExerciseCard = ({ exercise }: { exercise: ExerciseInWorkout & { exercise: 
   );
 };
 
-const Footer = ({ id, profileId }: { id: string; profileId: string }) => {
+const Footer = ({ id }: { id: string }) => {
   type State = "not-started" | "started" | "finished";
 
   const [state, setState] = useState<State>("not-started");
@@ -115,7 +115,7 @@ const Footer = ({ id, profileId }: { id: string; profileId: string }) => {
     Record<string, { startedAt: string; finishedAt: string }>
   >("workout-times", {});
 
-  const finishWorkout = api.workout.recommendNext.useMutation();
+  // const finishWorkout = api.workout.recommendNext.useMutation();
 
   const { seconds, minutes, hours, reset, pause } = useStopwatch({ autoStart: false });
 
@@ -161,7 +161,7 @@ const Footer = ({ id, profileId }: { id: string; profileId: string }) => {
                   finishedAt: "",
                 },
               });
-              finishWorkout.mutate({ lastWorkoutId: id, profileId });
+              // finishWorkout.mutate({ lastWorkoutId: id, profileId });
             }}
           >
             Iniciar treino

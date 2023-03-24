@@ -87,7 +87,7 @@ const enforceUserIsNotAdmin = t.middleware(async ({ ctx, next }) => {
   });
 });
 
-export const publicProcedure = t.procedure.use(logProcedure);
+// export const publicProcedure = t.procedure.use(logProcedure);
 
 export const adminProcedure = t.procedure.use(logProcedure).use(enforceUserIsAdmin);
 

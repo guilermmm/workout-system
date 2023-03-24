@@ -75,14 +75,14 @@ export const userRouter = createTRPCRouter({
 
   getLatestDatasheetBySession: userProcedure.query(async ({ ctx }) => {
     return ctx.prisma.datasheet.findFirstOrThrow({
-      where: { profileId: ctx.session.user.profile.id },
+      where: { profile: { userId: ctx.session.user.id } },
       orderBy: { createdAt: "desc" },
     });
   }),
 
   getDatasheetsBySession: userProcedure.query(async ({ ctx }) => {
     return ctx.prisma.datasheet.findMany({
-      where: { profileId: ctx.session.user.profile.id },
+      where: { profile: { userId: ctx.session.user.id } },
       orderBy: { createdAt: "desc" },
     });
   }),

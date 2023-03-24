@@ -61,9 +61,10 @@ export const exerciseInWorkoutRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const workout = await ctx.prisma.workout.findUniqueOrThrow({
         where: { id: input.workoutId },
+        include: { profile: { include: { user: { select: { id: true } } } } },
       });
 
-      if (workout.profileId !== ctx.session.user.profile.id) {
+      if (workout.profile.user?.id !== ctx.session.user.id) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
 

@@ -1,3 +1,5 @@
+import type { Exercise, ExerciseInWorkout } from "@prisma/client";
+
 export type Sets = RepSet[] | TimeSet[];
 
 export type RepSet = {
@@ -10,4 +12,8 @@ export type TimeSet = {
   weight: number;
 };
 
-export type BiSets = [string, string][]
+export type BiSets = [string, string][];
+
+export type ParsedExercise = Omit<ExerciseInWorkout, "sets"> & { exercise: Exercise } & {
+  sets: Sets;
+};

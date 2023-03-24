@@ -1,14 +1,14 @@
 import { z } from "zod";
-import { adminProcedure, createTRPCRouter, publicProcedure } from "../trpc";
+import { adminProcedure, createTRPCRouter } from "../trpc";
 
 export const exerciseRouter = createTRPCRouter({
-  getCategories: publicProcedure.query(async ({ ctx }) => {
+  getCategories: adminProcedure.query(async ({ ctx }) => {
     const exercises = await ctx.prisma.exercise.findMany({});
     const categories = exercises.map(exercise => exercise.category);
     return [...new Set(categories)];
   }),
 
-  getExercises: publicProcedure.query(({ ctx }) => {
+  getExercises: adminProcedure.query(({ ctx }) => {
     return ctx.prisma.exercise.findMany();
   }),
 

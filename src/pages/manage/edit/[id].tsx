@@ -5,28 +5,11 @@ import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import Loading from "../../../components/Loading";
 import { api } from "../../../utils/api";
-import { init } from "@paralleldrive/cuid2";
 import { getServerAuthSession } from "../../../server/auth";
 import type { GetServerSidePropsContext } from "next";
 import { env } from "../../../env/server.mjs";
-
-type ExerciseInWorkout = {
-  id: string;
-  exerciseId: string;
-  workoutId: string;
-  sets: number;
-  reps: number;
-  weight: number | null;
-  time: number;
-  description: string | null;
-};
-
-type Exercise = {
-  id: string;
-  name: string;
-  category: string;
-  hasReps: boolean;
-};
+import type { ParsedExercise } from "../../../utils/types";
+import type { Exercise } from "@prisma/client";
 
 const EditWorkout = () => {
   const router = useRouter();
@@ -45,16 +28,10 @@ const EditWorkout = () => {
     },
   );
 
-  const saveWorkout = api.workout.updateWorkout.useMutation({
-    onSuccess: () => workout.refetch(),
-  });
-
-  const changeName = api.workout.changeWorkoutName.useMutation({
-    onSuccess: () => workout.refetch(),
-  });
+  // const saveWorkout = api.workout.updateWorkout.useMutation({ onSuccess: () => workout.refetch() });
 
   const [editedExercises, setEditedExercises] = useState<
-    (ExerciseInWorkout & { exercise: Exercise })[]
+    NonNullable<typeof workout.data>["exercises"]
   >([]);
 
   const [remove, setRemove] = useState<string[]>([]);
@@ -82,10 +59,10 @@ const EditWorkout = () => {
     [exercises.data],
   );
 
-  const [editingName, setEditingName] = useState(false);
-  const [workoutName, setWorkoutName] = useState(workout.data?.name ?? "");
+  // const [editingName, setEditingName] = useState(false);
+  // const [workoutName, setWorkoutName] = useState(workout.data?.name ?? "");
 
-  const cuid = init({ length: 10 });
+  // const cuid = init({ length: 10 });
 
   return workout.data == null || exercises.data == null ? (
     <Loading />
@@ -141,7 +118,7 @@ const EditWorkout = () => {
         <div>
           <h1 className="text-xl font-medium text-slate-800">
             Treino{" "}
-            {editingName ? (
+            {/* {editingName ? (
               <input
                 type="text"
                 placeholder={workout.data.name}
@@ -150,11 +127,12 @@ const EditWorkout = () => {
               />
             ) : (
               workout.data.name
-            )}
+            )} */}
+            {workout.data.name}
           </h1>
           <div className={"h-1 bg-gold-500"} />
         </div>
-        {editingName ? (
+        {/* {editingName ? (
           <button
             onClick={() => {
               if (workoutName !== "" && workoutName !== workout.data!.name)
@@ -201,7 +179,7 @@ const EditWorkout = () => {
               />
             </svg>
           </button>
-        )}
+        )} */}
       </div>
       <div>
         {editedExercises.map(exercise => (
@@ -224,25 +202,20 @@ const EditWorkout = () => {
           <button
             className="flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600"
             onClick={() => {
-              setEditedExercises([
-                ...editedExercises,
-                {
-                  id: cuid(),
-                  workoutId: id,
-                  description: "",
-                  exerciseId: "",
-                  exercise: {
-                    id: "",
-                    name: "",
-                    category: "",
-                    hasReps: true,
-                  },
-                  sets: 0,
-                  reps: 0,
-                  time: 0,
-                  weight: null,
-                },
-              ]);
+              // setEditedExercises([
+              //   ...editedExercises,
+              //   {
+              //     id: cuid(),
+              //     workoutId: id,
+              //     description: "",
+              //     exerciseId: "",
+              //     exercise: {
+              //       id: "",
+              //       name: "",
+              //       category: "",
+              //     },
+              //   },
+              // ]);
             }}
           >
             Adicionar exercício
@@ -263,21 +236,24 @@ const EditWorkout = () => {
         <div className="fixed bottom-0 right-0 p-4">
           <button
             className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600"
-            onClick={() => {
-              const exercises = editedExercises.map(e => {
-                if (e.id.length == 10) {
-                  e.id = "";
-                }
-                return e;
-              });
+            // onClick={() => {
+            //   const exercises = editedExercises.map(e => {
+            //     if (e.id.length == 10) {
+            //       e.id = "";
+            //     }
+            //     return e;
+            //   });
 
-              saveWorkout.mutate({
-                id,
-                name: workout.data!.name,
-                exercises,
-                delete: remove,
-              });
-            }}
+            //   saveWorkout.mutate({
+            //     id,
+            //     name: workout.data.name,
+            //     exercises: {
+            //       create: [],
+            //       update: [],
+            //       delete: []
+            //     }
+            //   });
+            // }}
           >
             Salvar alterações
             <svg
@@ -302,8 +278,8 @@ const EditWorkout = () => {
 };
 
 type ExerciseCardProps = {
-  exercise: ExerciseInWorkout & { exercise: Exercise };
-  onEdit: (exercise: ExerciseInWorkout & { exercise: Exercise }) => void;
+  exercise: ParsedExercise;
+  onEdit: (exercise: ParsedExercise) => void;
   onDelete: (id: string) => void;
   exerciseCategories: { category: string; exercises: Exercise[] }[];
 };
@@ -318,15 +294,15 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: Exerci
         <select
           className="text-md w-fit border-b-2 p-1 font-medium text-blue-600 focus:border-blue-600 focus-visible:outline-none"
           value={exercise.exercise.id}
-          onChange={e => {
-            const newExercise = exerciseCategories
-              .flatMap(group => group.exercises)
-              .find(exercise => exercise.id === e.target.value);
+          // onChange={e => {
+          //   const newExercise = exerciseCategories
+          //     .flatMap(group => group.exercises)
+          //     .find(exercise => exercise.id === e.target.value);
 
-            if (newExercise) {
-              onEdit({ ...exercise, exercise: newExercise, exerciseId: newExercise.id });
-            }
-          }}
+          //   if (newExercise) {
+          //     onEdit({ ...exercise, exercise: newExercise, exerciseId: newExercise.id });
+          //   }
+          // }}
         >
           <option className="font-medium text-slate-600" value="" disabled>
             Selecione um exercício
@@ -356,16 +332,16 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: Exerci
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-2 text-sm">
           <label className="rounded-md px-2 py-1 font-medium shadow-md">
-            <input
+            {/* <input
               type="number"
               className="w-10 rounded-md border-2 text-center"
               value={exercise.sets}
               onChange={e => onEdit({ ...exercise, sets: Number(e.target.value) })}
               min={0}
-            />
+            /> */}
             <span className="ml-2 text-slate-700">séries</span>
           </label>
-          {exercise.exercise.hasReps ? (
+          {/* {exercise.exercise.hasReps ? (
             <label className="rounded-md px-2 py-1 font-medium shadow-md">
               <input
                 type="number"
@@ -387,7 +363,7 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: Exerci
               />
               <span className="ml-2 text-slate-700">segundos</span>
             </label>
-          )}
+          )} */}
         </div>
         <button
           className="ml-2 rounded-full p-2 text-red-400 transition-colors hover:bg-red-500 hover:text-white"

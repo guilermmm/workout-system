@@ -1,6 +1,4 @@
-import type { Profile } from "@prisma/client";
-import type { GetServerSidePropsContext } from "next";
-import type { Session } from "next-auth";
+import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { signOut } from "next-auth/react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -12,7 +10,7 @@ import { getServerAuthSession } from "../server/auth";
 
 const WorkoutsTab = dynamic(() => import("../components/WorkoutsTab"), { ssr: false });
 
-const Home = ({ user }: { user: Session["user"] & { profile: Profile } }) => {
+const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   return (
     <div className="flex h-full flex-col bg-slate-100">
       <div className="flex items-center justify-between bg-gold-500 p-2">
@@ -38,7 +36,7 @@ const Home = ({ user }: { user: Session["user"] & { profile: Profile } }) => {
       <div className="grow overflow-y-scroll">
         <div className=" mx-4 flex flex-col flex-wrap items-stretch sm:flex-row">
           <Suspense fallback={<Spinner />}>
-            <WorkoutsTab profile={user.profile} />
+            <WorkoutsTab />
           </Suspense>
         </div>
       </div>

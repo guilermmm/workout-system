@@ -4,7 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { env } from "../env/server.mjs";
 import { prisma } from "./db";
-import type { Profile } from "@prisma/client";
+import type { Simplify } from "@trpc/server";
 
 /**
  * Module augmentation for `next-auth` types
@@ -14,11 +14,7 @@ import type { Profile } from "@prisma/client";
  **/
 declare module "next-auth" {
   interface Session extends DefaultSession {
-    user: {
-      id: string;
-      // ...other properties
-    } & ({ role: "admin" } | { role: "user"; profile: Profile }) &
-      DefaultSession["user"];
+    user: Simplify<{ id: string } & { role: "admin" | "user" } & DefaultSession["user"]>;
   }
 
   // interface User {
@@ -34,17 +30,10 @@ declare module "next-auth" {
  **/
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    async session({ session, user }) {
+    session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;
-
-        const profile = await prisma.profile.findUnique({ where: { email: session.user.email! } });
-
-        if (env.ADMIN_EMAIL === user.email) {
-          session.user.role = "admin";
-        } else {
-          Object.assign(session.user, { role: "user", profile });
-        }
+        session.user.role = env.ADMIN_EMAIL === user.email ? "admin" : "user";
       }
       return session;
     },
@@ -61,6 +50,12 @@ export const authOptions: NextAuthOptions = {
       const profile = await prisma.profile.findUnique({ where: { email: user.email } });
 
       if (!profile) {
+        // TODO: redirect to a page telling the user he doesn't have access
+        return false;
+      }
+
+      if (!profile.isActive) {
+        // TODO: redirect to a page telling the user his account is inactive
         return false;
       }
 
