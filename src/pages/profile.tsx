@@ -1,4 +1,5 @@
 import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { useState } from "react";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
@@ -6,7 +7,7 @@ import Navbar from "../components/Navbar";
 import { getServerAuthSession } from "../server/auth";
 import { api } from "../utils/api";
 import { dataSheetTranslation } from "../utils/consts";
-import { ParsedDatasheet } from "../utils/types";
+import type { ParsedDatasheet } from "../utils/types";
 
 const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const [editedDataSheet, setEditedDataSheet] = useState<ParsedDatasheet>(
@@ -37,7 +38,9 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
         </div>
         <button
           className="rounded-full p-2 text-blue-700 transition-colors hover:bg-white"
-          onClick={() => {}}
+          onClick={() => {
+            void signOut();
+          }}
         >
           <ArrowRightOnRectangleIcon />
         </button>
@@ -46,7 +49,10 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
         <div className="mx-4 mt-4 flex flex-col sm:flex-row">
           {Object.keys(dataSheetTranslation).map(key => {
             return (
-              <div className="my-1 flex justify-between rounded-lg bg-white p-4 shadow-md">
+              <div
+                key={key}
+                className="my-1 flex justify-between rounded-lg bg-white p-4 shadow-md"
+              >
                 <h2 className="text-lg font-medium text-slate-800">
                   {dataSheetTranslation[key as keyof typeof dataSheetTranslation]}
                 </h2>

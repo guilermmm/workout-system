@@ -15,7 +15,7 @@ const WorkoutsTab = () => {
       {weekDayWorkouts.map(
         (workout, index) =>
           workout && (
-            <div className="flex">
+            <div key={index} className="flex">
               <div className="m-2 flex w-20 flex-col justify-center rounded-md bg-gold-500 p-4 font-bold text-black shadow-lg ">
                 {abbreviatedWeekdaysTranslation[index]}:
               </div>
