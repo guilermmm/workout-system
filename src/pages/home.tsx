@@ -50,7 +50,7 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
       </div>
       <div className="grow overflow-y-scroll">
         {workouts.isLoading ? (
-          <div className="flex flex-grow items-center justify-center">
+          <div className="flex h-full items-center justify-center">
             <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
           </div>
         ) : (
