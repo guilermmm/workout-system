@@ -59,6 +59,10 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
 
+      if (profile.userId == null) {
+        await prisma.profile.update({ where: { id: profile.id }, data: { userId: user.id } });
+      }
+
       return true;
     },
   },

@@ -6,7 +6,7 @@ const Loading = () => {
       <div className="flex h-64 w-64 items-center justify-center bg-white text-6xl font-bold">
         LOGO
       </div>
-      <Spinner className="h-48 w-48 fill-blue-500 text-gray-50" />
+      <Spinner className="h-48 w-48 fill-blue-600 text-gray-50" />
     </div>
   );
 };

@@ -2,19 +2,8 @@ import { z } from "zod";
 import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
-  getProfileBySession: userProcedure.query(async ({ ctx }) => {
-    const profile = await ctx.prisma.profile.findUniqueOrThrow({
-      where: { email: ctx.session.user.email! },
-    });
-
-    if (profile.userId == null) {
-      await ctx.prisma.profile.update({
-        where: { email: profile.email },
-        data: { userId: ctx.session.user.id },
-      });
-    }
-
-    return await ctx.prisma.profile.findUniqueOrThrow({
+  getProfileBySession: userProcedure.query(({ ctx }) => {
+    return ctx.prisma.profile.findUniqueOrThrow({
       where: { email: ctx.session.user.email! },
       include: { user: true },
     });

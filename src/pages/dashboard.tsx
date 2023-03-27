@@ -1,18 +1,30 @@
+import type { Profile, User } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { signOut, useSession } from "next-auth/react";
-import dynamic from "next/dynamic";
 import Image from "next/image";
-import { Suspense } from "react";
+import Link from "next/link";
+import { useState } from "react";
+import { useDebounce } from "use-debounce";
+import Error from "../components/Error";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
 import Navbar from "../components/Navbar";
 import Spinner from "../components/Spinner";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
-
-const ManagementTab = dynamic(() => import("../components/ManagementTab"), { ssr: false });
+import { api } from "../utils/api";
 
 const Dashboard = () => {
   const { data: session } = useSession();
+
+  const [searchInput, setSearchInput] = useState("");
+
+  const [debouncedInput] = useDebounce(searchInput, 500);
+
+  const profiles = api.user.searchProfiles.useQuery(debouncedInput);
+
+  if (profiles.error) {
+    return <Error />;
+  }
 
   return (
     <div className="flex h-full flex-col bg-slate-100">
@@ -37,14 +49,67 @@ const Dashboard = () => {
         </button>
       </div>
       <div className="grow overflow-y-scroll">
-        <div className=" mx-4 flex flex-col flex-wrap items-stretch sm:flex-row">
-          <Suspense fallback={<Spinner />}>
-            <ManagementTab />
-          </Suspense>
+        <div className="mx-4 flex h-full flex-1 grow flex-col gap-4">
+          <div className="relative my-2">
+            <input
+              type="text"
+              className="h-12 w-full rounded-full border-2 pl-4 pr-12"
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+            />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="absolute right-4 top-3 h-6 w-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+              />
+            </svg>
+          </div>
+          {profiles.isLoading ? (
+            <div className="flex flex-1 items-center justify-center">
+              <Spinner className="fill-blue-600 text-gray-200" />
+            </div>
+          ) : (
+            <div className="flex flex-col flex-wrap items-stretch gap-2 sm:flex-row">
+              {profiles.data.map(profile => (
+                <UserCard key={profile.id} profile={profile} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <Navbar />
     </div>
+  );
+};
+
+const UserCard = ({ profile }: { profile: Profile & { user: User | null } }) => {
+  return (
+    <Link
+      href={`/manage/${profile.id}`}
+      className="flex flex-1 flex-row items-center rounded-md bg-slate-50 p-3 shadow-md transition-shadow hover:shadow-xl"
+    >
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
+        <Image
+          width={48}
+          height={48}
+          alt={`Foto de perfil de ${profile.user?.name ?? profile.email}`}
+          src={profile.user?.image ?? "./google.svg"}
+          className="h-12 w-12 rounded-full"
+        />
+      </div>
+      <div className="ml-4">
+        <div className="truncate text-lg font-medium text-slate-800">{profile.user?.name}</div>
+        <div className="truncate text-sm text-slate-500">{profile.email}</div>
+      </div>
+    </Link>
   );
 };
 

@@ -47,7 +47,7 @@ model ExerciseInWorkout {
     @@index([workoutId])
 }
 
-enum WeekDay {
+enum Weekday {
     Monday
     Tuesday
     Wednesday
@@ -64,7 +64,7 @@ model Workout {
     profileId String
     exercises ExerciseInWorkout[]
     biSets    Json
-    days      WeekDay[]
+    days      Weekday[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
