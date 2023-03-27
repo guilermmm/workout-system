@@ -1,7 +1,13 @@
-import type { User } from "@prisma/client";
+import type { Session } from "next-auth";
 import Image from "next/image";
 
-const ProfilePic = ({ size, user }: { size: "sm" | "md"; user?: User | null }) => {
+const ProfilePic = ({
+  size,
+  user,
+}: {
+  size: "sm" | "md";
+  user?: Pick<Session["user"], "name" | "email" | "image"> | null;
+}) => {
   return (
     <div className="rounded-full bg-gray-50">
       <div className={size === "sm" ? "h-12 w-12" : "h-16 w-16"}>
