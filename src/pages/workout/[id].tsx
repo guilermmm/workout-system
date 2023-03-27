@@ -1,20 +1,24 @@
+import type { Exercise } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
 import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
+import CheckCircleIcon from "../../components/icons/CheckCircleIcon";
+import CheckIcon from "../../components/icons/CheckIcon";
+import ClockIcon from "../../components/icons/ClockIcon";
 import Loading from "../../components/Loading";
 import { getServerAuthSession } from "../../server/auth";
 import { classList, useLocalStorage } from "../../utils";
 import { api } from "../../utils/api";
-import type { ParsedExercise } from "../../utils/types";
+import type { ParseJsonValues, Sets } from "../../utils/types";
 
 const Workout = () => {
   const router = useRouter();
 
   const { id } = router.query as { id: string };
 
-  const workout = api.workout.getWorkout.useQuery({ id });
+  const workout = api.workout.getByIdBySession.useQuery(id);
 
   return workout.data == null ? (
     <Loading />
@@ -26,7 +30,7 @@ const Workout = () => {
             className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
             onClick={() => router.back()}
           >
-            <ArrowUturnLeftIcon />
+            <ArrowUturnLeftIcon className="h-6 w-6" />
           </button>
           <h1 className="ml-4 text-xl font-medium text-blue-700">
             Treino <span className="font-bold">{workout.data.name}</span>
@@ -35,7 +39,14 @@ const Workout = () => {
       </div>
       <div>
         {workout.data.exercises.map(exercise => {
-          return <ExerciseCard key={exercise.id} exercise={exercise} />;
+          return (
+            <ExerciseCard
+              key={exercise.id}
+              description={exercise.description}
+              exercise={exercise.exercise}
+              sets={exercise.sets}
+            />
+          );
         })}
       </div>
       <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-md">
@@ -45,21 +56,27 @@ const Workout = () => {
   );
 };
 
-const ExerciseCard = ({ exercise }: { exercise: ParsedExercise }) => {
+type ExerciseCardProps = {
+  description: string | null;
+  exercise: ParseJsonValues<Exercise>;
+  sets: Sets;
+};
+
+const ExerciseCard = ({ description, exercise, sets }: ExerciseCardProps) => {
   const [completed, setCompleted] = useState(false);
 
   return (
-    <div className="m-2 flex justify-between rounded-lg bg-white p-4 shadow-md" key={exercise.id}>
+    <div className="m-2 flex justify-between rounded-lg bg-white p-4 shadow-md">
       <div>
-        <div className="text-md font-medium text-blue-600">{exercise.exercise.name}</div>
-        <div className="text-sm text-slate-600">{exercise.exercise.category}</div>
-        <div className="text-sm">{exercise.description}</div>
+        <div className="text-md font-medium text-blue-600">{exercise.name}</div>
+        <div className="text-sm text-slate-600">{exercise.category}</div>
+        <div className="text-sm">{description}</div>
         {/* q porra é essa aq --->> */}{" "}
       </div>
       <div className="flex items-center justify-between">
         <div className="mr-5 text-right text-sm">
           <div className="font-medium text-slate-700">
-            <div className="font-medium text-slate-700">{exercise.sets.length} séries</div>
+            <div className="font-medium text-slate-700">{sets.length} séries</div>
             {/* {exercise.exercise.hasReps ? (
               <div className="font-medium text-slate-700">{exercise.reps} repetições</div>
             ) : (
@@ -75,18 +92,7 @@ const ExerciseCard = ({ exercise }: { exercise: ParsedExercise }) => {
           onClick={() => setCompleted(!completed)}
         >
           <div className="flex h-8 w-8 items-center justify-center">
-            {completed && (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={3}
-                stroke="currentColor"
-                className="h-6 w-6"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-            )}
+            {completed && <CheckIcon className="h-6 w-6" />}
           </div>
         </button>
       </div>
@@ -153,20 +159,7 @@ const Footer = ({ id }: { id: string }) => {
             }}
           >
             Iniciar treino
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="h-8 w-8"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <ClockIcon className="h-8 w-8" />
           </button>
         </>
       ) : state === "started" ? (
@@ -188,20 +181,7 @@ const Footer = ({ id }: { id: string }) => {
             }}
           >
             Concluir treino
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.25}
-              stroke="currentColor"
-              className="h-8 w-8"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <CheckCircleIcon className="h-6 w-6" />
           </button>
         </>
       ) : (

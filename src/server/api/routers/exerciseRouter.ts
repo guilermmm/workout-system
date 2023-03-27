@@ -2,72 +2,41 @@ import type { Exercise } from "@prisma/client";
 import { z } from "zod";
 import { adminProcedure, createTRPCRouter } from "../trpc";
 
+function reduceByCategory(acc: { category: string; exercises: Exercise[] }[], exercise: Exercise) {
+  const existingCategory = acc.find(item => item.category === exercise.category);
+
+  if (existingCategory) {
+    existingCategory.exercises.push(exercise);
+  } else {
+    acc.push({ category: exercise.category, exercises: [exercise] });
+  }
+
+  return acc;
+}
+
 export const exerciseRouter = createTRPCRouter({
   getCategories: adminProcedure.query(async ({ ctx }) => {
     const exercises = await ctx.prisma.exercise.findMany({});
-    const categories = exercises.reduce((acc, exercise) => {
-      const existingCategory = acc.find(item => item.category === exercise.category);
-
-      if (existingCategory) {
-        existingCategory.exercises.push(exercise);
-      } else {
-        acc.push({ category: exercise.category, exercises: [exercise] });
-      }
-
-      return acc;
-    }, [] as { category: string; exercises: Exercise[] }[]);
-    return categories;
+    return exercises.reduce(reduceByCategory, []);
   }),
 
-  getExercises: adminProcedure.query(({ ctx }) => {
+  getMany: adminProcedure.query(({ ctx }) => {
     return ctx.prisma.exercise.findMany();
   }),
 
-  createExercise: adminProcedure
-    .input(
-      z.object({
-        name: z.string(),
-        category: z.string(),
-        hasReps: z.boolean(),
-      }),
-    )
-    .mutation(({ ctx, input }) => {
-      return ctx.prisma.exercise.create({
-        data: {
-          name: input.name,
-          category: input.category,
-          hasReps: input.hasReps,
-        },
-      });
+  create: adminProcedure
+    .input(z.object({ name: z.string(), category: z.string() }))
+    .mutation(({ ctx, input: { name, category } }) => {
+      return ctx.prisma.exercise.create({ data: { name, category } });
     }),
 
-  updateExercise: adminProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        category: z.string(),
-        hasReps: z.boolean(),
-      }),
-    )
-    .mutation(({ ctx, input }) => {
-      return ctx.prisma.exercise.update({
-        where: {
-          id: input.id,
-        },
-        data: {
-          name: input.name,
-          category: input.category,
-          hasReps: input.hasReps,
-        },
-      });
+  update: adminProcedure
+    .input(z.object({ id: z.string(), name: z.string(), category: z.string() }))
+    .mutation(({ ctx, input: { id, name, category } }) => {
+      return ctx.prisma.exercise.update({ where: { id }, data: { name, category } });
     }),
 
-  deleteExercise: adminProcedure.input(z.object({ id: z.string() })).mutation(({ ctx, input }) => {
-    return ctx.prisma.exercise.delete({
-      where: {
-        id: input.id,
-      },
-    });
-  }),
+  delete: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(({ ctx, input: { id } }) => ctx.prisma.exercise.delete({ where: { id } })),
 });

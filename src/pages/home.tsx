@@ -14,7 +14,7 @@ import { api } from "../utils/api";
 import { jsDateToWeekday, weekdaysAbbrv } from "../utils/consts";
 
 const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
-  const workouts = api.workout.getWorkoutsBySession.useQuery();
+  const workouts = api.workout.getManyBySession.useQuery();
 
   if (workouts.error) {
     return <ErrorPage />;
@@ -41,7 +41,7 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
           className="rounded-full p-2 text-blue-700 transition-colors hover:bg-white"
           onClick={() => void signOut()}
         >
-          <ArrowRightOnRectangleIcon />
+          <ArrowRightOnRectangleIcon className="h-6 w-6" />
         </button>
       </div>
       <div className="grow overflow-y-scroll">

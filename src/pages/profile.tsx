@@ -42,7 +42,7 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
             void signOut();
           }}
         >
-          <ArrowRightOnRectangleIcon />
+          <ArrowRightOnRectangleIcon className="h-6 w-6" />
         </button>
       </div>
       <div className="grow overflow-y-scroll">

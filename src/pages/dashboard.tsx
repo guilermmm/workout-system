@@ -8,6 +8,7 @@ import { useDebounce } from "use-debounce";
 import AdminNavbar from "../components/AdminNavbar";
 import ErrorPage from "../components/Error";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
+import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
 import Spinner from "../components/Spinner";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
@@ -45,7 +46,7 @@ const Dashboard = () => {
           className="rounded-full p-2 text-blue-700 transition-colors hover:bg-white"
           onClick={() => void signOut()}
         >
-          <ArrowRightOnRectangleIcon />
+          <ArrowRightOnRectangleIcon className="h-6 w-6" />
         </button>
       </div>
       <div className="grow overflow-y-scroll">
@@ -57,20 +58,7 @@ const Dashboard = () => {
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
             />
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="absolute right-4 top-3 h-6 w-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-              />
-            </svg>
+            <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
           </div>
           {profiles.isLoading ? (
             <div className="flex flex-1 items-center justify-center">

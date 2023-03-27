@@ -1,4 +1,4 @@
-import type { Exercise } from "@prisma/client";
+import type { Exercise, ExerciseInWorkout } from "@prisma/client";
 import type { Simplify } from "@trpc/server";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
@@ -10,9 +10,8 @@ import Spinner from "../../../components/Spinner";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { api } from "../../../utils/api";
-import type { ParsedExercise } from "../../../utils/types";
 
-type ExerciseInWorkout = Simplify<Omit<ParsedExercise, "exercise" | "createdAt" | "updatedAt">>;
+type NewExercise = Simplify<Omit<ExerciseInWorkout, "createdAt" | "updatedAt">>;
 
 const CreateWorkout = () => {
   const router = useRouter();
@@ -23,9 +22,9 @@ const CreateWorkout = () => {
 
   const categories = api.exercise.getCategories.useQuery();
 
-  const { mutate } = api.workout.createWorkout.useMutation({ onSuccess: () => router.back() });
+  const { mutate } = api.workout.create.useMutation({ onSuccess: () => router.back() });
 
-  const [exercises, setExercises] = useState<ExerciseInWorkout[]>([]);
+  const [exercises, setExercises] = useState<NewExercise[]>([]);
 
   const [name, setName] = useState("");
 
@@ -41,7 +40,7 @@ const CreateWorkout = () => {
             className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
             onClick={() => router.back()}
           >
-            <ArrowUturnLeftIcon />
+            <ArrowUturnLeftIcon className="h-6 w-6" />
           </button>
         </div>
         <div className="flex items-center">
@@ -224,8 +223,8 @@ const CreateWorkout = () => {
 };
 
 type ExerciseCardProps = {
-  exercise: ExerciseInWorkout;
-  onEdit: (exercise: ExerciseInWorkout) => void;
+  exercise: NewExercise;
+  onEdit: (exercise: NewExercise) => void;
   onDelete: (id: string) => void;
   exerciseCategories: { category: string; exercises: Exercise[] }[];
 };

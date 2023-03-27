@@ -16,9 +16,9 @@ const Manage = () => {
   const { profileId } = router.query as { profileId: string };
 
   const profile = api.user.getProfileById.useQuery(profileId);
-  const workouts = api.workout.getWorkouts.useQuery({ profileId });
+  const workouts = api.workout.getMany.useQuery({ profileId });
 
-  const createWorkout = api.workout.createWorkout.useMutation({
+  const createWorkout = api.workout.create.useMutation({
     onSuccess: () => {
       void workouts.refetch();
     },
@@ -35,7 +35,7 @@ const Manage = () => {
           className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
           onClick={() => router.back()}
         >
-          <ArrowUturnLeftIcon />
+          <ArrowUturnLeftIcon className="h-6 w-6" />
         </button>
         <div className="flex items-center">
           <div className="flex max-w-[calc(100vw_-_144px)] flex-row items-center justify-between text-right">
@@ -108,7 +108,7 @@ type WorkoutCardProps = {
 };
 
 const WorkoutCard = ({ id, name, description, onDelete }: WorkoutCardProps) => {
-  const deleteWorkout = api.workout.deleteWorkout.useMutation({
+  const deleteWorkout = api.workout.delete.useMutation({
     onSuccess: () => {
       onDelete();
     },

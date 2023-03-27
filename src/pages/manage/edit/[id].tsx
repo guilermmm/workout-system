@@ -1,4 +1,4 @@
-import type { Exercise } from "@prisma/client";
+import type { Exercise, ExerciseInWorkout } from "@prisma/client";
 import structuredClone from "@ungap/structured-clone";
 import deepEqual from "deep-equal";
 import type { GetServerSidePropsContext } from "next";
@@ -10,24 +10,21 @@ import Loading from "../../../components/Loading";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { api } from "../../../utils/api";
-import type { ParsedExercise } from "../../../utils/types";
+import type { ParseJsonValues } from "../../../utils/types";
 
 const EditWorkout = () => {
   const router = useRouter();
 
   const { id } = router.query as { id: string };
 
-  const workout = api.workout.getWorkout.useQuery(
-    { id },
-    {
-      onSuccess: data => {
-        if (data) {
-          setEditedExercises(structuredClone(data.exercises));
-        }
-      },
-      refetchOnWindowFocus: false,
+  const workout = api.workout.getById.useQuery(id, {
+    onSuccess: data => {
+      if (data) {
+        setEditedExercises(structuredClone(data.exercises));
+      }
     },
-  );
+    refetchOnWindowFocus: false,
+  });
 
   // const saveWorkout = api.workout.updateWorkout.useMutation({ onSuccess: () => workout.refetch() });
 
@@ -41,7 +38,7 @@ const EditWorkout = () => {
     !deepEqual(workout.data?.exercises, editedExercises) &&
     editedExercises.every(exercise => exercise.exercise.id !== "");
 
-  const exercises = api.exercise.getExercises.useQuery(undefined, {
+  const exercises = api.exercise.getMany.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
 
@@ -75,7 +72,7 @@ const EditWorkout = () => {
             className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
             onClick={() => router.back()}
           >
-            <ArrowUturnLeftIcon />
+            <ArrowUturnLeftIcon className="h-6 w-6" />
           </button>
         </div>
         {workout.data && (
@@ -183,7 +180,7 @@ const EditWorkout = () => {
               setEditedExercises(editedExercises.filter(e => e.id !== id));
               setRemove([...remove, id]);
             }}
-            exerciseCategories={exerciseCategories!}
+            categories={exerciseCategories!}
           />
         ))}
         <div className="flex flex-row items-center justify-center">
@@ -266,22 +263,22 @@ const EditWorkout = () => {
 };
 
 type ExerciseCardProps = {
-  exercise: ParsedExercise;
-  onEdit: (exercise: ParsedExercise) => void;
+  exercise: ParseJsonValues<ExerciseInWorkout & { exercise: Exercise }>;
+  onEdit: (exercise: ParseJsonValues<ExerciseInWorkout & { exercise: Exercise }>) => void;
   onDelete: (id: string) => void;
-  exerciseCategories: { category: string; exercises: Exercise[] }[];
+  categories: { category: string; exercises: Exercise[] }[];
 };
 
-const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: ExerciseCardProps) => {
+const ExerciseCard = ({ exercise, onEdit, onDelete, categories }: ExerciseCardProps) => {
   return (
     <div
       className="m-2 flex justify-between gap-4 rounded-lg bg-white p-4 shadow-md"
-      key={exercise.id}
+      key={exercise.exercise.id}
     >
       <div className="flex flex-1 flex-col gap-2">
         <select
           className="text-md w-fit border-b-2 p-1 font-medium text-blue-600 focus:border-blue-600 focus-visible:outline-none"
-          value={exercise.exercise.id}
+          value={exercise.id}
           // onChange={e => {
           //   const newExercise = exerciseCategories
           //     .flatMap(group => group.exercises)
@@ -295,7 +292,7 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: Exerci
           <option className="font-medium text-slate-600" value="" disabled>
             Selecione um exercício
           </option>
-          {exerciseCategories.map(group => (
+          {categories.map(group => (
             <optgroup
               label={group.category}
               key={group.category}

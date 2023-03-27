@@ -1,11 +1,64 @@
 import { Method } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import type { ParsedExercise } from "../../../utils/types";
+import type { ParseJsonValues } from "../../../utils/types";
 import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
 
 export const workoutRouter = createTRPCRouter({
-  createWorkout: adminProcedure
+  getMany: adminProcedure
+    .input(z.object({ profileId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const workouts = await ctx.prisma.workout.findMany({
+        where: { profileId: input.profileId },
+        include: { exercises: { include: { exercise: { select: { category: true } } } } },
+      });
+      const mappedWorkouts = workouts.map(workout => ({
+        ...workout,
+        categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
+      }));
+
+      return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
+    }),
+
+  getById: adminProcedure.input(z.string()).query(async ({ ctx, input }) => {
+    const workout = await ctx.prisma.workout.findUniqueOrThrow({
+      where: { id: input },
+      include: { exercises: { include: { exercise: true } }, profile: { include: { user: true } } },
+    });
+
+    return workout as ParseJsonValues<typeof workout>;
+  }),
+
+  getManyBySession: userProcedure.query(async ({ ctx }) => {
+    const workouts = await ctx.prisma.workout.findMany({
+      where: { profile: { userId: ctx.session.user.id } },
+      include: { exercises: { include: { exercise: { select: { category: true } } } } },
+    });
+    const mappedWorkouts = workouts.map(workout => ({
+      ...workout,
+      categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
+    }));
+
+    return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
+  }),
+
+  getByIdBySession: userProcedure.input(z.string()).query(async ({ ctx, input }) => {
+    const workout = await ctx.prisma.workout.findUniqueOrThrow({
+      where: { id: input },
+      include: {
+        exercises: { include: { exercise: true } },
+        profile: { include: { user: { select: { id: true } } } },
+      },
+    });
+
+    if (workout.profile.user?.id !== ctx.session.user.id) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+
+    return workout as ParseJsonValues<typeof workout>;
+  }),
+
+  create: adminProcedure
     .input(
       z.object({
         name: z.string(),
@@ -23,18 +76,18 @@ export const workoutRouter = createTRPCRouter({
         ),
       }),
     )
-    .mutation(({ ctx, input }) => {
+    .mutation(({ ctx, input: { name, profileId, biSets, exercises } }) => {
       return ctx.prisma.workout.create({
         data: {
-          name: input.name,
-          profile: { connect: { id: input.profileId } },
-          biSets: input.biSets,
-          exercises: { createMany: { data: input.exercises } },
+          name,
+          biSets,
+          profile: { connect: { id: profileId } },
+          exercises: { createMany: { data: exercises } },
         },
       });
     }),
 
-  updateWorkout: adminProcedure
+  update: adminProcedure
     .input(
       z.object({
         id: z.string(),
@@ -66,7 +119,7 @@ export const workoutRouter = createTRPCRouter({
         biSets: z.array(z.tuple([z.string(), z.string()])),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(({ ctx, input }) => {
       return ctx.prisma.workout.update({
         where: { id: input.id },
         data: {
@@ -83,60 +136,7 @@ export const workoutRouter = createTRPCRouter({
       });
     }),
 
-  deleteWorkout: adminProcedure
+  delete: adminProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(({ ctx, input }) => ctx.prisma.workout.delete({ where: { id: input.id } })),
-
-  getWorkouts: adminProcedure
-    .input(z.object({ profileId: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const workouts = await ctx.prisma.workout.findMany({
-        where: { profileId: input.profileId },
-        include: { exercises: { include: { exercise: { select: { category: true } } } } },
-      });
-      return workouts.map(workout => ({
-        ...workout,
-        categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
-      }));
-    }),
-
-  getWorkout: adminProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
-    const workout = await ctx.prisma.workout.findUniqueOrThrow({
-      where: { id: input.id },
-      include: { exercises: { include: { exercise: true } }, profile: { include: { user: true } } },
-    });
-
-    return workout as unknown as Omit<typeof workout, "exercises"> & {
-      exercises: ParsedExercise[];
-    };
-  }),
-
-  getWorkoutsBySession: userProcedure.query(async ({ ctx }) => {
-    const workouts = await ctx.prisma.workout.findMany({
-      where: { profile: { userId: ctx.session.user.id } },
-      include: { exercises: { include: { exercise: { select: { category: true } } } } },
-    });
-    return workouts.map(workout => ({
-      ...workout,
-      categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
-    }));
-  }),
-
-  getWorkoutBySession: userProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const workout = await ctx.prisma.workout.findUniqueOrThrow({
-        where: { id: input.id },
-        include: {
-          exercises: { include: { exercise: true } },
-          profile: { include: { user: { select: { id: true } } } },
-        },
-      });
-
-      if (workout.profile.user?.id !== ctx.session.user.id) {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-      }
-
-      return workout;
-    }),
+    .mutation(({ ctx, input: { id } }) => ctx.prisma.workout.delete({ where: { id } })),
 });
