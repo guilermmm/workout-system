@@ -1,18 +1,17 @@
+import { Weekday } from "@prisma/client";
 import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { signOut } from "next-auth/react";
-import Image from "next/image";
-import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
-import UserNavbar from "../components/UserNavbar";
-import Spinner from "../components/Spinner";
-import { getServerAuthSession } from "../server/auth";
-import { Weekday } from "@prisma/client";
 import Link from "next/link";
+import { Fragment } from "react";
+import Error from "../components/Error";
+import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
+import ProfilePic from "../components/ProfilePic";
+import Spinner from "../components/Spinner";
+import UserNavbar from "../components/UserNavbar";
+import { getServerAuthSession } from "../server/auth";
 import { capitalize, classList, join } from "../utils";
 import { api } from "../utils/api";
 import { jsDateToWeekday, weekdaysAbbrv } from "../utils/consts";
-import Error from "../components/Error";
-import { Fragment } from "react";
-import ProfilePic from "../components/ProfilePic";
 
 const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const workouts = api.workout.getWorkoutsBySession.useQuery();
@@ -73,7 +72,6 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
                       })}
                     >
                       <WorkoutCard
-                        key={workout.id}
                         id={workout.id}
                         name={workout.name}
                         description={capitalize(join(workout.categories))}

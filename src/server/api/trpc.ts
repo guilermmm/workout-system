@@ -1,10 +1,10 @@
 import { initTRPC, TRPCError } from "@trpc/server";
-import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
-import { type Session } from "next-auth";
+import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
+import type { Session } from "next-auth";
 import superjson from "superjson";
+import { env } from "../../env/server.mjs";
 import { getServerAuthSession } from "../auth";
 import { prisma } from "../db";
-import { env } from "../../env/server.mjs";
 
 type CreateContextOptions = {
   session: Session | null;

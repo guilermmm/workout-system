@@ -1,10 +1,11 @@
-import type { GetServerSidePropsContext } from "next";
-import { getServerSession, type NextAuthOptions, type DefaultSession } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import type { Simplify } from "@trpc/server";
+import type { GetServerSidePropsContext } from "next";
+import type { DefaultSession, NextAuthOptions } from "next-auth";
+import { getServerSession } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
 import { env } from "../env/server.mjs";
 import { prisma } from "./db";
-import type { Simplify } from "@trpc/server";
 
 /**
  * Module augmentation for `next-auth` types

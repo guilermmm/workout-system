@@ -1,8 +1,8 @@
-import { createTRPCRouter } from "./trpc";
+import { exerciseInWorkoutRouter } from "./routers/exerciseInWorkoutRouter";
+import { exerciseRouter } from "./routers/exerciseRouter";
 import { userRouter } from "./routers/userRouter";
 import { workoutRouter } from "./routers/workoutRouter";
-import { exerciseRouter } from "./routers/exerciseRouter";
-import { exerciseInWorkoutRouter } from "./routers/exerciseInWorkoutRouter";
+import { createTRPCRouter } from "./trpc";
 
 /**
  * This is the primary router for your server.

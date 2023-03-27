@@ -1,15 +1,15 @@
+import type { Exercise } from "@prisma/client";
 import structuredClone from "@ungap/structured-clone";
 import deepEqual from "deep-equal";
+import type { GetServerSidePropsContext } from "next";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import Loading from "../../../components/Loading";
-import { api } from "../../../utils/api";
-import { getServerAuthSession } from "../../../server/auth";
-import type { GetServerSidePropsContext } from "next";
 import { env } from "../../../env/server.mjs";
+import { getServerAuthSession } from "../../../server/auth";
+import { api } from "../../../utils/api";
 import type { ParsedExercise } from "../../../utils/types";
-import type { Exercise } from "@prisma/client";
 
 const EditWorkout = () => {
   const router = useRouter();

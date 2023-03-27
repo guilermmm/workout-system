@@ -1,6 +1,6 @@
-import ListBulletIcon from "./icons/ListBulletIcon";
-import { useRouter } from "next/router";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import ListBulletIcon from "./icons/ListBulletIcon";
 import UserGroupIcon from "./icons/UserGroupIcon";
 
 const Navbar = () => {
