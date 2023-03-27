@@ -86,4 +86,34 @@ export const userRouter = createTRPCRouter({
       orderBy: { createdAt: "desc" },
     });
   }),
+
+  createDatasheet: userProcedure
+    .input(
+      z.object({
+        weight: z.number(),
+        height: z.number(),
+        thorax: z.number(),
+        waist: z.number(),
+        abdomen: z.number(),
+        hips: z.number(),
+        rightThigh: z.number(),
+        leftThigh: z.number(),
+        rightArm: z.number(),
+        leftArm: z.number(),
+        rightCalf: z.number(),
+        leftCalf: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const profile = await ctx.prisma.profile.findUniqueOrThrow({
+        where: { userId: ctx.session.user.id },
+      });
+
+      return ctx.prisma.datasheet.create({
+        data: {
+          ...input,
+          profileId: profile.id,
+        },
+      });
+    }),
 });

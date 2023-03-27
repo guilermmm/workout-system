@@ -1,20 +1,33 @@
+import { WeekDay } from "@prisma/client";
 import Link from "next/link";
 import { capitalize, classList, join } from "../utils";
 import { api } from "../utils/api";
+import { abbreviatedWeekdaysTranslation } from "../utils/consts";
 
 const WorkoutsTab = () => {
   const [workouts] = api.workout.getWorkoutsBySession.useSuspenseQuery();
+  const weekDayWorkouts = Object.values(WeekDay).map(day =>
+    workouts.find(workout => workout.days.includes(day)),
+  );
 
   return (
     <>
-      {workouts.map(workout => (
-        <WorkoutCard
-          key={workout.id}
-          id={workout.id}
-          name={workout.name}
-          description={capitalize(join(workout.categories))}
-        />
-      ))}
+      {weekDayWorkouts.map(
+        (workout, index) =>
+          workout && (
+            <div className="flex">
+              <div className="m-2 flex w-20 flex-col justify-center rounded-md bg-gold-500 p-4 font-bold text-black shadow-lg ">
+                {abbreviatedWeekdaysTranslation[index]}:
+              </div>
+              <WorkoutCard
+                key={workout.id}
+                id={workout.id}
+                name={workout.name}
+                description={capitalize(join(workout.categories))}
+              />
+            </div>
+          ),
+      )}
     </>
   );
 };

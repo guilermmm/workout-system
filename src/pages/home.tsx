@@ -34,7 +34,7 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
         </button>
       </div>
       <div className="grow overflow-y-scroll">
-        <div className=" mx-4 flex flex-col flex-wrap items-stretch sm:flex-row">
+        <div className="mx-4 mt-4 flex flex-col flex-wrap items-stretch sm:flex-row">
           <Suspense fallback={<Spinner />}>
             <WorkoutsTab />
           </Suspense>

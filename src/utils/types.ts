@@ -1,4 +1,4 @@
-import type { Exercise, ExerciseInWorkout } from "@prisma/client";
+import type { Datasheet, Exercise, ExerciseInWorkout } from "@prisma/client";
 
 export type Sets = RepSet[] | TimeSet[];
 
@@ -17,3 +17,5 @@ export type BiSets = [string, string][];
 export type ParsedExercise = Omit<ExerciseInWorkout, "sets"> & { exercise: Exercise } & {
   sets: Sets;
 };
+
+export type ParsedDatasheet = Omit<Datasheet, "profileId" | "createdAt">;
