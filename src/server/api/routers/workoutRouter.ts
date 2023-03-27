@@ -11,6 +11,16 @@ export const workoutRouter = createTRPCRouter({
         name: z.string(),
         profileId: z.string(),
         biSets: z.array(z.tuple([z.string(), z.string()])),
+        exercises: z.array(
+          z.object({
+            exerciseId: z.string(),
+            sets: z
+              .array(z.object({ reps: z.number(), weight: z.number() }))
+              .or(z.array(z.object({ time: z.number(), weight: z.number() }))),
+            description: z.string().nullish(),
+            method: z.nativeEnum(Method),
+          }),
+        ),
       }),
     )
     .mutation(({ ctx, input }) => {
@@ -19,6 +29,7 @@ export const workoutRouter = createTRPCRouter({
           name: input.name,
           profile: { connect: { id: input.profileId } },
           biSets: input.biSets,
+          exercises: { createMany: { data: input.exercises } },
         },
       });
     }),

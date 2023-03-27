@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import ExclamationCircleIcon from "./icons/ExclamationCircleIcon";
 
-const Error = () => {
+const ErrorPage = () => {
   const router = useRouter();
 
   return (
@@ -18,4 +18,4 @@ const Error = () => {
   );
 };
 
-export default Error;
+export default ErrorPage;

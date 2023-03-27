@@ -1,73 +1,39 @@
 import type { Exercise } from "@prisma/client";
-import structuredClone from "@ungap/structured-clone";
-import deepEqual from "deep-equal";
+import type { Simplify } from "@trpc/server";
 import type { GetServerSidePropsContext } from "next";
-import Image from "next/image";
 import { useRouter } from "next/router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import ErrorPage from "../../../components/Error";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
-import Loading from "../../../components/Loading";
+import ProfilePic from "../../../components/ProfilePic";
+import Spinner from "../../../components/Spinner";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { api } from "../../../utils/api";
 import type { ParsedExercise } from "../../../utils/types";
 
-const EditWorkout = () => {
+type ExerciseInWorkout = Simplify<Omit<ParsedExercise, "exercise" | "createdAt" | "updatedAt">>;
+
+const CreateWorkout = () => {
   const router = useRouter();
 
-  const { id } = router.query as { id: string };
+  const { profileId } = router.query as { profileId: string };
 
-  const workout = api.workout.getWorkout.useQuery(
-    { id },
-    {
-      onSuccess: data => {
-        if (data) {
-          setEditedExercises(structuredClone(data.exercises));
-        }
-      },
-      refetchOnWindowFocus: false,
-    },
-  );
+  const profile = api.user.getProfileById.useQuery(profileId);
 
-  // const saveWorkout = api.workout.updateWorkout.useMutation({ onSuccess: () => workout.refetch() });
+  const categories = api.exercise.getCategories.useQuery();
 
-  const [editedExercises, setEditedExercises] = useState<
-    NonNullable<typeof workout.data>["exercises"]
-  >([]);
+  const { mutate } = api.workout.createWorkout.useMutation({ onSuccess: () => router.back() });
 
-  const [remove, setRemove] = useState<string[]>([]);
+  const [exercises, setExercises] = useState<ExerciseInWorkout[]>([]);
 
-  const changes =
-    !deepEqual(workout.data?.exercises, editedExercises) &&
-    editedExercises.every(exercise => exercise.exercise.id !== "");
+  const [name, setName] = useState("");
 
-  const exercises = api.exercise.getExercises.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-  });
+  if (profile.error || categories.error) {
+    return <ErrorPage />;
+  }
 
-  const exerciseCategories = useMemo(
-    () =>
-      exercises.data?.reduce((acc, exercise) => {
-        const category = exercise.category;
-        const group = acc.find(group => group.category === category);
-        if (group) {
-          group.exercises.push(exercise);
-        } else {
-          acc.push({ category, exercises: [exercise] });
-        }
-        return acc;
-      }, [] as { category: string; exercises: Exercise[] }[]),
-    [exercises.data],
-  );
-
-  // const [editingName, setEditingName] = useState(false);
-  // const [workoutName, setWorkoutName] = useState(workout.data?.name ?? "");
-
-  // const cuid = init({ length: 10 });
-
-  return workout.data == null || exercises.data == null ? (
-    <Loading />
-  ) : (
+  return (
     <div className="min-h-full bg-slate-100">
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
         <div className="flex flex-row items-center justify-between">
@@ -78,45 +44,38 @@ const EditWorkout = () => {
             <ArrowUturnLeftIcon />
           </button>
         </div>
-        {workout.data && (
-          <div className="flex flex-row items-center justify-between text-right">
-            <div className="ml-4 flex flex-col">
-              <h1 className=" text-xl text-blue-700">
-                <span className="font-bold">
-                  {workout.data.profile.user?.name!.split(" ").at(0)}
-                </span>
-              </h1>
-              <p className=" font-medium text-slate-700">
-                {workout.data.profile.email.split("@").at(0)}@...
-              </p>
+        <div className="flex items-center">
+          <div className="flex max-w-[calc(100vw_-_144px)] flex-row items-center justify-between text-right">
+            <div className="ml-4 flex flex-col truncate">
+              {profile.data && (
+                <>
+                  <h1 className="truncate text-xl text-blue-700">
+                    Treinos de <span className="font-bold">{profile.data.user?.name}</span>
+                  </h1>
+                  <p className="truncate font-medium text-slate-700">{profile.data.email}</p>
+                </>
+              )}
             </div>
-            <Image
-              src={workout.data.profile.user?.image ?? ""}
-              alt={`Foto de perfil de ${
-                workout.data.profile.user?.name ?? workout.data.profile.email
-              }`}
-              width={48}
-              height={48}
-              className="ml-4 block rounded-full"
-            />
           </div>
-        )}
+          <div className="ml-4">
+            {profile.isLoading ? (
+              <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
+            ) : (
+              <ProfilePic size="sm" user={profile.data.user} />
+            )}
+          </div>
+        </div>
       </div>
       <div className="my-4 mx-2 flex">
         <div>
           <h1 className="text-xl font-medium text-slate-800">
             Treino{" "}
-            {/* {editingName ? (
-              <input
-                type="text"
-                placeholder={workout.data.name}
-                className="w-20 text-center"
-                onChange={e => setWorkoutName(e.target.value)}
-              />
-            ) : (
-              workout.data.name
-            )} */}
-            {workout.data.name}
+            <input
+              type="text"
+              placeholder="Nome do treino"
+              className="w-20 text-center"
+              onChange={e => setName(e.target.value)}
+            />
           </h1>
           <div className={"h-1 bg-gold-500"} />
         </div>
@@ -170,22 +129,23 @@ const EditWorkout = () => {
         )} */}
       </div>
       <div>
-        {editedExercises.map(exercise => (
-          <ExerciseCard
-            key={exercise.id}
-            exercise={exercise}
-            onEdit={editedExercise => {
-              setEditedExercises(
-                editedExercises.map(e => (e.id === exercise.id ? editedExercise : e)),
-              );
-            }}
-            onDelete={id => {
-              setEditedExercises(editedExercises.filter(e => e.id !== id));
-              setRemove([...remove, id]);
-            }}
-            exerciseCategories={exerciseCategories!}
-          />
-        ))}
+        {categories.isLoading ? (
+          <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
+        ) : (
+          exercises.map(exercise => (
+            <ExerciseCard
+              key={exercise.id}
+              exercise={exercise}
+              onEdit={editedExercise => {
+                setExercises(exercises.map(e => (e.id === exercise.id ? editedExercise : e)));
+              }}
+              onDelete={id => {
+                setExercises(exercises.filter(e => e.id !== id));
+              }}
+              exerciseCategories={categories.data}
+            />
+          ))
+        )}
         <div className="flex flex-row items-center justify-center">
           <button
             className="flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600"
@@ -220,54 +180,52 @@ const EditWorkout = () => {
           </button>
         </div>
       </div>
-      {changes && (
-        <div className="fixed bottom-0 right-0 p-4">
-          <button
-            className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600"
-            // onClick={() => {
-            //   const exercises = editedExercises.map(e => {
-            //     if (e.id.length == 10) {
-            //       e.id = "";
-            //     }
-            //     return e;
-            //   });
+      <div className="fixed bottom-0 right-0 p-4">
+        <button
+          className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600"
+          // onClick={() => {
+          //   const exercises = editedExercises.map(e => {
+          //     if (e.id.length == 10) {
+          //       e.id = "";
+          //     }
+          //     return e;
+          //   });
 
-            //   saveWorkout.mutate({
-            //     id,
-            //     name: workout.data.name,
-            //     exercises: {
-            //       create: [],
-            //       update: [],
-            //       delete: []
-            //     }
-            //   });
-            // }}
+          //   saveWorkout.mutate({
+          //     id,
+          //     name: workout.data.name,
+          //     exercises: {
+          //       create: [],
+          //       update: [],
+          //       delete: []
+          //     }
+          //   });
+          // }}
+        >
+          Salvar treino
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.25}
+            stroke="currentColor"
+            className="h-8 w-8"
           >
-            Salvar alterações
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.25}
-              stroke="currentColor"
-              className="h-8 w-8"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 };
 
 type ExerciseCardProps = {
-  exercise: ParsedExercise;
-  onEdit: (exercise: ParsedExercise) => void;
+  exercise: ExerciseInWorkout;
+  onEdit: (exercise: ExerciseInWorkout) => void;
   onDelete: (id: string) => void;
   exerciseCategories: { category: string; exercises: Exercise[] }[];
 };
@@ -281,7 +239,7 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: Exerci
       <div className="flex flex-1 flex-col gap-2">
         <select
           className="text-md w-fit border-b-2 p-1 font-medium text-blue-600 focus:border-blue-600 focus-visible:outline-none"
-          value={exercise.exercise.id}
+          value={exercise.exerciseId}
           // onChange={e => {
           //   const newExercise = exerciseCategories
           //     .flatMap(group => group.exercises)
@@ -377,7 +335,7 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: Exerci
   );
 };
 
-export default EditWorkout;
+export default CreateWorkout;
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   const session = await getServerAuthSession(ctx);

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
 import AdminNavbar from "../components/AdminNavbar";
-import Error from "../components/Error";
+import ErrorPage from "../components/Error";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
 import Spinner from "../components/Spinner";
 import { env } from "../env/server.mjs";
@@ -23,7 +23,7 @@ const Dashboard = () => {
   const profiles = api.user.searchProfiles.useQuery(debouncedInput);
 
   if (profiles.error) {
-    return <Error />;
+    return <ErrorPage />;
   }
 
   return (

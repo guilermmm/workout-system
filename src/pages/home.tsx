@@ -3,7 +3,7 @@ import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "nex
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { Fragment } from "react";
-import Error from "../components/Error";
+import ErrorPage from "../components/Error";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
 import ProfilePic from "../components/ProfilePic";
 import Spinner from "../components/Spinner";
@@ -17,7 +17,7 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
   const workouts = api.workout.getWorkoutsBySession.useQuery();
 
   if (workouts.error) {
-    return <Error />;
+    return <ErrorPage />;
   }
 
   const weekDayWorkouts =

@@ -1,18 +1,19 @@
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import Error from "../../components/Error";
-import ProfilePic from "../../components/ProfilePic";
-import Spinner from "../../components/Spinner";
-import { env } from "../../env/server.mjs";
-import { getServerAuthSession } from "../../server/auth";
-import { capitalize, join } from "../../utils";
-import { api } from "../../utils/api";
+import ErrorPage from "../../../components/Error";
+import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
+import ProfilePic from "../../../components/ProfilePic";
+import Spinner from "../../../components/Spinner";
+import { env } from "../../../env/server.mjs";
+import { getServerAuthSession } from "../../../server/auth";
+import { capitalize, join } from "../../../utils";
+import { api } from "../../../utils/api";
 
 const Manage = () => {
   const router = useRouter();
 
-  const { id: profileId } = router.query as { id: string };
+  const { profileId } = router.query as { profileId: string };
 
   const profile = api.user.getProfileById.useQuery(profileId);
   const workouts = api.workout.getWorkouts.useQuery({ profileId });
@@ -24,7 +25,7 @@ const Manage = () => {
   });
 
   if (profile.error || workouts.error) {
-    return <Error />;
+    return <ErrorPage />;
   }
 
   return (
@@ -34,20 +35,7 @@ const Manage = () => {
           className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
           onClick={() => router.back()}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="h-6 w-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
-            />
-          </svg>
+          <ArrowUturnLeftIcon />
         </button>
         <div className="flex items-center">
           <div className="flex max-w-[calc(100vw_-_144px)] flex-row items-center justify-between text-right">
@@ -91,7 +79,10 @@ const Manage = () => {
       <div className="fixed bottom-0 right-0 p-4">
         <button
           className="flex w-full justify-center rounded-full bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600"
-          onClick={() => createWorkout.mutate({ profileId, name: "Novo", biSets: [] })}
+          onClick={() => {
+            // createWorkout.mutate({ profileId, name: "Novo", biSets: [], exercises: [] })
+            void router.push(`/manage/${profileId}/create`);
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

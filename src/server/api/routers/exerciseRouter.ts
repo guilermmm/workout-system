@@ -1,11 +1,22 @@
+import type { Exercise } from "@prisma/client";
 import { z } from "zod";
 import { adminProcedure, createTRPCRouter } from "../trpc";
 
 export const exerciseRouter = createTRPCRouter({
   getCategories: adminProcedure.query(async ({ ctx }) => {
     const exercises = await ctx.prisma.exercise.findMany({});
-    const categories = exercises.map(exercise => exercise.category);
-    return [...new Set(categories)];
+    const categories = exercises.reduce((acc, exercise) => {
+      const existingCategory = acc.find(item => item.category === exercise.category);
+
+      if (existingCategory) {
+        existingCategory.exercises.push(exercise);
+      } else {
+        acc.push({ category: exercise.category, exercises: [exercise] });
+      }
+
+      return acc;
+    }, [] as { category: string; exercises: Exercise[] }[]);
+    return categories;
   }),
 
   getExercises: adminProcedure.query(({ ctx }) => {

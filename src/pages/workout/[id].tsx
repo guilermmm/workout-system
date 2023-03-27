@@ -2,6 +2,7 @@ import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
+import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
 import Loading from "../../components/Loading";
 import { getServerAuthSession } from "../../server/auth";
 import { classList, useLocalStorage } from "../../utils";
@@ -25,20 +26,7 @@ const Workout = () => {
             className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
             onClick={() => router.back()}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="h-6 w-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
-              />
-            </svg>
+            <ArrowUturnLeftIcon />
           </button>
           <h1 className="ml-4 text-xl font-medium text-blue-700">
             Treino <span className="font-bold">{workout.data.name}</span>
