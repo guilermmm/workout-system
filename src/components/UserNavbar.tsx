@@ -1,7 +1,7 @@
-import UserGroupIcon from "./icons/UserGroupIcon";
 import ListBulletIcon from "./icons/ListBulletIcon";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import ProfileIcon from "./icons/ProfileIcon";
 
 const Navbar = () => {
   const router = useRouter();
@@ -16,7 +16,7 @@ const Navbar = () => {
       </Link>
       <Link href="/profile" className="grow">
         <div className="mb-4 mt-4 flex grow justify-center text-xl font-medium text-slate-800">
-          <UserGroupIcon />
+          <ProfileIcon />
         </div>
         {router.pathname === "/profile" && <div className="h-1 bg-gold-500" />}
       </Link>

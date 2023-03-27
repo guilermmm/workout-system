@@ -2,7 +2,7 @@ import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "nex
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
-import Navbar from "../components/Navbar";
+import UserNavbar from "../components/UserNavbar";
 import Spinner from "../components/Spinner";
 import { getServerAuthSession } from "../server/auth";
 import { Weekday } from "@prisma/client";
@@ -74,7 +74,7 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
           </div>
         )}
       </div>
-      <Navbar />
+      <UserNavbar />
     </div>
   );
 };

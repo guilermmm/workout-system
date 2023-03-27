@@ -3,7 +3,7 @@ import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { useState } from "react";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
-import Navbar from "../components/Navbar";
+import UserNavbar from "../components/UserNavbar";
 import { getServerAuthSession } from "../server/auth";
 import { api } from "../utils/api";
 import { dataSheetTranslation } from "../utils/consts";
@@ -85,7 +85,7 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
         </div>
       </div>
 
-      <Navbar />
+      <UserNavbar />
     </div>
   );
 };

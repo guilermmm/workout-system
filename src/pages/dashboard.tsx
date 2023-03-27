@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useDebounce } from "use-debounce";
 import Error from "../components/Error";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
-import Navbar from "../components/Navbar";
+import AdminNavbar from "../components/AdminNavbar";
 import Spinner from "../components/Spinner";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
@@ -85,7 +85,7 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-      <Navbar />
+      <AdminNavbar />
     </div>
   );
 };
