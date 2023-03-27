@@ -51,3 +51,11 @@ export const useLocalStorage = <T>(key: string, initialValue: T) => {
 
   return [storedValue, setValue] as const;
 };
+
+export async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export async function never() {
+  return new Promise(() => void 0);
+}

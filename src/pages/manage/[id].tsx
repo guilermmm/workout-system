@@ -1,8 +1,9 @@
 import type { GetServerSidePropsContext } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import Loading from "../../components/Loading";
+import Error from "../../components/Error";
+import ProfilePic from "../../components/ProfilePic";
+import Spinner from "../../components/Spinner";
 import { env } from "../../env/server.mjs";
 import { getServerAuthSession } from "../../server/auth";
 import { capitalize, join } from "../../utils";
@@ -22,10 +23,12 @@ const Manage = () => {
     },
   });
 
-  return profile.data == null || workouts.data == null ? (
-    <Loading />
-  ) : (
-    <div className="min-h-full bg-slate-100">
+  if (profile.error || workouts.error) {
+    return <Error />;
+  }
+
+  return (
+    <div className="flex min-h-full flex-col bg-slate-100">
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
         <button
           className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
@@ -46,50 +49,49 @@ const Manage = () => {
             />
           </svg>
         </button>
-        {profile.data && (
-          <div className="flex flex-row items-center justify-between text-right">
-            <div className="ml-4 flex flex-col">
-              <h1 className="text-xl text-blue-700">
-                Treinos ativos de{" "}
-                <span className="font-bold">{profile.data.user?.name?.split(" ").at(0)}</span>
-              </h1>
-              <p className="truncate font-medium text-slate-700">
-                {profile.data.email.split("@").at(0)}@...
-              </p>
+        <div className="flex items-center">
+          <div className="flex max-w-[calc(100vw_-_144px)] flex-row items-center justify-between text-right">
+            <div className="ml-4 flex flex-col truncate">
+              {profile.data && (
+                <>
+                  <h1 className="truncate text-xl text-blue-700">
+                    Treinos de <span className="font-bold">{profile.data.user?.name}</span>
+                  </h1>
+                  <p className="truncate font-medium text-slate-700">{profile.data.email}</p>
+                </>
+              )}
             </div>
-            <Image
-              src={profile.data.user?.image ?? ""}
-              alt={`Foto de perfil de ${profile.data.user?.name ?? profile.data.email}`}
-              width={48}
-              height={48}
-              className="ml-4 rounded-full"
-            />
           </div>
-        )}
+          <div className="ml-4">
+            {profile.isLoading ? (
+              <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
+            ) : (
+              <ProfilePic size="sm" user={profile.data.user} />
+            )}
+          </div>
+        </div>
       </div>
-      <div className="mt-8 flex flex-col flex-wrap items-stretch sm:flex-row">
-        {workouts.data.map(workout => (
-          <WorkoutCard
-            onDelete={() => {
-              void workouts.refetch();
-            }}
-            key={workout.id}
-            id={workout.id}
-            name={workout.name}
-            description={capitalize(join(workout.categories))}
-          />
-        ))}
-      </div>
+      {workouts.isLoading ? (
+        <div className="flex flex-1 items-center justify-center">
+          <Spinner className="h-64 w-64 fill-blue-600 text-gray-200" />
+        </div>
+      ) : (
+        <div className="mt-8 flex flex-col flex-wrap items-stretch sm:flex-row">
+          {workouts.data.map(workout => (
+            <WorkoutCard
+              onDelete={() => void workouts.refetch()}
+              key={workout.id}
+              id={workout.id}
+              name={workout.name}
+              description={capitalize(join(workout.categories))}
+            />
+          ))}
+        </div>
+      )}
       <div className="fixed bottom-0 right-0 p-4">
         <button
           className="flex w-full justify-center rounded-full bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600"
-          onClick={() => {
-            createWorkout.mutate({
-              profileId,
-              name: "Novo",
-              biSets: [],
-            });
-          }}
+          onClick={() => createWorkout.mutate({ profileId, name: "Novo", biSets: [] })}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
