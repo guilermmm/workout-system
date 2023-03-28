@@ -6,6 +6,9 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
+import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
+import PlusIcon from "../../../components/icons/PlusIcon";
+import TrashIcon from "../../../components/icons/TrashIcon";
 import Loading from "../../../components/Loading";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
@@ -204,60 +207,39 @@ const EditWorkout = () => {
             }}
           >
             Adicionar exercício
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.25}
-              stroke="currentColor"
-              className="h-8 w-8"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+            <PlusIcon className="h-8 w-8" />
           </button>
         </div>
       </div>
-      {changes && (
-        <div className="fixed bottom-0 right-0 p-4">
-          <button
-            className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600"
-            // onClick={() => {
-            //   const exercises = editedExercises.map(e => {
-            //     if (e.id.length == 10) {
-            //       e.id = "";
-            //     }
-            //     return e;
-            //   });
+      {changes ||
+        (true && (
+          <div className="fixed bottom-0 right-0 p-4">
+            <button
+              className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600"
+              // onClick={() => {
+              //   const exercises = editedExercises.map(e => {
+              //     if (e.id.length == 10) {
+              //       e.id = "";
+              //     }
+              //     return e;
+              //   });
 
-            //   saveWorkout.mutate({
-            //     id,
-            //     name: workout.data.name,
-            //     exercises: {
-            //       create: [],
-            //       update: [],
-            //       delete: []
-            //     }
-            //   });
-            // }}
-          >
-            Salvar alterações
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.25}
-              stroke="currentColor"
-              className="h-8 w-8"
+              //   saveWorkout.mutate({
+              //     id,
+              //     name: workout.data.name,
+              //     exercises: {
+              //       create: [],
+              //       update: [],
+              //       delete: []
+              //     }
+              //   });
+              // }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
+              Salvar alterações
+              <CheckCircleIcon className="h-8 w-8" />
+            </button>
+          </div>
+        ))}
     </div>
   );
 };
@@ -354,20 +336,7 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, categories }: ExerciseCardPr
           className="ml-2 rounded-full p-2 text-red-400 transition-colors hover:bg-red-500 hover:text-white"
           onClick={() => onDelete(exercise.id)}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="h-6 w-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-            />
-          </svg>
+          <TrashIcon className="h-6 w-6" />
         </button>
       </div>
     </div>

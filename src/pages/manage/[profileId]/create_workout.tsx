@@ -1,17 +1,23 @@
 import type { Exercise, ExerciseInWorkout } from "@prisma/client";
-import type { Simplify } from "@trpc/server";
+import { Method } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import ErrorPage from "../../../components/Error";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
+import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
+import PlusIcon from "../../../components/icons/PlusIcon";
+import TrashIcon from "../../../components/icons/TrashIcon";
 import ProfilePic from "../../../components/ProfilePic";
 import Spinner from "../../../components/Spinner";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { api } from "../../../utils/api";
+import type { BiSets, ParseJsonValues } from "../../../utils/types";
 
-type NewExercise = Simplify<Omit<ExerciseInWorkout, "createdAt" | "updatedAt">>;
+type NewExercise = ParseJsonValues<
+  Omit<ExerciseInWorkout, "id" | "workoutId" | "createdAt" | "updatedAt">
+>;
 
 const CreateWorkout = () => {
   const router = useRouter();
@@ -25,6 +31,8 @@ const CreateWorkout = () => {
   const { mutate } = api.workout.create.useMutation({ onSuccess: () => router.back() });
 
   const [exercises, setExercises] = useState<NewExercise[]>([]);
+
+  const [biSets, setBiSets] = useState<BiSets>([]);
 
   const [name, setName] = useState("");
 
@@ -49,7 +57,7 @@ const CreateWorkout = () => {
               {profile.data && (
                 <>
                   <h1 className="truncate text-xl text-blue-700">
-                    Treinos de <span className="font-bold">{profile.data.user?.name}</span>
+                    Criar treino para <span className="font-bold">{profile.data.user?.name}</span>
                   </h1>
                   <p className="truncate font-medium text-slate-700">{profile.data.email}</p>
                 </>
@@ -67,16 +75,15 @@ const CreateWorkout = () => {
       </div>
       <div className="my-4 mx-2 flex">
         <div>
-          <h1 className="text-xl font-medium text-slate-800">
-            Treino{" "}
+          <h1 className="text-slate-800">
+            <span className="text-xl font-medium">Treino </span>
             <input
               type="text"
               placeholder="Nome do treino"
-              className="w-20 text-center"
+              className="rounded-md border-2 px-3 py-1 text-lg focus-visible:border-blue-600 focus-visible:outline-none"
               onChange={e => setName(e.target.value)}
             />
           </h1>
-          <div className={"h-1 bg-gold-500"} />
         </div>
         {/* {editingName ? (
           <button
@@ -131,17 +138,14 @@ const CreateWorkout = () => {
         {categories.isLoading ? (
           <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
         ) : (
-          exercises.map(exercise => (
+          exercises.map((exercise, index) => (
             <ExerciseCard
-              key={exercise.id}
+              key={index}
+              id={index}
               exercise={exercise}
-              onEdit={editedExercise => {
-                setExercises(exercises.map(e => (e.id === exercise.id ? editedExercise : e)));
-              }}
-              onDelete={id => {
-                setExercises(exercises.filter(e => e.id !== id));
-              }}
-              exerciseCategories={categories.data}
+              onEdit={it => setExercises(exercises.map((e, i) => (i === index ? it : e)))}
+              onDelete={id => setExercises(exercises.filter((_, i) => i !== id))}
+              categories={categories.data}
             />
           ))
         )}
@@ -149,73 +153,25 @@ const CreateWorkout = () => {
           <button
             className="flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600"
             onClick={() => {
-              // setEditedExercises([
-              //   ...editedExercises,
-              //   {
-              //     id: cuid(),
-              //     workoutId: id,
-              //     description: "",
-              //     exerciseId: "",
-              //     exercise: {
-              //       id: "",
-              //       name: "",
-              //       category: "",
-              //     },
-              //   },
-              // ]);
+              setExercises([
+                ...exercises,
+                { exerciseId: "", sets: [], description: "", method: Method.Standard },
+              ]);
             }}
           >
             Adicionar exercício
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.25}
-              stroke="currentColor"
-              className="h-8 w-8"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+            <PlusIcon className="h-8 w-8" />
           </button>
         </div>
       </div>
       <div className="fixed bottom-0 right-0 p-4">
         <button
-          className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600"
-          // onClick={() => {
-          //   const exercises = editedExercises.map(e => {
-          //     if (e.id.length == 10) {
-          //       e.id = "";
-          //     }
-          //     return e;
-          //   });
-
-          //   saveWorkout.mutate({
-          //     id,
-          //     name: workout.data.name,
-          //     exercises: {
-          //       create: [],
-          //       update: [],
-          //       delete: []
-          //     }
-          //   });
-          // }}
+          className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
+          onClick={() => mutate({ name, profileId, exercises, biSets })}
+          disabled={name === ""}
         >
           Salvar treino
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.25}
-            stroke="currentColor"
-            className="h-8 w-8"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+          {name !== "" && <CheckCircleIcon className="h-8 w-8" />}
         </button>
       </div>
     </div>
@@ -223,36 +179,34 @@ const CreateWorkout = () => {
 };
 
 type ExerciseCardProps = {
+  id: number;
   exercise: NewExercise;
   onEdit: (exercise: NewExercise) => void;
-  onDelete: (id: string) => void;
-  exerciseCategories: { category: string; exercises: Exercise[] }[];
+  onDelete: (index: number) => void;
+  categories: { category: string; exercises: Exercise[] }[];
 };
 
-const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: ExerciseCardProps) => {
+const ExerciseCard = ({ id, exercise, onEdit, onDelete, categories }: ExerciseCardProps) => {
   return (
-    <div
-      className="m-2 flex justify-between gap-4 rounded-lg bg-white p-4 shadow-md"
-      key={exercise.id}
-    >
+    <div className="m-2 flex justify-between gap-4 rounded-lg bg-white p-4 shadow-md">
       <div className="flex flex-1 flex-col gap-2">
         <select
           className="text-md w-fit border-b-2 p-1 font-medium text-blue-600 focus:border-blue-600 focus-visible:outline-none"
           value={exercise.exerciseId}
-          // onChange={e => {
-          //   const newExercise = exerciseCategories
-          //     .flatMap(group => group.exercises)
-          //     .find(exercise => exercise.id === e.target.value);
+          onChange={e => {
+            const newExercise = categories
+              .flatMap(group => group.exercises)
+              .find(exercise => exercise.id === e.target.value);
 
-          //   if (newExercise) {
-          //     onEdit({ ...exercise, exercise: newExercise, exerciseId: newExercise.id });
-          //   }
-          // }}
+            if (newExercise) {
+              onEdit({ ...exercise, exerciseId: newExercise.id });
+            }
+          }}
         >
           <option className="font-medium text-slate-600" value="" disabled>
             Selecione um exercício
           </option>
-          {exerciseCategories.map(group => (
+          {categories.map(group => (
             <optgroup
               label={group.category}
               key={group.category}
@@ -312,22 +266,9 @@ const ExerciseCard = ({ exercise, onEdit, onDelete, exerciseCategories }: Exerci
         </div>
         <button
           className="ml-2 rounded-full p-2 text-red-400 transition-colors hover:bg-red-500 hover:text-white"
-          onClick={() => onDelete(exercise.id)}
+          onClick={() => onDelete(id)}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="h-6 w-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-            />
-          </svg>
+          <TrashIcon className="h-6 w-6" />
         </button>
       </div>
     </div>
