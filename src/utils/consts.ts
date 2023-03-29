@@ -39,4 +39,4 @@ export const dataSheetTranslation = {
   leftArm: "Braço Esq.",
   rightCalf: "Panturrilha Dir.",
   leftCalf: "Panturrilha Esq.",
-};
+} as const;

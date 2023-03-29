@@ -8,6 +8,7 @@ import CheckCircleIcon from "../../components/icons/CheckCircleIcon";
 import CheckIcon from "../../components/icons/CheckIcon";
 import ClockIcon from "../../components/icons/ClockIcon";
 import Loading from "../../components/Loading";
+import Spinner from "../../components/Spinner";
 import { getServerAuthSession } from "../../server/auth";
 import { classList, useLocalStorage } from "../../utils";
 import { api } from "../../utils/api";
@@ -20,10 +21,8 @@ const Workout = () => {
 
   const workout = api.workout.getByIdBySession.useQuery(id);
 
-  return workout.data == null ? (
-    <Loading />
-  ) : (
-    <div className="min-h-full bg-slate-100">
+  return (
+    <div className="flex min-h-full flex-col bg-slate-100">
       <div className="flex max-w-full items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
           <button
@@ -33,23 +32,29 @@ const Workout = () => {
             <ArrowUturnLeftIcon className="h-6 w-6" />
           </button>
           <h1 className="ml-4 text-xl font-medium text-blue-700">
-            Treino <span className="font-bold">{workout.data.name}</span>
+            Treino <span className="font-bold">{workout.data?.name}</span>
           </h1>
         </div>
       </div>
-      <div>
-        {workout.data.exercises.map(exercise => {
-          return (
-            <ExerciseCard
-              key={exercise.id}
-              description={exercise.description}
-              exercise={exercise.exercise}
-              sets={exercise.sets}
-            />
-          );
-        })}
+      <div className="grow">
+        {workout.isLoading ? (
+          <div className="flex h-full items-center justify-center overflow-y-scroll">
+            <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
+          </div>
+        ) : (
+          workout.data?.exercises.map(exercise => {
+            return (
+              <ExerciseCard
+                key={exercise.id}
+                description={exercise.description}
+                exercise={exercise.exercise}
+                sets={exercise.sets}
+              />
+            );
+          })
+        )}
       </div>
-      <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-md">
+      <div className="bg-white p-4 shadow-md">
         <Footer id={id} />
       </div>
     </div>
