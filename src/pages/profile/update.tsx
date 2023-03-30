@@ -1,16 +1,18 @@
-import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import type { GetServerSidePropsContext } from "next";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import ErrorPage from "../../components/Error";
 import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
 import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
+import Spinner from "../../components/Spinner";
 import UserNavbar from "../../components/UserNavbar";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 import { dataSheetTranslation } from "../../utils/consts";
 import type { ParsedDatasheet } from "../../utils/types";
 
-const UpdateMeasure = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+const UpdateMeasure = () => {
   const router = useRouter();
 
   const [editedDataSheet, setEditedDataSheet] = useState<ParsedDatasheet>(
@@ -23,6 +25,10 @@ const UpdateMeasure = ({ user }: InferGetServerSidePropsType<typeof getServerSid
   const changed = Object.values(editedDataSheet).every(value => value !== 0);
 
   const createDataSheet = api.user.createDatasheet.useMutation();
+
+  createDataSheet.isSuccess && router.push("/profile");
+
+  if (createDataSheet.isError) return <ErrorPage />;
 
   return (
     <div className="flex h-full flex-col bg-slate-100">
@@ -51,10 +57,9 @@ const UpdateMeasure = ({ user }: InferGetServerSidePropsType<typeof getServerSid
             return (
               <div
                 key={key}
-                className={
-                  "flex justify-between rounded-lg bg-white p-4 shadow-md " +
-                  (index >= 6 && "col-span-2")
-                }
+                className={`flex justify-between rounded-lg bg-white p-4 shadow-md ${
+                  index >= 6 ? "col-span-2" : ""
+                }`}
               >
                 <h2 className="text-lg font-medium text-slate-800">
                   {dataSheetTranslation[key as keyof typeof dataSheetTranslation]}
@@ -86,7 +91,11 @@ const UpdateMeasure = ({ user }: InferGetServerSidePropsType<typeof getServerSid
               createDataSheet.mutate(editedDataSheet);
             }}
           >
-            Salvar
+            {createDataSheet.isLoading ? (
+              <Spinner className="h-7 w-7 fill-blue-600 text-gray-200" />
+            ) : (
+              "Salvar"
+            )}
           </button>
         </div>
       </div>

@@ -37,7 +37,7 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
       <div className="grow">
         <div className="mt-4">
           <OptionCard title="Histórico de treinos" href="#" />
-          <OptionCard title="Histórico de medidas" href="/profile/measure_history" />
+          <OptionCard title="Histórico de medidas" href="/profile/datasheet_history" />
           <OptionCard title="Atualizar medidas" href="/profile/update" />
         </div>
         <div>
@@ -56,7 +56,7 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
                   </h2>
                   <h2 className="text-lg font-medium text-slate-800">
                     {latestDataSheet.data?.[key as keyof typeof dataSheetTranslation] ?? "-"}
-                    {key !== "weight" ? "cm" : "kg"}
+                    {key !== "weight" ? " cm" : " kg"}
                   </h2>
                 </div>
               );
