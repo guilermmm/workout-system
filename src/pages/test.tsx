@@ -1,3 +1,5 @@
-import Loading from "../components/Loading";
+import ErrorPage from "../components/ErrorPage";
 
-export default Loading;
+export default function Test() {
+  return <ErrorPage />;
+}
