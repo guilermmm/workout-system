@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
 import AdminNavbar from "../components/AdminNavbar";
-import ErrorPage from "../components/Error";
+import ErrorPage from "../components/ErrorPage";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
 import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
 import Spinner from "../components/Spinner";

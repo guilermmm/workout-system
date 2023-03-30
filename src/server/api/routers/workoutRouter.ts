@@ -71,20 +71,29 @@ export const workoutRouter = createTRPCRouter({
               .or(z.array(z.object({ time: z.number(), weight: z.number() }))),
             description: z.string().nullish(),
             method: z.nativeEnum(Method),
+            index: z.number(),
           }),
         ),
-        biSets: z.array(z.tuple([z.string(), z.string()])),
+        biSets: z.array(z.tuple([z.number(), z.number()])),
       }),
     )
-    .mutation(({ ctx, input: { name, profileId, biSets, exercises } }) => {
-      return ctx.prisma.workout.create({
+    .mutation(async ({ ctx, input: { name, profileId, biSets, exercises } }) => {
+      const workout = await ctx.prisma.workout.create({
         data: {
           name,
-          biSets,
+          biSets: [],
           profile: { connect: { id: profileId } },
           exercises: { createMany: { data: exercises } },
         },
+        include: { exercises: true },
       });
+
+      const biSetsData = biSets.map(([index1, index2]) => [
+        workout.exercises.find(exercise => exercise.index === index1)!.id,
+        workout.exercises.find(exercise => exercise.index === index2)!.id,
+      ]);
+
+      await ctx.prisma.workout.update({ where: { id: workout.id }, data: { biSets: biSetsData } });
     }),
 
   update: adminProcedure
@@ -101,6 +110,7 @@ export const workoutRouter = createTRPCRouter({
                 .or(z.array(z.object({ time: z.number(), weight: z.number() }))),
               description: z.string().nullish(),
               method: z.nativeEnum(Method),
+              index: z.number(),
             }),
           ),
           update: z.array(
@@ -112,6 +122,7 @@ export const workoutRouter = createTRPCRouter({
                 .or(z.array(z.object({ time: z.number(), weight: z.number() }))),
               description: z.string().nullish(),
               method: z.nativeEnum(Method),
+              index: z.number(),
             }),
           ),
           delete: z.array(z.string()),

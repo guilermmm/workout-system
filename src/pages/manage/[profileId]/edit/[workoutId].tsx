@@ -1,35 +1,39 @@
 import type { Exercise, ExerciseInWorkout } from "@prisma/client";
-import structuredClone from "@ungap/structured-clone";
 import deepEqual from "deep-equal";
 import type { GetServerSidePropsContext } from "next";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useMemo, useState } from "react";
-import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
-import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
-import PlusIcon from "../../../components/icons/PlusIcon";
-import TrashIcon from "../../../components/icons/TrashIcon";
-import Loading from "../../../components/Loading";
-import { env } from "../../../env/server.mjs";
-import { getServerAuthSession } from "../../../server/auth";
-import { api } from "../../../utils/api";
-import type { ParseJsonValues } from "../../../utils/types";
+import { useState } from "react";
+import ErrorPage from "../../../../components/ErrorPage";
+import ArrowUturnLeftIcon from "../../../../components/icons/ArrowUturnLeftIcon";
+import CheckCircleIcon from "../../../../components/icons/CheckCircleIcon";
+import PlusIcon from "../../../../components/icons/PlusIcon";
+import TrashIcon from "../../../../components/icons/TrashIcon";
+import Spinner from "../../../../components/Spinner";
+import { env } from "../../../../env/server.mjs";
+import { getServerAuthSession } from "../../../../server/auth";
+import { api } from "../../../../utils/api";
+import type { ParseJsonValues } from "../../../../utils/types";
 
 const EditWorkout = () => {
   const router = useRouter();
 
-  const { id } = router.query as { id: string };
+  const { profileId, workoutId } = router.query as { profileId: string; workoutId: string };
 
-  const workout = api.workout.getById.useQuery(id, {
+  const profile = api.user.getProfileById.useQuery(profileId);
+
+  const categories = api.exercise.getCategories.useQuery();
+
+  const workout = api.workout.getById.useQuery(workoutId, {
     onSuccess: data => {
       if (data) {
-        setEditedExercises(structuredClone(data.exercises));
+        router.back();
       }
     },
     refetchOnWindowFocus: false,
   });
 
-  // const saveWorkout = api.workout.updateWorkout.useMutation({ onSuccess: () => workout.refetch() });
+  const { mutate } = api.workout.update.useMutation({ onSuccess: () => workout.refetch() });
 
   const [editedExercises, setEditedExercises] = useState<
     NonNullable<typeof workout.data>["exercises"]
@@ -37,37 +41,19 @@ const EditWorkout = () => {
 
   const [remove, setRemove] = useState<string[]>([]);
 
+  const [biSets, setBiSets] = useState<[number, number][]>([]);
+
+  const [name, setName] = useState("");
+
   const changes =
     !deepEqual(workout.data?.exercises, editedExercises) &&
     editedExercises.every(exercise => exercise.exercise.id !== "");
 
-  const exercises = api.exercise.getMany.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-  });
+  if (profile.error || categories.error || workout.error) {
+    return <ErrorPage />;
+  }
 
-  const exerciseCategories = useMemo(
-    () =>
-      exercises.data?.reduce((acc, exercise) => {
-        const category = exercise.category;
-        const group = acc.find(group => group.category === category);
-        if (group) {
-          group.exercises.push(exercise);
-        } else {
-          acc.push({ category, exercises: [exercise] });
-        }
-        return acc;
-      }, [] as { category: string; exercises: Exercise[] }[]),
-    [exercises.data],
-  );
-
-  // const [editingName, setEditingName] = useState(false);
-  // const [workoutName, setWorkoutName] = useState(workout.data?.name ?? "");
-
-  // const cuid = init({ length: 10 });
-
-  return workout.data == null || exercises.data == null ? (
-    <Loading />
-  ) : (
+  return (
     <div className="min-h-full bg-slate-100">
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
         <div className="flex flex-row items-center justify-between">
@@ -105,18 +91,13 @@ const EditWorkout = () => {
       <div className="my-4 mx-2 flex">
         <div>
           <h1 className="text-xl font-medium text-slate-800">
-            Treino{" "}
-            {/* {editingName ? (
-              <input
-                type="text"
-                placeholder={workout.data.name}
-                className="w-20 text-center"
-                onChange={e => setWorkoutName(e.target.value)}
-              />
-            ) : (
-              workout.data.name
-            )} */}
-            {workout.data.name}
+            <span className="text-xl font-medium">Treino </span>
+            <input
+              type="text"
+              placeholder="Nome do treino"
+              className="rounded-md border-2 px-3 py-1 text-lg focus-visible:border-blue-600 focus-visible:outline-none"
+              onChange={e => setName(e.target.value)}
+            />
           </h1>
           <div className={"h-1 bg-gold-500"} />
         </div>
@@ -170,22 +151,26 @@ const EditWorkout = () => {
         )} */}
       </div>
       <div>
-        {editedExercises.map(exercise => (
-          <ExerciseCard
-            key={exercise.id}
-            exercise={exercise}
-            onEdit={editedExercise => {
-              setEditedExercises(
-                editedExercises.map(e => (e.id === exercise.id ? editedExercise : e)),
-              );
-            }}
-            onDelete={id => {
-              setEditedExercises(editedExercises.filter(e => e.id !== id));
-              setRemove([...remove, id]);
-            }}
-            categories={exerciseCategories!}
-          />
-        ))}
+        {categories.isLoading ? (
+          <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
+        ) : (
+          editedExercises.map(exercise => (
+            <ExerciseCard
+              key={exercise.id}
+              exercise={exercise}
+              onEdit={editedExercise => {
+                setEditedExercises(
+                  editedExercises.map(e => (e.id === exercise.id ? editedExercise : e)),
+                );
+              }}
+              onDelete={id => {
+                setEditedExercises(editedExercises.filter(e => e.id !== id));
+                setRemove([...remove, id]);
+              }}
+              categories={categories.data}
+            />
+          ))
+        )}
         <div className="flex flex-row items-center justify-center">
           <button
             className="flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600"

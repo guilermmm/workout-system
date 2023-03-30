@@ -5,21 +5,27 @@ import { useState } from "react";
 import Loading from "../components/Loading";
 
 const Index = () => {
-  const { data: session, status } = useSession();
+  const session = useSession();
 
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
 
-  if (session?.user.role === "admin") {
-    void router.push("/dashboard");
-  } else if (session?.user.role === "user") {
-    void router.push("/home");
+  if (session.status === "loading" || loading) {
+    return <Loading />;
   }
 
-  return status === "loading" || loading ? (
-    <Loading />
-  ) : (
+  if (session.data != null) {
+    if (session.data.user.role === "admin") {
+      void router.push("/dashboard");
+    } else if (session.data.user.role === "user") {
+      void router.push("/home");
+    }
+
+    return <Loading />;
+  }
+
+  return (
     <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400">
       <div className="flex h-64 w-64 items-center justify-center bg-white text-6xl font-bold">
         LOGO

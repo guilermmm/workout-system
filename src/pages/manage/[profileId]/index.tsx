@@ -1,7 +1,7 @@
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import ErrorPage from "../../../components/Error";
+import ErrorPage from "../../../components/ErrorPage";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
 import PencilSquareIcon from "../../../components/icons/PencilSquareIcon";
 import PlusIcon from "../../../components/icons/PlusIcon";
@@ -39,8 +39,8 @@ const Manage = () => {
             <div className="ml-4 flex flex-col truncate">
               {profile.data && (
                 <>
-                  <h1 className="truncate text-xl text-blue-700">
-                    Treinos de <span className="font-bold">{profile.data.user?.name}</span>
+                  <h1 className="truncate text-xl font-bold text-blue-700">
+                    {profile.data.user?.name}
                   </h1>
                   <p className="truncate font-medium text-slate-700">{profile.data.email}</p>
                 </>

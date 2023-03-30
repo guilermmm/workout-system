@@ -3,7 +3,7 @@ import { Method } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import ErrorPage from "../../../components/Error";
+import ErrorPage from "../../../components/ErrorPage";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
 import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
 import PlusIcon from "../../../components/icons/PlusIcon";
@@ -13,10 +13,11 @@ import Spinner from "../../../components/Spinner";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { api } from "../../../utils/api";
-import type { BiSets, ParseJsonValues } from "../../../utils/types";
+import { methodTranslation } from "../../../utils/consts";
+import type { ParseJsonValues } from "../../../utils/types";
 
 type NewExercise = ParseJsonValues<
-  Omit<ExerciseInWorkout, "id" | "workoutId" | "createdAt" | "updatedAt">
+  Omit<ExerciseInWorkout, "id" | "workoutId" | "createdAt" | "updatedAt" | "index">
 >;
 
 const CreateWorkout = () => {
@@ -32,7 +33,7 @@ const CreateWorkout = () => {
 
   const [exercises, setExercises] = useState<NewExercise[]>([]);
 
-  const [biSets, setBiSets] = useState<BiSets>([]);
+  const [biSets, setBiSets] = useState<[number, number][]>([]);
 
   const [name, setName] = useState("");
 
@@ -85,54 +86,6 @@ const CreateWorkout = () => {
             />
           </h1>
         </div>
-        {/* {editingName ? (
-          <button
-            onClick={() => {
-              if (workoutName !== "" && workoutName !== workout.data!.name)
-                changeName.mutate({ id: workout.data!.id, name: workoutName });
-
-              setEditingName(false);
-            }}
-            className="ml-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.25}
-              stroke="currentColor"
-              className="h-6 w-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </button>
-        ) : (
-          <button
-            className="ml-2"
-            onClick={() => {
-              setEditingName(true);
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="h-6 w-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-              />
-            </svg>
-          </button>
-        )} */}
       </div>
       <div>
         {categories.isLoading ? (
@@ -155,7 +108,12 @@ const CreateWorkout = () => {
             onClick={() => {
               setExercises([
                 ...exercises,
-                { exerciseId: "", sets: [], description: "", method: Method.Standard },
+                {
+                  exerciseId: "",
+                  sets: [],
+                  description: "",
+                  method: Method.Standard,
+                },
               ]);
             }}
           >
@@ -167,7 +125,14 @@ const CreateWorkout = () => {
       <div className="fixed bottom-0 right-0 p-4">
         <button
           className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
-          onClick={() => mutate({ name, profileId, exercises, biSets })}
+          onClick={() =>
+            mutate({
+              name,
+              profileId,
+              exercises: exercises.map((e, i) => ({ ...e, index: i })),
+              biSets,
+            })
+          }
           disabled={name === ""}
         >
           Salvar treino
@@ -187,39 +152,78 @@ type ExerciseCardProps = {
 };
 
 const ExerciseCard = ({ id, exercise, onEdit, onDelete, categories }: ExerciseCardProps) => {
-  return (
-    <div className="m-2 flex justify-between gap-4 rounded-lg bg-white p-4 shadow-md">
-      <div className="flex flex-1 flex-col gap-2">
-        <select
-          className="text-md w-fit border-b-2 p-1 font-medium text-blue-600 focus:border-blue-600 focus-visible:outline-none"
-          value={exercise.exerciseId}
-          onChange={e => {
-            const newExercise = categories
-              .flatMap(group => group.exercises)
-              .find(exercise => exercise.id === e.target.value);
+  const [type, setType] = useState<"reps" | "time">("reps");
 
-            if (newExercise) {
-              onEdit({ ...exercise, exerciseId: newExercise.id });
-            }
-          }}
-        >
-          <option className="font-medium text-slate-600" value="" disabled>
-            Selecione um exercício
-          </option>
-          {categories.map(group => (
-            <optgroup
-              label={group.category}
-              key={group.category}
-              className="my-2 block text-sm text-slate-700/70"
-            >
-              {group.exercises.map(e => (
-                <option key={e.id} className="font-medium text-blue-600" value={e.id}>
-                  {e.name}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+  const [sets, setSets] = useState([{ reps: 0, weight: 0, time: 0 }]);
+
+  const updateSets = (newSets: typeof sets) => {
+    setSets(newSets);
+
+    if (type === "reps") {
+      onEdit({ ...exercise, sets: newSets.map(set => ({ reps: set.reps, weight: set.weight })) });
+    } else {
+      onEdit({ ...exercise, sets: newSets.map(set => ({ time: set.time, weight: set.weight })) });
+    }
+  };
+
+  const updateType = (newType: typeof type) => {
+    setType(newType);
+
+    if (newType === "reps") {
+      onEdit({ ...exercise, sets: sets.map(set => ({ reps: set.reps, weight: set.weight })) });
+    } else {
+      onEdit({ ...exercise, sets: sets.map(set => ({ time: set.time, weight: set.weight })) });
+    }
+  };
+
+  return (
+    <div className="m-2 flex flex-col justify-between gap-4 rounded-lg bg-white p-4 shadow-md">
+      <div className="flex flex-1 flex-col gap-2">
+        <div className="flex flex-row items-center justify-between gap-2">
+          <select
+            className="text-md w-fit border-b-2 p-1 font-medium text-blue-600 focus:border-blue-600 focus-visible:outline-none"
+            value={exercise.exerciseId}
+            onChange={e => {
+              const newExercise = categories
+                .flatMap(group => group.exercises)
+                .find(exercise => exercise.id === e.target.value);
+
+              if (newExercise) {
+                onEdit({ ...exercise, exerciseId: newExercise.id });
+              }
+            }}
+          >
+            <option className="font-medium text-slate-600" value="" disabled>
+              Selecione um exercício
+            </option>
+            {categories.map(group => (
+              <optgroup
+                label={group.category}
+                key={group.category}
+                className="my-2 block text-sm text-slate-700/70"
+              >
+                {group.exercises.map(e => (
+                  <option key={e.id} className="font-medium text-blue-600" value={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <select className="text-md w-fit border-b-2 p-1 font-medium focus:border-blue-600 focus-visible:outline-none">
+            {Object.values(Method).map(method => (
+              <option key={method} value={method} className="text-sm font-medium">
+                {methodTranslation[method]}
+              </option>
+            ))}
+          </select>
+          <button
+            className="ml-2 rounded-full p-2 text-red-400 transition-colors hover:bg-red-500 hover:text-white"
+            onClick={() => onDelete(id)}
+          >
+            <TrashIcon className="h-6 w-6" />
+          </button>
+        </div>
         <textarea
           className="block w-full resize-none border-b-2 p-1 text-sm text-slate-800 focus:border-blue-600 focus:outline-none"
           placeholder="Descrição"
@@ -229,47 +233,98 @@ const ExerciseCard = ({ id, exercise, onEdit, onDelete, categories }: ExerciseCa
         />
       </div>
       <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-2 text-sm">
-          <label className="rounded-md px-2 py-1 font-medium shadow-md">
-            {/* <input
-              type="number"
-              className="w-10 rounded-md border-2 text-center"
-              value={exercise.sets}
-              onChange={e => onEdit({ ...exercise, sets: Number(e.target.value) })}
-              min={0}
-            /> */}
-            <span className="ml-2 text-slate-700">séries</span>
+        <div className="flex flex-col gap-2">
+          <div className="inline-flex">
+            <span className="mr-3 text-sm font-medium text-gray-900">Repetições</span>
+            <label className="relative cursor-pointer items-center">
+              <input
+                type="checkbox"
+                checked={type === "time"}
+                onChange={e => updateType(e.target.checked ? "time" : "reps")}
+                className="peer sr-only"
+              />
+              <div className="peer h-6 w-11 rounded-full bg-blue-600 after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300" />
+            </label>
+            <span className="ml-3 text-sm font-medium text-gray-900">Tempo</span>
+          </div>
+          <label>
+            Bi-Set
+            <select></select>
           </label>
-          {/* {exercise.exercise.hasReps ? (
-            <label className="rounded-md px-2 py-1 font-medium shadow-md">
-              <input
-                type="number"
-                className="w-10 rounded-md border-2 text-center"
-                value={exercise.reps}
-                onChange={e => onEdit({ ...exercise, reps: Number(e.target.value) })}
-                min={0}
-              />
-              <span className="ml-2 text-slate-700">repetições</span>
-            </label>
-          ) : (
-            <label className="rounded-md px-2 py-1 font-medium shadow-md">
-              <input
-                type="number"
-                className="w-10 rounded-md border-2 text-center"
-                value={exercise.time}
-                onChange={e => onEdit({ ...exercise, time: Number(e.target.value) })}
-                min={0}
-              />
-              <span className="ml-2 text-slate-700">segundos</span>
-            </label>
-          )} */}
         </div>
-        <button
-          className="ml-2 rounded-full p-2 text-red-400 transition-colors hover:bg-red-500 hover:text-white"
-          onClick={() => onDelete(id)}
-        >
-          <TrashIcon className="h-6 w-6" />
-        </button>
+
+        <div className="flex flex-col gap-2 text-sm">
+          <div className="flex flex-col rounded-md px-2 py-1 font-medium shadow-md">
+            <span className="text-slate-700">Séries</span>
+            {sets.map((set, index) => (
+              <div
+                className="m-0.5 flex flex-row items-center gap-2 rounded bg-gray-100 p-0.5 shadow-md"
+                key={index}
+              >
+                {type === "reps" ? (
+                  <>
+                    <input
+                      type="number"
+                      className="w-10 rounded-md border-2 text-center"
+                      value={set.reps}
+                      onChange={e => {
+                        const newSets = [...sets];
+
+                        newSets[index]!.reps = Number(e.target.value);
+
+                        updateSets(newSets);
+                      }}
+                      min={0}
+                    />
+                    <span className="mr-2 text-slate-700">reps</span>
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="number"
+                      className="w-10 rounded-md border-2 text-center"
+                      value={set.time}
+                      onChange={e => {
+                        const newSets = [...sets];
+
+                        newSets[index]!.time = Number(e.target.value);
+
+                        updateSets(newSets);
+                      }}
+                      min={0}
+                    />
+                    <span className="mr-2 text-slate-700">seg</span>
+                  </>
+                )}
+                <input
+                  type="number"
+                  className="w-10 rounded-md border-2 text-center"
+                  value={set.weight}
+                  onChange={e => {
+                    const newSets = [...sets];
+                    newSets[index]!.weight = Number(e.target.value);
+                    updateSets(newSets);
+                  }}
+                  min={0}
+                />
+                <span className="mr-2 text-slate-700">kg</span>
+              </div>
+            ))}
+            <button
+              className="m-0.5 flex flex-row items-center justify-center gap-2 rounded bg-gray-100 p-0.5 shadow-md"
+              onClick={() => {
+                const lastSet = sets.at(-1);
+                if (lastSet) {
+                  updateSets([...sets, { ...lastSet }]);
+                } else {
+                  updateSets([{ reps: 0, weight: 0, time: 0 }]);
+                }
+              }}
+            >
+              <PlusIcon className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
