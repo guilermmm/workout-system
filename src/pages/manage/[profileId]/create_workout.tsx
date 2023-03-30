@@ -158,20 +158,20 @@ const CreateWorkout = () => {
                   categories={categories.data}
                 />
               );
-            } else {
-              const exercise = group;
-              return (
-                <ExerciseCard
-                  key={exercise.id}
-                  exercise={exercise}
-                  setBiSets={setBiSets}
-                  onEdit={it => setExercises(exercises.map(e => (e.id === exercise.id ? it : e)))}
-                  onDelete={() => setExercises(exercises.filter(e => e.id !== exercise.id))}
-                  categories={categories.data}
-                  otherExercises={exercises.filter(({ id }) => id !== exercise.id)}
-                />
-              );
             }
+
+            const exercise = group;
+            return (
+              <ExerciseCard
+                key={exercise.id}
+                exercise={exercise}
+                setBiSets={setBiSets}
+                onEdit={it => setExercises(exercises.map(e => (e.id === exercise.id ? it : e)))}
+                onDelete={() => setExercises(exercises.filter(e => e.id !== exercise.id))}
+                categories={categories.data}
+                otherExercises={exercises.filter(({ id }) => id !== exercise.id)}
+              />
+            );
           })
         )}
         <div className="flex flex-row items-center justify-center">

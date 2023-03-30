@@ -1,4 +1,4 @@
-import type { Exercise } from "@prisma/client";
+import type { Exercise, ExerciseInWorkout } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -7,7 +7,6 @@ import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
 import CheckCircleIcon from "../../components/icons/CheckCircleIcon";
 import CheckIcon from "../../components/icons/CheckIcon";
 import ClockIcon from "../../components/icons/ClockIcon";
-import Loading from "../../components/Loading";
 import Spinner from "../../components/Spinner";
 import { getServerAuthSession } from "../../server/auth";
 import { classList, useLocalStorage } from "../../utils";
@@ -42,16 +41,52 @@ const Workout = () => {
             <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
           </div>
         ) : (
-          workout.data?.exercises.map(exercise => {
-            return (
-              <ExerciseCard
-                key={exercise.id}
-                description={exercise.description}
-                exercise={exercise.exercise}
-                sets={exercise.sets}
-              />
-            );
-          })
+          (() => {
+            if (!workout.data) return null;
+
+            type E = (typeof workout.data.exercises)[number];
+
+            const groups: ([E, E] | E)[] = workout.data.exercises.reduce((acc, exercise) => {
+              const isAlreadyInAGroup = acc.find(
+                g => Array.isArray(g) && g.find(e => e.id === exercise.id),
+              );
+              if (isAlreadyInAGroup) {
+                return acc;
+              }
+
+              const biSet = workout.data.biSets.find(
+                ([a, b]) => a === exercise.id || b === exercise.id,
+              );
+              if (biSet) {
+                const [a, b] = biSet;
+                if (a === exercise.id) {
+                  return [...acc, [exercise, workout.data.exercises.find(e => e.id === b)!]];
+                } else {
+                  return [...acc, [workout.data.exercises.find(e => e.id === a)!, exercise]];
+                }
+              }
+
+              return [...acc, exercise];
+            }, [] as ([E, E] | E)[]);
+
+            return groups.map(group => {
+              if (Array.isArray(group)) {
+                const [a, b] = group;
+                return <BiSetCard key={a.id} first={a} second={b} />;
+              }
+
+              const exercise = group;
+
+              return (
+                <ExerciseCard
+                  key={exercise.id}
+                  description={exercise.description}
+                  exercise={exercise.exercise}
+                  sets={exercise.sets}
+                />
+              );
+            });
+          })()
         )}
       </div>
       <div className="bg-white p-4 shadow-md">
@@ -100,6 +135,29 @@ const ExerciseCard = ({ description, exercise, sets }: ExerciseCardProps) => {
             {completed && <CheckIcon className="h-6 w-6" />}
           </div>
         </button>
+      </div>
+    </div>
+  );
+};
+
+type BiSetCardProps = {
+  first: ParseJsonValues<ExerciseInWorkout & { exercise: Exercise }>;
+  second: ParseJsonValues<ExerciseInWorkout & { exercise: Exercise }>;
+};
+
+const BiSetCard: React.FC<BiSetCardProps> = ({ first, second }: BiSetCardProps) => {
+  return (
+    <div className="m-2 flex flex-col rounded-xl bg-blue-500 pt-2">
+      <div className="flex flex-row items-center justify-between px-2">
+        <span className="ml-4 font-medium text-gray-50">Bi-set</span>
+      </div>
+      <div className="m-2 mt-1 flex flex-col items-stretch">
+        <ExerciseCard description={first.description} exercise={first.exercise} sets={first.sets} />
+        <ExerciseCard
+          description={second.description}
+          exercise={second.exercise}
+          sets={second.sets}
+        />
       </div>
     </div>
   );
