@@ -1,22 +1,5 @@
+import { Weekday } from "@prisma/client";
 import { prisma } from "../src/server/db";
-
-const profiles = [
-  { email: "jartur.dev@gmail.com" },
-  { email: "joao.moura59346@gmail.com" },
-  { email: "guilherme.melo36451@alunos.ufersa.edu.br" },
-];
-
-export async function seedProfiles() {
-  return Promise.all(
-    profiles.map(profile => {
-      return prisma.profile.upsert({
-        where: { email: profile.email },
-        update: {},
-        create: { email: profile.email },
-      });
-    }),
-  );
-}
 
 const exercises = [
   { name: "Supino Reto", category: "Peito" },
@@ -57,12 +40,47 @@ const exercises = [
   { name: "Caminhada", category: "Cardio" },
 ];
 
-export async function seedExercises() {
+async function seedExercises() {
+  console.log("Seeding exercises...");
+
   await prisma.exercise.deleteMany();
   return prisma.exercise.createMany({ data: exercises });
 }
 
-export default async function seed() {
-  await seedProfiles();
-  await seedExercises();
+const profiles = [
+  { email: "jartur.dev@gmail.com" },
+  { email: "joao.moura59346@gmail.com" },
+  { email: "guilherme.melo36451@alunos.ufersa.edu.br" },
+];
+
+async function seedProfiles() {
+  console.log("Seeding profiles...");
+
+  return Promise.all(
+    profiles.map(({ email }) => {
+      return prisma.profile.upsert({
+        where: { email },
+        update: {},
+        create: {
+          email,
+          workouts: {
+            createMany: {
+              data: [
+                { name: "A", days: [Weekday.Monday, Weekday.Thursday], biSets: [] },
+                { name: "B", days: [Weekday.Tuesday, Weekday.Friday], biSets: [] },
+                { name: "C", days: [Weekday.Wednesday, Weekday.Saturday], biSets: [] },
+              ],
+            },
+          },
+        },
+      });
+    }),
+  );
 }
+
+async function seed() {
+  await seedExercises();
+  await seedProfiles();
+}
+
+void seed();
