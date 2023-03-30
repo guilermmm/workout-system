@@ -34,17 +34,21 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] arrumar a tela de manage q ta quebrando
 - [ ] diminuir o tamanho do JS da pagina /manage/edit/\[id\] (remover cuid)
 - [ ] ficha pessoal do aluno
+  - [ ] tela index mostrando as ultimas medidas e os botoes pras funcoes abaixo
+  - [ ] atualizar medidas
+  - [ ] mostrar historico de medidas
+  - [ ] mostrar historico de treinos finalizados
 - [ ] admin criar os exercicios
 
-- [ ] validacao de usuario
-- [ ] permitir que o professor faça o treino do aluno mesmo antes dele logar a primeira vez, e quando logar já tiver tudo bonitin
+- [x] validacao de usuario
+- [x] permitir que o professor faça o treino do aluno mesmo antes dele logar a primeira vez, e quando logar já tiver tudo bonitin
 
-- [ ] botar calendariozinho na tela de treinos do aluno
+- [x] botar dias da semana na tela de treinos do aluno
 - [ ] permitir apenas um timer ativo por vez
 
+- [x] ajustar a lógica dos sets
 - [ ] permitir ao instrutor reorganizar a ordem dos exercícios de um treino
 - [ ] arrumar as categorias dos treinos
-- [ ] botar reps como string
 - [ ] usuario contar as series
 
 - [ ] pensar em opção para quem nao usa celular

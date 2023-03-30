@@ -87,6 +87,7 @@ model Profile {
 }
 
 model Datasheet {
+    id        String  @id @default(cuid())
     profileId String  @unique
     profile   Profile @relation(fields: [profileId], references: [id])
 
