@@ -16,7 +16,14 @@ import { jsDateToWeekday, weekdaysAbbrv } from "../utils/consts";
 const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const workouts = api.workout.getManyBySession.useQuery();
 
+  const profile = api.user.getProfileBySession.useQuery();
+
   if (workouts.error) {
+    return <ErrorPage />;
+  }
+
+  if (profile.data?.isActive === false) {
+    // TODO: Handle not-active user properly
     return <ErrorPage />;
   }
 
