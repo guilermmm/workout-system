@@ -1,4 +1,4 @@
-import type { Weekday } from "@prisma/client";
+import type { Datasheet, Method, Weekday } from "@prisma/client";
 
 export const weekdaysAbbrv = {
   Monday: "SEG",
@@ -8,7 +8,7 @@ export const weekdaysAbbrv = {
   Friday: "SEX",
   Saturday: "SAB",
   Sunday: "DOM",
-} as const;
+} as const satisfies Record<Weekday, string>;
 
 export const jsDateToWeekday = (date: Date): Weekday => {
   const day = date.getDay() as 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -39,4 +39,11 @@ export const dataSheetTranslation = {
   leftArm: "Braço Esq.",
   rightCalf: "Panturrilha Dir.",
   leftCalf: "Panturrilha Esq.",
-} as const;
+} as const satisfies Record<keyof Omit<Datasheet, "id" | "profileId" | "createdAt">, string>;
+
+export const methodTranslation = {
+  Standard: "Normal",
+  DropSet: "Drop Set",
+  PeakContraction: "Pico de Contração",
+  RestPause: "Rest Pause",
+} as const satisfies Record<Method, string>;

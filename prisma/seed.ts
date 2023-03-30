@@ -7,11 +7,15 @@ const profiles = [
 ];
 
 export async function seedProfiles() {
-  console.log("Seeding profiles...");
-
-  await prisma.profile.deleteMany();
-
-  return prisma.profile.createMany({ data: profiles });
+  return Promise.all(
+    profiles.map(profile => {
+      return prisma.profile.upsert({
+        where: { email: profile.email },
+        update: {},
+        create: { email: profile.email },
+      });
+    }),
+  );
 }
 
 const exercises = [
@@ -54,10 +58,7 @@ const exercises = [
 ];
 
 export async function seedExercises() {
-  console.log("Seeding exercises...");
-
   await prisma.exercise.deleteMany();
-
   return prisma.exercise.createMany({ data: exercises });
 }
 
