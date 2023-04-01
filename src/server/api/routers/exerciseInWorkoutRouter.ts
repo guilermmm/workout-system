@@ -32,9 +32,10 @@ export const exerciseInWorkoutRouter = createTRPCRouter({
           .or(z.array(z.object({ time: z.number(), weight: z.number() }))),
         description: z.string().nullish(),
         method: z.nativeEnum(Method),
+        index: z.number(),
       }),
     )
-    .mutation(({ ctx, input: { workoutId, exerciseId, sets, description, method } }) => {
+    .mutation(({ ctx, input: { workoutId, exerciseId, sets, description, method, index } }) => {
       return ctx.prisma.exerciseInWorkout.create({
         data: {
           workout: { connect: { id: workoutId } },
@@ -42,6 +43,7 @@ export const exerciseInWorkoutRouter = createTRPCRouter({
           sets,
           description,
           method,
+          index,
         },
       });
     }),

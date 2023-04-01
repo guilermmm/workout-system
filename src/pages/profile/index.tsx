@@ -2,8 +2,8 @@ import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "nex
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
 import UserNavbar from "../../components/UserNavbar";
+import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 import { dataSheetTranslation } from "../../utils/consts";
