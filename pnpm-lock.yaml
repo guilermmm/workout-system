@@ -28,6 +28,7 @@ specifiers:
   prettier-plugin-tailwindcss: ^0.2.1
   prisma: ^4.9.0
   react: 18.2.0
+  react-detect-click-outside: ^1.1.7
   react-dom: 18.2.0
   react-timer-hook: ^3.0.5
   superjson: 1.9.1
@@ -50,6 +51,7 @@ dependencies:
   next: 13.1.6_biqbaboplfbrettd7655fr4n2y
   next-auth: 4.19.1_3vryta7zmbcsw4rrqf4axjqggm
   react: 18.2.0
+  react-detect-click-outside: 1.1.7_biqbaboplfbrettd7655fr4n2y
   react-dom: 18.2.0_react@18.2.0
   react-timer-hook: 3.0.5_biqbaboplfbrettd7655fr4n2y
   superjson: 1.9.1
@@ -2457,6 +2459,16 @@ packages:
     resolution: {integrity: sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==}
     engines: {node: '>=10'}
     dev: true
+
+  /react-detect-click-outside/1.1.7_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-dMrBZD7JW0Eh/uYNmMLTNwFj6afGYxAnc80fDSGJdjXjxJddH8ZazyMg2emyb8CAx9Hilr+r1fY+tm7O7m9eJg==}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18
+      react-dom: ^16.8.0 || ^17 || ^18
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+    dev: false
 
   /react-dom/18.2.0_react@18.2.0:
     resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}

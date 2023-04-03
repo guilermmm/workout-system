@@ -1,5 +1,15 @@
 import type { Datasheet, Method, Weekday } from "@prisma/client";
 
+export const weekdaysTranslation = {
+  Monday: "Segunda-feira",
+  Tuesday: "Terça-feira",
+  Wednesday: "Quarta-feira",
+  Thursday: "Quinta-feira",
+  Friday: "Sexta-feira",
+  Saturday: "Sábado",
+  Sunday: "Domingo",
+} as const satisfies Record<Weekday, string>;
+
 export const weekdaysAbbrv = {
   Monday: "SEG",
   Tuesday: "TER",

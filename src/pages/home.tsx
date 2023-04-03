@@ -27,10 +27,15 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
     return <ErrorPage />;
   }
 
-  const weekDayWorkouts =
-    workouts.data &&
+  const weekDayWorkouts = (arr: NonNullable<typeof workouts.data>) =>
     Object.values(Weekday).map(
-      day => [day, workouts.data.find(workout => workout.days.includes(day))] as const,
+      day =>
+        [
+          day,
+          arr
+            .filter(workout => workout.days.includes(day))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+        ] as const,
     );
 
   const today = jsDateToWeekday(new Date());
@@ -58,9 +63,9 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
           </div>
         ) : (
           <div className="mx-4 my-4 grid grid-cols-[auto_1fr]">
-            {weekDayWorkouts!.map(
-              ([day, workout]) =>
-                workout && (
+            {weekDayWorkouts(workouts.data).map(
+              ([day, workouts]) =>
+                workouts.length !== 0 && (
                   <Fragment key={day}>
                     <div
                       className={classList(
@@ -78,11 +83,14 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
                         "rounded-r-lg bg-gold-300": today === day,
                       })}
                     >
-                      <WorkoutCard
-                        id={workout.id}
-                        name={workout.name}
-                        description={capitalize(join(workout.categories))}
-                      />
+                      {workouts.map(workout => (
+                        <WorkoutCard
+                          key={workout.id}
+                          id={workout.id}
+                          name={workout.name}
+                          description={capitalize(join(workout.categories))}
+                        />
+                      ))}
                     </div>
                   </Fragment>
                 ),
