@@ -57,23 +57,25 @@ const Dashboard = () => {
           <ArrowRightOnRectangleIcon className="h-6 w-6" />
         </button>
       </div>
+      <div className="m-2 flex h-full flex-1 grow flex-col gap-4">
+        <div className="relative">
+          <input
+            type="text"
+            className="h-12 w-full rounded-full border-2 pl-4 pr-12"
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+          />
+          <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
+        </div>
+      </div>
       <div className="grow overflow-y-scroll" ref={ref}>
         <div className="mx-4 flex h-full flex-1 grow flex-col gap-4">
-          <div className="relative my-2">
-            <input
-              type="text"
-              className="h-12 w-full rounded-full border-2 pl-4 pr-12"
-              value={searchInput}
-              onChange={e => setSearchInput(e.target.value)}
-            />
-            <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
-          </div>
           {!profiles.data && profiles.isLoading ? (
             <div className="flex flex-1 items-center justify-center">
               <Spinner className="fill-blue-600 text-gray-200" />
             </div>
           ) : (
-            <div className="flex flex-col flex-wrap items-stretch gap-2 sm:flex-row">
+            <div className="flex flex-col flex-wrap items-stretch gap-2 pb-4 sm:flex-row">
               {profiles.data.pages.flatMap(({ items }) =>
                 items.map(profile => (
                   <UserCard

@@ -42,34 +42,34 @@ const Dashboard = () => {
           <ArrowRightOnRectangleIcon className="h-6 w-6" />
         </button>
       </div>
+      <div className="m-2 flex items-center gap-2">
+        <div className="relative grow">
+          <input
+            type="text"
+            className="h-12 w-full rounded-full border-2 pl-4 pr-12"
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+          />
+          <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
+        </div>
+        <div>
+          <div className="inline-flex">
+            <span className="mr-1 text-sm font-medium text-gray-900">Alfabética</span>
+            <label className="relative cursor-pointer items-center">
+              <input
+                type="checkbox"
+                checked={organizeBy === "category"}
+                onChange={e => setOrganizeBy(e.target.checked ? "category" : "name")}
+                className="peer sr-only"
+              />
+              <div className="peer h-6 w-11 rounded-full bg-blue-600 after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300" />
+            </label>
+            <span className="ml-1 text-sm font-medium text-gray-900">Categoria</span>
+          </div>
+        </div>
+      </div>
       <div className="grow overflow-y-scroll">
         <div className="mx-4 flex h-full flex-1 grow flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <div className="relative my-2 grow">
-              <input
-                type="text"
-                className="h-12 w-full rounded-full border-2 pl-4 pr-12"
-                value={searchInput}
-                onChange={e => setSearchInput(e.target.value)}
-              />
-              <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
-            </div>
-            <div>
-              <div className="inline-flex">
-                <span className="mr-1 text-sm font-medium text-gray-900">Alfabética</span>
-                <label className="relative cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    checked={organizeBy === "category"}
-                    onChange={e => setOrganizeBy(e.target.checked ? "category" : "name")}
-                    className="peer sr-only"
-                  />
-                  <div className="peer h-6 w-11 rounded-full bg-blue-600 after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300" />
-                </label>
-                <span className="ml-1 text-sm font-medium text-gray-900">Categoria</span>
-              </div>
-            </div>
-          </div>
           {exercises.isLoading ? (
             <div className="flex flex-1 items-center justify-center">
               <Spinner className="fill-blue-600 text-gray-200" />
