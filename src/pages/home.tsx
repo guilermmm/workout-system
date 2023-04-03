@@ -44,7 +44,7 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
     <div className="flex h-full flex-col bg-slate-100">
       <div className="flex items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
-          <ProfilePic size="md" user={user} />
+          <ProfilePic size="lg" user={user} />
           <h1 className="ml-4 text-lg font-medium text-blue-700">
             Olá, <span className="font-bold">{user.name}</span>!
           </h1>

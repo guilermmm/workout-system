@@ -1,8 +1,8 @@
 import { signIn, useSession } from "next-auth/react";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import Loading from "../components/Loading";
+import ProfilePic from "../components/ProfilePic";
 
 const Index = () => {
   const session = useSession();
@@ -40,13 +40,7 @@ const Index = () => {
             className="block rounded-full bg-blue-600 p-3 transition-colors hover:bg-blue-500"
           >
             <div className="flex items-center justify-center">
-              <Image
-                width={40}
-                height={40}
-                alt="Google"
-                src="/google.svg"
-                className="leading-0 rounded-full bg-white"
-              />
+              <ProfilePic size="sm" alt="Google" />
               <span className="mx-3">Entrar com Google</span>
             </div>
           </button>

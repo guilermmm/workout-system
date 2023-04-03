@@ -9,13 +9,13 @@ import ErrorPage from "../components/ErrorPage";
 import ProfilePic from "../components/ProfilePic";
 import Spinner from "../components/Spinner";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
+import CheckCircleIcon from "../components/icons/CheckCircleIcon";
 import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
+import XCircleIcon from "../components/icons/XCircleIcon";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
-import { api } from "../utils/api";
-import XCircleIcon from "../components/icons/XCircleIcon";
-import CheckCircleIcon from "../components/icons/CheckCircleIcon";
 import { classList } from "../utils";
+import { api } from "../utils/api";
 
 const Dashboard = () => {
   const { data: session } = useSession();
@@ -34,7 +34,7 @@ const Dashboard = () => {
     <div className="flex h-full flex-col bg-slate-100">
       <div className="flex items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
-          <ProfilePic user={session?.user} size="sm" />
+          <ProfilePic user={session?.user} size="md" />
           <h1 className="ml-4 text-lg font-medium text-blue-700">
             Olá, <span className="font-bold">{session?.user.name}</span>!
           </h1>
@@ -92,7 +92,7 @@ const UserCard = ({
     >
       <Link href={`/manage/${profile.id}`} className="flex grow items-center truncate p-3 pr-0">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
-          <ProfilePic user={profile.user} size="sm" />
+          <ProfilePic user={profile.user} size="md" />
         </div>
         <div className="ml-4 truncate">
           <div className="truncate text-lg font-medium text-slate-800">{profile.user?.name}</div>
@@ -135,6 +135,8 @@ const StatusButton = ({
         "pl-8": !opened,
       })}
       onClick={() => setOpened(true)}
+      onMouseEnter={() => setOpened(true)}
+      onMouseLeave={() => setOpened(false)}
     >
       <div
         className={classList(

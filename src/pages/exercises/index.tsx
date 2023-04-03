@@ -30,7 +30,7 @@ const Dashboard = () => {
     <div className="flex h-full flex-col bg-slate-100">
       <div className="flex items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
-          <ProfilePic user={session?.user} size="sm" />
+          <ProfilePic user={session?.user} size="md" />
           <h1 className="ml-4 text-lg font-medium text-blue-700">
             Olá, <span className="font-bold">{session?.user.name}</span>!
           </h1>

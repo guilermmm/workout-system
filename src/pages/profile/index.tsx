@@ -1,7 +1,7 @@
 import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { signOut } from "next-auth/react";
-import Image from "next/image";
 import Link from "next/link";
+import ProfilePic from "../../components/ProfilePic";
 import UserNavbar from "../../components/UserNavbar";
 import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
 import { getServerAuthSession } from "../../server/auth";
@@ -14,13 +14,7 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
     <div className="flex h-full flex-col bg-slate-100">
       <div className="flex items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
-          <Image
-            width={64}
-            height={64}
-            src={user.image ?? ""}
-            alt="Foto de perfil"
-            className="rounded-full"
-          />
+          <ProfilePic user={user} size="lg" />
           <h1 className="ml-4 text-lg font-medium text-blue-700">
             <span className="font-bold">{user.name}</span>
           </h1>

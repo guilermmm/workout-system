@@ -1,10 +1,10 @@
 import type { Exercise, ExerciseInWorkout } from "@prisma/client";
 import deepEqual from "deep-equal";
 import type { GetServerSidePropsContext } from "next";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import ErrorPage from "../../../../components/ErrorPage";
+import ProfilePic from "../../../../components/ProfilePic";
 import Spinner from "../../../../components/Spinner";
 import ArrowUturnLeftIcon from "../../../../components/icons/ArrowUturnLeftIcon";
 import CheckCircleIcon from "../../../../components/icons/CheckCircleIcon";
@@ -76,15 +76,7 @@ const EditWorkout = () => {
                 {workout.data.profile.email.split("@").at(0)}@...
               </p>
             </div>
-            <Image
-              src={workout.data.profile.user?.image ?? ""}
-              alt={`Foto de perfil de ${
-                workout.data.profile.user?.name ?? workout.data.profile.email
-              }`}
-              width={48}
-              height={48}
-              className="ml-4 block rounded-full"
-            />
+            <ProfilePic user={workout.data.profile.user} size="md" />
           </div>
         )}
       </div>

@@ -51,7 +51,7 @@ const Manage = () => {
             {profile.isLoading ? (
               <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
             ) : (
-              <ProfilePic size="sm" user={profile.data.user} />
+              <ProfilePic size="md" user={profile.data.user} />
             )}
           </div>
         </div>
