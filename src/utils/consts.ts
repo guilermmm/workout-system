@@ -54,6 +54,8 @@ export const dataSheetTranslation = {
 export const methodTranslation = {
   Standard: "Normal",
   DropSet: "Drop Set",
-  PeakContraction: "Pico de Contração",
   RestPause: "Rest Pause",
+  Isometric: "Isometria",
+  Pyramid: "Pirâmide",
+  PeakContraction: "Pico de Contração",
 } as const satisfies Record<Method, string>;

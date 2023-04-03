@@ -28,6 +28,8 @@ enum Method {
     Standard
     DropSet
     RestPause
+    Isometric
+    Pyramid
     PeakContraction
 }
 

@@ -31,7 +31,7 @@ const CreateWorkout = () => {
 
   const profile = api.user.getProfileById.useQuery(profileId);
 
-  const categories = api.exercise.getCategories.useQuery();
+  const categories = api.exercise.getGroups.useQuery();
 
   const { mutate } = api.workout.create.useMutation({ onSuccess: () => router.back() });
 

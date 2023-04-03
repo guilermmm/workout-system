@@ -8,7 +8,7 @@ const Navbar = () => {
 
   return (
     <nav className="flex bg-slate-100 shadow-up">
-      <Link href="/home" className="grow">
+      <Link href="/dashboard" className="grow">
         <div className="mb-4 mt-4 flex grow justify-center text-xl font-medium text-slate-800">
           <UserGroupIcon className="h-6 w-6" />
         </div>

@@ -22,7 +22,7 @@ const EditWorkout = () => {
 
   const profile = api.user.getProfileById.useQuery(profileId);
 
-  const categories = api.exercise.getCategories.useQuery();
+  const categories = api.exercise.getGroups.useQuery();
 
   const workout = api.workout.getById.useQuery(workoutId, {
     onSuccess: data => {

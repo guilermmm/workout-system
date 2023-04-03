@@ -32,10 +32,10 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] timer no treino ativo
 - [x] quando concluir um treino, recomendar o próximo com base em ordem que o professor definiu
 - [x] arrumar a tela de manage q ta quebrando
-- [ ] diminuir o tamanho do JS da pagina /manage/edit/\[id\] (remover cuid)
-- [ ] ficha pessoal do aluno
+- [x] diminuir o tamanho do JS da pagina /manage/edit/\[id\] (remover cuid)
+- [x] ficha pessoal do aluno
   - [ ] tela index mostrando as ultimas medidas e os botoes pras funcoes abaixo
-  - [ ] atualizar medidas
+  - [x] atualizar medidas
   - [ ] mostrar historico de medidas
   - [ ] mostrar historico de treinos finalizados
 - [ ] admin criar os exercicios
@@ -48,7 +48,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 
 - [x] ajustar a lógica dos sets
 - [ ] permitir ao instrutor reorganizar a ordem dos exercícios de um treino
-- [ ] arrumar as categorias dos treinos
+- [x] arrumar as categorias dos treinos
 - [ ] usuario contar as series
 
 - [ ] pensar em opção para quem nao usa celular

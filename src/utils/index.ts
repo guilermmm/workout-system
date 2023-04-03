@@ -1,3 +1,4 @@
+import type { Exercise } from "@prisma/client";
 import { useState } from "react";
 
 export const join = (array: string[], separator = ", ") => {
@@ -58,4 +59,19 @@ export async function sleep(ms: number) {
 
 export async function never() {
   return new Promise(() => void 0);
+}
+
+export function reduceByCategory(
+  acc: { category: string; exercises: Exercise[] }[],
+  exercise: Exercise,
+) {
+  const existingCategory = acc.find(item => item.category === exercise.category);
+
+  if (existingCategory) {
+    existingCategory.exercises.push(exercise);
+  } else {
+    acc.push({ category: exercise.category, exercises: [exercise] });
+  }
+
+  return acc;
 }
