@@ -1,3 +1,4 @@
+import type { Datasheet } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/router";
@@ -11,7 +12,6 @@ import UpwardArrowIcon from "../../components/icons/UpwardArrowIcon";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 import { dataSheetTranslation } from "../../utils/consts";
-import { Datasheet } from "@prisma/client";
 
 const DataSheetHistory = () => {
   const router = useRouter();
