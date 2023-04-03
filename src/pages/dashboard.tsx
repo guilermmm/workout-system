@@ -2,7 +2,7 @@ import type { Profile, User } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDebounce } from "use-debounce";
 import AdminNavbar from "../components/AdminNavbar";
 import ErrorPage from "../components/ErrorPage";
@@ -14,7 +14,7 @@ import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
 import XCircleIcon from "../components/icons/XCircleIcon";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
-import { classList } from "../utils";
+import { classList, useOutsideClick } from "../utils";
 import { api } from "../utils/api";
 
 const Dashboard = () => {
@@ -88,7 +88,7 @@ const UserCard = ({
 }) => {
   return (
     <div
-      className={`flex max-w-[calc(100vw_-_2rem)] flex-1 flex-row items-center justify-between rounded-md border-r-4 bg-slate-50 shadow-md transition-shadow hover:shadow-xl`}
+      className={`flex max-w-[calc(100vw_-_2rem)] flex-1 flex-row items-center justify-between rounded-md bg-slate-50 shadow-md transition-shadow hover:shadow-xl`}
     >
       <Link href={`/manage/${profile.id}`} className="flex grow items-center truncate p-3 pr-0">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
@@ -118,15 +118,7 @@ const StatusButton = ({
     ? api.user.deactivate.useMutation()
     : api.user.activate.useMutation();
 
-  useEffect(() => {
-    const second = setTimeout(() => {
-      setOpened(false);
-    }, 3000);
-
-    return () => {
-      clearTimeout(second);
-    };
-  }, [opened]);
+  const ref = useOutsideClick<HTMLDivElement>(() => setOpened(false));
 
   return (
     <div
@@ -137,12 +129,13 @@ const StatusButton = ({
       onClick={() => setOpened(true)}
       onMouseEnter={() => setOpened(true)}
       onMouseLeave={() => setOpened(false)}
+      ref={ref}
     >
       <div
         className={classList(
           "flex h-full items-center justify-center overflow-x-hidden rounded-r-md transition-all",
           {
-            "w-[72px] rounded-md": opened,
+            "w-[72px] rounded-l-md": opened,
             "w-3": !opened,
             "bg-green-500": isActive,
             "bg-red-500": !isActive,
@@ -150,7 +143,11 @@ const StatusButton = ({
         )}
       >
         <button
-          className="m-3"
+          className={classList("rounded-full transition-all", {
+            "bg-white": opened,
+            "m-3": !opened,
+            "m-1.5 p-1.5": opened,
+          })}
           onClick={() =>
             changeStatus.mutate(
               { profileId: id },
@@ -165,14 +162,14 @@ const StatusButton = ({
         >
           {isActive ? (
             <XCircleIcon
-              className={classList("text-white transition-all", {
+              className={classList("text-red-500 transition-all", {
                 "h-0 w-0": !opened,
                 "h-10 w-10": opened,
               })}
             />
           ) : (
             <CheckCircleIcon
-              className={classList("text-white transition-all", {
+              className={classList("text-green-500 transition-all", {
                 "h-0 w-0": !opened,
                 "h-10 w-10": opened,
               })}

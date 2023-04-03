@@ -43,6 +43,8 @@ const CreateWorkout = () => {
 
   const [name, setName] = useState("");
 
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     console.log(biSets);
   }, [biSets]);
@@ -65,6 +67,7 @@ const CreateWorkout = () => {
   };
 
   const handleSave = () => {
+    setSaving(true);
     mutate({
       name,
       profileId,
@@ -148,7 +151,6 @@ const CreateWorkout = () => {
             onChange={setWeekdays}
             optionToString={it => weekdaysTranslation[it]}
             optionToKey={it => it}
-            isSelected={it => weekdays.includes(it)}
             placeholder="Selecionar dias da semana..."
           />
         </label>
@@ -198,14 +200,16 @@ const CreateWorkout = () => {
         </div>
       </div>
       <div className="fixed bottom-0 right-0 p-4">
-        <button
-          className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
-          onClick={handleSave}
-          disabled={name === ""}
-        >
-          Salvar treino
-          {name !== "" && <CheckCircleIcon className="h-8 w-8" />}
-        </button>
+        {
+          <button
+            className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
+            onClick={handleSave}
+            disabled={name === "" || exercises.length === 0 || weekdays.length === 0 || saving}
+          >
+            Salvar treino
+            {name !== "" && <CheckCircleIcon className="h-8 w-8" />}
+          </button>
+        }
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import type { Exercise } from "@prisma/client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const join = (array: string[], separator = ", ") => {
   return array.length === 0
@@ -75,3 +75,25 @@ export function reduceByCategory(
 
   return acc;
 }
+
+export const useOutsideClick = <T extends HTMLElement>(callback: (e: Event) => void) => {
+  const ref = useRef<T | null>(null);
+
+  useEffect(() => {
+    const handleClick = (e: Event) => {
+      console.log(ref.current, e.target);
+
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        callback(e);
+      }
+    };
+
+    document.addEventListener("click", handleClick, true);
+
+    return () => {
+      document.removeEventListener("click", handleClick, true);
+    };
+  }, [ref, callback]);
+
+  return ref as React.MutableRefObject<T>;
+};

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useDetectClickOutside } from "react-detect-click-outside";
+import { useOutsideClick } from "../utils";
 
 type Props<T> = {
   placeholder: string;
@@ -9,33 +9,18 @@ type Props<T> = {
   onChange: (selected: T[]) => void;
   optionToString: (option: T) => string;
   optionToKey: (option: T) => string;
-  isDisabled?: (option: T) => boolean;
-  isSelected?: (option: T) => boolean;
 };
 
 const MultiSelect = <T extends unknown>(props: Props<T>) => {
-  const {
-    className,
-    options,
-    selected,
-    onChange,
-    optionToString,
-    optionToKey,
-    isDisabled,
-    isSelected,
-  } = props;
+  const { className, options, selected, onChange, optionToString, optionToKey } = props;
 
   const [open, setOpen] = useState(false);
 
-  const ref = useDetectClickOutside({ onTriggered: () => setOpen(false) });
+  const ref = useOutsideClick<HTMLDivElement>(() => setOpen(false));
 
   const handleSelect = useCallback(
     (option: T) => {
-      if (isDisabled && isDisabled(option)) {
-        return;
-      }
-
-      if (isSelected && isSelected(option)) {
+      if (selected.includes(option)) {
         onChange(
           selected.filter(selectedOption => optionToKey(option) !== optionToKey(selectedOption)),
         );
@@ -43,12 +28,8 @@ const MultiSelect = <T extends unknown>(props: Props<T>) => {
         onChange([...selected, option]);
       }
     },
-    [onChange, selected, isDisabled, isSelected, optionToKey],
+    [onChange, selected, optionToKey],
   );
-
-  const handleToggle = useCallback(() => {
-    setOpen(!open);
-  }, [open]);
 
   return (
     <div className="relative w-max" ref={ref}>
@@ -70,28 +51,26 @@ const MultiSelect = <T extends unknown>(props: Props<T>) => {
               {props.placeholder}
             </div>
           )}
-          <button type="button" className="absolute inset-0" onClick={handleToggle} />
+          <button type="button" className="absolute inset-0" onClick={() => setOpen(!open)} />
         </div>
       </div>
       {open && (
-        <div className="absolute z-10 mt-1 w-max rounded-md bg-white shadow-lg">
-          <div className="max-h-64 overflow-y-auto">
+        <div className="absolute left-0 right-0 z-10 mt-1 w-max rounded-md bg-white shadow-lg">
+          <div className="max-h-72 overflow-y-auto">
             {options.map(option => (
-              <div
+              <label
                 key={optionToKey(option)}
-                className="flex items-center justify-between px-4 py-2 hover:bg-gray-100"
-                onClick={() => handleSelect(option)}
+                className="flex items-center justify-between px-4 py-2 text-sm hover:bg-gold-100"
               >
                 <div className="flex items-center">
                   <input
                     type="checkbox"
-                    className="mr-2"
-                    checked={isSelected ? isSelected(option) : selected.includes(option)}
-                    disabled={isDisabled ? isDisabled(option) : false}
+                    checked={selected.includes(option)}
+                    onChange={() => handleSelect(option)}
                   />
-                  {optionToString(option)}
+                  <span className="ml-2">{optionToString(option)}</span>
                 </div>
-              </div>
+              </label>
             ))}
           </div>
         </div>
