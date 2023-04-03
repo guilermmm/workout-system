@@ -5,7 +5,6 @@ import ProfileIcon from "./icons/ProfileIcon";
 
 const Navbar = () => {
   const router = useRouter();
-  console.log();
 
   return (
     <nav className="flex bg-slate-100 shadow-up">

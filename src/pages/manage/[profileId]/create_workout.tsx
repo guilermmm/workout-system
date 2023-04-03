@@ -45,10 +45,6 @@ const CreateWorkout = () => {
 
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    console.log(biSets);
-  }, [biSets]);
-
   if (profile.error || categories.error) {
     return <ErrorPage />;
   }

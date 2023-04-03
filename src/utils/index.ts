@@ -1,5 +1,6 @@
 import type { Exercise } from "@prisma/client";
-import { useEffect, useRef, useState } from "react";
+import type { MutableRefObject, RefObject } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export const join = (array: string[], separator = ", ") => {
   return array.length === 0
@@ -81,8 +82,6 @@ export const useOutsideClick = <T extends HTMLElement>(callback: (e: Event) => v
 
   useEffect(() => {
     const handleClick = (e: Event) => {
-      console.log(ref.current, e.target);
-
       if (ref.current && !ref.current.contains(e.target as Node)) {
         callback(e);
       }
@@ -95,5 +94,41 @@ export const useOutsideClick = <T extends HTMLElement>(callback: (e: Event) => v
     };
   }, [ref, callback]);
 
-  return ref as React.MutableRefObject<T>;
+  return ref as MutableRefObject<T>;
 };
+
+export default function useEndOfScroll<T extends HTMLElement>(
+  ref: RefObject<T>,
+  callback: () => void,
+) {
+  const endOfScrollRef = useRef(false);
+
+  const handleScroll = useCallback(() => {
+    if (!ref.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = ref.current;
+
+    const isBottom = scrollHeight <= clientHeight || scrollHeight - scrollTop === clientHeight;
+
+    if (isBottom) {
+      endOfScrollRef.current = true;
+      callback();
+    } else if (!isBottom) {
+      endOfScrollRef.current = false;
+    }
+  }, [ref, callback]);
+
+  useEffect(() => {
+    const el = ref.current;
+    el?.addEventListener("scroll", handleScroll);
+    el?.addEventListener("resize", handleScroll);
+    el?.addEventListener("wheel", handleScroll);
+    el?.addEventListener("touchmove", handleScroll);
+    return () => {
+      el?.removeEventListener("scroll", handleScroll);
+      el?.removeEventListener("resize", handleScroll);
+      el?.removeEventListener("wheel", handleScroll);
+      el?.removeEventListener("touchmove", handleScroll);
+    };
+  }, [ref, handleScroll]);
+}

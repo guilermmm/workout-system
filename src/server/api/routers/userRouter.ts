@@ -28,15 +28,33 @@ export const userRouter = createTRPCRouter({
     });
   }),
 
-  searchProfiles: adminProcedure.input(z.string()).query(({ ctx, input }) => {
-    return ctx.prisma.profile.findMany({
-      where: {
-        OR: [{ user: { name: { contains: input } } }, { email: { contains: input } }],
-      },
-      include: { user: true },
-      orderBy: { isActive: "desc" },
-    });
-  }),
+  searchProfiles: adminProcedure
+    .input(
+      z.object({
+        search: z.string(),
+        limit: z.number().min(1).max(20).optional().default(20),
+        cursor: z.string().nullish(),
+      }),
+    )
+    .query(async ({ ctx, input: { search, cursor, limit } }) => {
+      const items = await ctx.prisma.profile.findMany({
+        take: limit + 1,
+        where: {
+          OR: [{ user: { name: { contains: search } } }, { email: { contains: search } }],
+        },
+        cursor: cursor ? { id: cursor } : undefined,
+        include: { user: true },
+        orderBy: { id: "asc" },
+      });
+
+      let nextCursor: typeof cursor | undefined = undefined;
+      if (items.length > limit) {
+        const nextItem = items.pop();
+        nextCursor = nextItem!.id;
+      }
+
+      return { items, nextCursor };
+    }),
 
   createProfile: adminProcedure
     .input(z.object({ email: z.string().email() }))

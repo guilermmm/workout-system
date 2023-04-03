@@ -43,14 +43,68 @@ const exercises = [
 async function seedExercises() {
   console.log("Seeding exercises...");
 
-  await prisma.exercise.deleteMany();
-  return prisma.exercise.createMany({ data: exercises });
+  try {
+    await prisma.exercise.deleteMany();
+    return prisma.exercise.createMany({ data: exercises });
+  } catch (error) {
+    console.log("Exercises already seeded");
+  }
 }
 
 const profiles = [
   { email: "jartur.dev@gmail.com" },
   { email: "joao.moura59346@gmail.com" },
   { email: "guilherme.melo36451@alunos.ufersa.edu.br" },
+  { email: "ournews@verizon.net" },
+  { email: "simone@yahoo.com" },
+  { email: "giafly@msn.com" },
+  { email: "syncnine@comcast.net" },
+  { email: "munjal@gmail.com" },
+  { email: "goldberg@outlook.com" },
+  { email: "alias@live.com" },
+  { email: "hachi@gmail.com" },
+  { email: "cremonini@icloud.com" },
+  { email: "hutton@optonline.net" },
+  { email: "scottlee@optonline.net" },
+  { email: "moxfulder@gmail.com" },
+  { email: "csilvers@live.com" },
+  { email: "wonderkid@att.net" },
+  { email: "jyoliver@mac.com" },
+  { email: "agolomsh@yahoo.com" },
+  { email: "draper@verizon.net" },
+  { email: "brainless@mac.com" },
+  { email: "valdez@icloud.com" },
+  { email: "hachi@me.com" },
+  { email: "henkp@gmail.com" },
+  { email: "draper@optonline.net" },
+  { email: "mbrown@att.net" },
+  { email: "gumpish@icloud.com" },
+  { email: "pontipak@optonline.net" },
+  { email: "janusfury@hotmail.com" },
+  { email: "tellis@live.com" },
+  { email: "amichalo@live.com" },
+  { email: "ovprit@hotmail.com" },
+  { email: "nighthawk@hotmail.com" },
+  { email: "dbanarse@hotmail.com" },
+  { email: "pmint@optonline.net" },
+  { email: "amichalo@optonline.net" },
+  { email: "scato@hotmail.com" },
+  { email: "scotfl@me.com" },
+  { email: "ilikered@gmail.com" },
+  { email: "nichoj@me.com" },
+  { email: "hstiles@icloud.com" },
+  { email: "willg@att.net" },
+  { email: "elflord@outlook.com" },
+  { email: "hakim@mac.com" },
+  { email: "ilikered@outlook.com" },
+  { email: "melnik@comcast.net" },
+  { email: "hmbrand@yahoo.ca" },
+  { email: "phish@optonline.net" },
+  { email: "dbrobins@mac.com" },
+  { email: "eurohack@outlook.com" },
+  { email: "msusa@att.net" },
+  { email: "sisyphus@mac.com" },
+  { email: "purvis@sbcglobal.net" },
 ];
 
 async function seedProfiles() {

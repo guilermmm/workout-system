@@ -2,7 +2,7 @@ import type { Profile, User } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDebounce } from "use-debounce";
 import AdminNavbar from "../components/AdminNavbar";
 import ErrorPage from "../components/ErrorPage";
@@ -14,7 +14,7 @@ import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
 import XCircleIcon from "../components/icons/XCircleIcon";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
-import { classList, useOutsideClick } from "../utils";
+import useEndOfScroll, { classList, useOutsideClick } from "../utils";
 import { api } from "../utils/api";
 
 const Dashboard = () => {
@@ -22,9 +22,20 @@ const Dashboard = () => {
 
   const [searchInput, setSearchInput] = useState("");
 
-  const [debouncedInput] = useDebounce(searchInput, 500);
+  const [debouncedInput] = useDebounce(searchInput, 150);
 
-  const profiles = api.user.searchProfiles.useQuery(debouncedInput);
+  const profiles = api.user.searchProfiles.useInfiniteQuery(
+    { search: debouncedInput },
+    { getNextPageParam: lastPage => lastPage.nextCursor },
+  );
+
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEndOfScroll(ref, () => {
+    if (profiles.hasNextPage && !profiles.isFetching) {
+      void profiles.fetchNextPage();
+    }
+  });
 
   if (profiles.error) {
     return <ErrorPage />;
@@ -46,7 +57,7 @@ const Dashboard = () => {
           <ArrowRightOnRectangleIcon className="h-6 w-6" />
         </button>
       </div>
-      <div className="grow overflow-y-scroll">
+      <div className="grow overflow-y-scroll" ref={ref}>
         <div className="mx-4 flex h-full flex-1 grow flex-col gap-4">
           <div className="relative my-2">
             <input
@@ -57,19 +68,21 @@ const Dashboard = () => {
             />
             <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
           </div>
-          {profiles.isLoading ? (
+          {!profiles.data && profiles.isLoading ? (
             <div className="flex flex-1 items-center justify-center">
               <Spinner className="fill-blue-600 text-gray-200" />
             </div>
           ) : (
             <div className="flex flex-col flex-wrap items-stretch gap-2 sm:flex-row">
-              {profiles.data.map(profile => (
-                <UserCard
-                  key={profile.id}
-                  profile={profile}
-                  refetch={async () => void (await profiles.refetch())}
-                />
-              ))}
+              {profiles.data.pages.flatMap(({ items }) =>
+                items.map(profile => (
+                  <UserCard
+                    key={profile.id}
+                    profile={profile}
+                    refetch={async () => void (await profiles.refetch())}
+                  />
+                )),
+              )}
             </div>
           )}
         </div>
