@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useDebounce } from "use-debounce";
 import AdminNavbar from "../components/AdminNavbar";
 import ErrorPage from "../components/ErrorPage";
+import ProfilePic from "../components/ProfilePic";
 import Spinner from "../components/Spinner";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
 import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
@@ -82,18 +83,12 @@ const UserCard = ({ profile }: { profile: Profile & { user: User | null } }) => 
   return (
     <Link
       href={`/manage/${profile.id}`}
-      className="flex flex-1 flex-row items-center rounded-md bg-slate-50 p-3 shadow-md transition-shadow hover:shadow-xl"
+      className="flex max-w-[calc(100vw_-_2rem)] flex-1 flex-row items-center rounded-md bg-slate-50 p-3 shadow-md transition-shadow hover:shadow-xl"
     >
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
-        <Image
-          width={48}
-          height={48}
-          alt={`Foto de perfil de ${profile.user?.name ?? profile.email}`}
-          src={profile.user?.image ?? "./google.svg"}
-          className="h-12 w-12 rounded-full"
-        />
+        <ProfilePic user={profile.user} size="sm" />
       </div>
-      <div className="ml-4">
+      <div className="ml-4 truncate">
         <div className="truncate text-lg font-medium text-slate-800">{profile.user?.name}</div>
         <div className="truncate text-sm text-slate-500">{profile.email}</div>
       </div>
