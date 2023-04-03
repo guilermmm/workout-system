@@ -1,6 +1,7 @@
 import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
+import FullPage from "../../components/FullPage";
 import ProfilePic from "../../components/ProfilePic";
 import UserNavbar from "../../components/UserNavbar";
 import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
@@ -11,7 +12,7 @@ import { dataSheetTranslation } from "../../utils/consts";
 const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const latestDataSheet = api.user.getLatestDatasheetBySession.useQuery();
   return (
-    <div className="flex h-full flex-col bg-slate-100">
+    <FullPage>
       <div className="flex items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
           <ProfilePic user={user} size="lg" />
@@ -60,7 +61,7 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
       </div>
 
       <UserNavbar />
-    </div>
+    </FullPage>
   );
 };
 

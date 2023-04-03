@@ -1,12 +1,12 @@
 import type { Exercise } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useMemo, useState } from "react";
+import AdminHeader from "../../components/AdminHeader";
 import AdminNavbar from "../../components/AdminNavbar";
 import ErrorPage from "../../components/ErrorPage";
-import ProfilePic from "../../components/ProfilePic";
+import FullPage from "../../components/FullPage";
 import Spinner from "../../components/Spinner";
-import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
 import MagnifyingGlassIcon from "../../components/icons/MagnifyingGlassIcon";
 import { env } from "../../env/server.mjs";
 import { getServerAuthSession } from "../../server/auth";
@@ -27,21 +27,8 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex h-full flex-col bg-slate-100">
-      <div className="flex items-center justify-between bg-gold-500 p-2">
-        <div className="flex items-center">
-          <ProfilePic user={session?.user} size="md" />
-          <h1 className="ml-4 text-lg font-medium text-blue-700">
-            Olá, <span className="font-bold">{session?.user.name}</span>!
-          </h1>
-        </div>
-        <button
-          className="rounded-full p-2 text-blue-700 transition-colors hover:bg-white"
-          onClick={() => void signOut()}
-        >
-          <ArrowRightOnRectangleIcon className="h-6 w-6" />
-        </button>
-      </div>
+    <FullPage>
+      <AdminHeader user={session?.user} />
       <div className="m-2 flex items-center gap-2">
         <div className="relative grow">
           <input
@@ -80,7 +67,7 @@ const Dashboard = () => {
         </div>
       </div>
       <AdminNavbar />
-    </div>
+    </FullPage>
   );
 };
 

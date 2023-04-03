@@ -3,6 +3,7 @@ import { signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import ErrorPage from "../../components/ErrorPage";
+import FullPage from "../../components/FullPage";
 import Spinner from "../../components/Spinner";
 import UserNavbar from "../../components/UserNavbar";
 import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
@@ -24,14 +25,16 @@ const UpdateMeasure = () => {
 
   const changed = Object.values(editedDataSheet).every(value => value !== 0);
 
-  const createDataSheet = api.user.createDatasheet.useMutation();
-
-  createDataSheet.isSuccess && router.push("/profile");
+  const createDataSheet = api.user.createDatasheet.useMutation({
+    onSuccess: () => {
+      void router.push("/profile");
+    },
+  });
 
   if (createDataSheet.isError) return <ErrorPage />;
 
   return (
-    <div className="flex h-full flex-col bg-slate-100">
+    <FullPage>
       <div className="flex items-center justify-between bg-gold-500 p-2">
         <button
           className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
@@ -101,7 +104,7 @@ const UpdateMeasure = () => {
       </div>
 
       <UserNavbar />
-    </div>
+    </FullPage>
   );
 };
 

@@ -4,6 +4,7 @@ import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { Fragment } from "react";
 import ErrorPage from "../components/ErrorPage";
+import FullPage from "../components/FullPage";
 import ProfilePic from "../components/ProfilePic";
 import Spinner from "../components/Spinner";
 import UserNavbar from "../components/UserNavbar";
@@ -41,7 +42,7 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
   const today = jsDateToWeekday(new Date());
 
   return (
-    <div className="flex h-full flex-col bg-slate-100">
+    <FullPage>
       <div className="flex items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
           <ProfilePic size="lg" user={user} />
@@ -99,7 +100,7 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
         )}
       </div>
       <UserNavbar />
-    </div>
+    </FullPage>
   );
 };
 

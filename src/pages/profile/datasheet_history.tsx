@@ -3,6 +3,7 @@ import type { GetServerSidePropsContext } from "next";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import FullPage from "../../components/FullPage";
 import Spinner from "../../components/Spinner";
 import UserNavbar from "../../components/UserNavbar";
 import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
@@ -19,7 +20,7 @@ const DataSheetHistory = () => {
   const dataSheetHistory = api.user.getDatasheetsBySession.useQuery();
 
   return (
-    <div className="flex h-full flex-col bg-slate-100">
+    <FullPage>
       <div className="flex items-center justify-between bg-gold-500 p-2">
         <button
           className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
@@ -52,7 +53,7 @@ const DataSheetHistory = () => {
       </div>
 
       <UserNavbar />
-    </div>
+    </FullPage>
   );
 };
 
