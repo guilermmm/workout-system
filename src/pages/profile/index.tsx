@@ -34,7 +34,7 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
           <ArrowRightOnRectangleIcon className="h-6 w-6" />
         </button>
       </div>
-      <div className="grow">
+      <div className="grow overflow-y-scroll pb-4">
         <div className="mt-4">
           <OptionCard title="Histórico de treinos" href="#" />
           <OptionCard title="Histórico de medidas" href="/profile/datasheet_history" />

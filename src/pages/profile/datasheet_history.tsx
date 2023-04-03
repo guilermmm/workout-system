@@ -11,17 +11,12 @@ import UpwardArrowIcon from "../../components/icons/UpwardArrowIcon";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 import { dataSheetTranslation } from "../../utils/consts";
+import { Datasheet } from "@prisma/client";
 
 const DataSheetHistory = () => {
   const router = useRouter();
 
   const dataSheetHistory = api.user.getDatasheetsBySession.useQuery();
-
-  const [opened, setOpened] = useState<boolean[]>([]);
-
-  opened.length === 0 &&
-    dataSheetHistory.isSuccess &&
-    setOpened(dataSheetHistory.data.map(() => false));
 
   return (
     <div className="flex h-full flex-col bg-slate-100">
@@ -50,41 +45,44 @@ const DataSheetHistory = () => {
             <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
           </div>
         ) : (
-          dataSheetHistory.data?.map((measure, index) => (
-            <div key={index} className="m-2 rounded-lg bg-white shadow-md">
-              <button
-                className="flex w-full justify-between p-4"
-                onClick={() => {
-                  setOpened(opened.map((opn, i) => (i === index ? !opn : opn)));
-                }}
-              >
-                {measure.createdAt.toLocaleDateString("pt-BR")}
-
-                {opened[index] ? (
-                  <UpwardArrowIcon className="h-5 w-5" />
-                ) : (
-                  <DownArrowIcon className="h-5 w-5" />
-                )}
-              </button>
-              {opened[index] && (
-                <div className=" border-t-4 p-4 pt-3">
-                  {Object.keys(dataSheetTranslation).map(key => (
-                    <div key={key} className="flex justify-between border-b-2">
-                      <span>{dataSheetTranslation[key as keyof typeof dataSheetTranslation]}:</span>
-                      <span className="font-bold">
-                        {measure[key as keyof typeof dataSheetTranslation] || "-"}
-                        {key !== "weight" ? " cm" : " kg"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          dataSheetHistory.data?.map(measure => (
+            <DataSheetCard measure={measure} key={measure.id} />
           ))
         )}
       </div>
 
       <UserNavbar />
+    </div>
+  );
+};
+
+const DataSheetCard = ({ measure }: { measure: Datasheet }) => {
+  const [opened, setOpened] = useState(false);
+  return (
+    <div className="m-2 rounded-lg bg-white shadow-md">
+      <button
+        className="flex w-full justify-between p-4"
+        onClick={() => {
+          setOpened(!opened);
+        }}
+      >
+        {measure.createdAt.toLocaleDateString("pt-BR")}
+
+        {opened ? <UpwardArrowIcon className="h-5 w-5" /> : <DownArrowIcon className="h-5 w-5" />}
+      </button>
+      {opened && (
+        <div className=" border-t-4 p-4 pt-3">
+          {Object.keys(dataSheetTranslation).map(key => (
+            <div key={key} className="flex justify-between border-b-2">
+              <span>{dataSheetTranslation[key as keyof typeof dataSheetTranslation]}:</span>
+              <span className="font-bold">
+                {measure[key as keyof typeof dataSheetTranslation] || "-"}
+                {key !== "weight" ? " cm" : " kg"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
