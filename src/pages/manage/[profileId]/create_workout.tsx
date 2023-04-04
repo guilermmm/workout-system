@@ -7,6 +7,7 @@ import ErrorPage from "../../../components/ErrorPage";
 import MultiSelect from "../../../components/MultiSelect";
 import ProfilePic from "../../../components/ProfilePic";
 import Spinner from "../../../components/Spinner";
+import TextInput from "../../../components/TextInput";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
 import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
 import PlusIcon from "../../../components/icons/PlusIcon";
@@ -36,11 +37,8 @@ const CreateWorkout = () => {
   const { mutate } = api.workout.create.useMutation({ onSuccess: () => router.back() });
 
   const [exercises, setExercises] = useState<NewExercise[]>([]);
-
   const [biSets, setBiSets] = useState<[number, number][]>([]);
-
   const [weekdays, setWeekdays] = useState<Weekday[]>([]);
-
   const [name, setName] = useState("");
 
   const [saving, setSaving] = useState(false);
@@ -128,28 +126,23 @@ const CreateWorkout = () => {
           </div>
         </div>
       </div>
-      <div className="my-4 mx-2 flex flex-row justify-around gap-2">
-        <label className="flex items-center gap-2 text-slate-800">
-          <span className="text-xl font-medium">Treino</span>
-          <input
-            type="text"
-            placeholder="Nome do treino"
-            className="rounded-md border-2 px-3 py-1 text-lg focus-visible:border-blue-600 focus-visible:outline-none"
-            onChange={e => setName(e.target.value)}
-          />
-        </label>
-
-        <label className="flex items-center gap-2 text-slate-800">
-          <MultiSelect
-            className="min-h-10 min-w-48 flex items-center rounded-lg border-2 bg-white"
-            options={Object.values(Weekday)}
-            selected={weekdays}
-            onChange={setWeekdays}
-            optionToString={it => weekdaysTranslation[it]}
-            optionToKey={it => it}
-            placeholder="Selecionar dias da semana..."
-          />
-        </label>
+      <div className="flex flex-col gap-2 bg-white py-4 px-2 sm:flex-row">
+        <TextInput
+          label="Nome do treino"
+          model="outline"
+          className="w-full rounded-lg bg-white font-medium sm:w-1/2"
+          value={name}
+          onChange={setName}
+        />
+        <MultiSelect
+          label="Dias da semana"
+          className="w-full rounded-lg bg-white font-medium sm:w-1/2"
+          options={Object.values(Weekday)}
+          onChange={setWeekdays}
+          selected={weekdays}
+          itemToString={it => weekdaysTranslation[it]}
+          itemToKey={it => it}
+        />
       </div>
       <div>
         {categories.isLoading ? (
@@ -180,7 +173,9 @@ const CreateWorkout = () => {
                 onEdit={it => setExercises(exercises.map(e => (e.id === exercise.id ? it : e)))}
                 onDelete={() => setExercises(exercises.filter(e => e.id !== exercise.id))}
                 categories={categories.data}
-                otherExercises={exercises.filter(({ id }) => id !== exercise.id)}
+                otherExercises={exercises.filter(
+                  ({ id }) => id !== exercise.id || biSets.some(([a, b]) => a === id || b === id),
+                )}
               />
             );
           })
@@ -231,7 +226,6 @@ const ExerciseCard = ({
   const [type, setType] = useState<"reps" | "time">("reps");
 
   const [sets, setSets] = useState([{ reps: 0, weight: 0, time: 0 }]);
-
   const [biSet, setBiSet] = useState<number>();
 
   useEffect(() => {
@@ -266,6 +260,10 @@ const ExerciseCard = ({
     }
   };
 
+  const updateMethod = (newMethod: Method) => {
+    onEdit({ ...exercise, method: newMethod });
+  };
+
   const updateType = (newType: typeof type) => {
     setType(newType);
 
@@ -295,8 +293,9 @@ const ExerciseCard = ({
               className="text-md w-fit border-b-2 p-1 text-sm text-blue-600 focus:border-blue-600 focus-visible:outline-none"
               value={exercise.exerciseId}
               onChange={handleSelectExercise}
+              defaultValue=""
             >
-              <option className="text-slate-600" disabled>
+              <option value="" className="text-slate-600" disabled>
                 Selecione um exercício
               </option>
               {categories.map(group => (
@@ -313,7 +312,12 @@ const ExerciseCard = ({
                 </optgroup>
               ))}
             </select>
-            <select className="text-md w-fit border-b-2 p-1 text-sm focus:border-blue-600 focus-visible:outline-none">
+            <select
+              className="text-md w-fit border-b-2 p-1 text-sm focus:border-blue-600 focus-visible:outline-none"
+              value={exercise.method}
+              onChange={e => updateMethod(e.target.value as Method)}
+              defaultValue="Monday"
+            >
               {Object.values(Method).map(method => (
                 <option key={method} value={method} className="text-sm">
                   {methodTranslation[method]}

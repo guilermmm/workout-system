@@ -130,18 +130,18 @@ export const workoutRouter = createTRPCRouter({
         biSets: z.array(z.tuple([z.string(), z.string()])),
       }),
     )
-    .mutation(({ ctx, input }) => {
+    .mutation(({ ctx, input: { id, name, exercises } }) => {
       return ctx.prisma.workout.update({
-        where: { id: input.id },
+        where: { id },
         data: {
-          name: input.name,
+          name,
           exercises: {
-            createMany: { data: input.exercises.create },
-            updateMany: input.exercises.update.map(({ id, exerciseId, ...exercise }) => ({
+            createMany: { data: exercises.create },
+            updateMany: exercises.update.map(({ id, exerciseId, ...exercise }) => ({
               where: { id },
               data: { exercise: { connect: { id: exerciseId } }, ...exercise },
             })),
-            deleteMany: input.exercises.delete.map(id => ({ id })),
+            deleteMany: exercises.delete.map(id => ({ id })),
           },
         },
       });
