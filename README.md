@@ -48,7 +48,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [ ] permitir apenas um timer ativo por vez
 
 - [x] ajustar a lógica dos sets
-- [ ] permitir ao instrutor reorganizar a ordem dos exercícios de um treino
+- [x] permitir ao instrutor reorganizar a ordem dos exercícios de um treino
 - [x] arrumar as categorias dos treinos
 - [ ] usuario contar as series
 

@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import { classList } from "../utils";
 
 type Props = {
@@ -17,10 +16,8 @@ type Props = {
 const NumberInput: React.FC<Props> = props => {
   const { value, onChange, label, className, name, model, min, max, step, suffix } = props;
 
-  const Comp = className ? "div" : Fragment;
-
   return (
-    <Comp className={className}>
+    <div className={className}>
       <div className="relative bg-inherit">
         <input
           type="number"
@@ -53,12 +50,12 @@ const NumberInput: React.FC<Props> = props => {
         />
         <label
           htmlFor={name}
-          className="absolute top-2 left-1 z-10 origin-[0] -translate-y-4 scale-75 transform bg-inherit px-2 text-sm text-gray-500 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-blue-600"
+          className="absolute top-2 left-1 origin-[0] -translate-y-4 scale-75 transform bg-inherit px-2 text-sm text-gray-500 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-blue-600"
         >
           {label}
         </label>
       </div>
-    </Comp>
+    </div>
   );
 };
 

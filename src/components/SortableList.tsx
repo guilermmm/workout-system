@@ -9,25 +9,42 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Fragment, createContext, useContext, useMemo, useState } from "react";
+import { Fragment, createContext, useContext, useEffect, useMemo, useState } from "react";
 
 interface BaseItem {
   id: UniqueIdentifier;
 }
 
 interface Props<T extends BaseItem> {
-  className: string;
+  className?: string;
   items: T[];
   onChange: (items: T[]) => void;
-  children: (item: T, active: Active | null) => React.ReactNode;
+  children: (item: T, animating: boolean) => React.ReactNode;
 }
 
 function SortableList<T extends BaseItem>(props: Props<T>) {
   const { className, items, onChange, children: render } = props;
 
   const [active, setActive] = useState<Active | null>(null);
+  const [animating, setAnimating] = useState(false);
   const activeItem = useMemo(() => items.find(item => item.id === active?.id), [active, items]);
   const sensors = useSensors(useSensor(PointerSensor));
+
+  useEffect(() => {
+    let timeout: NodeJS.Timeout | undefined;
+
+    if (active) {
+      setAnimating(true);
+    } else {
+      timeout = setTimeout(() => setAnimating(false), 250);
+    }
+
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    };
+  }, [active]);
 
   return (
     <DndContext
@@ -49,28 +66,18 @@ function SortableList<T extends BaseItem>(props: Props<T>) {
       <SortableContext items={items}>
         <ul className={className} role="application">
           {items.map(item => (
-            <Fragment key={item.id}>{render(item, active)}</Fragment>
+            <Fragment key={item.id}>{render(item, animating)}</Fragment>
           ))}
         </ul>
       </SortableContext>
-      <SortableOverlay>{activeItem ? render(activeItem, active) : null}</SortableOverlay>
+      <DragOverlay
+        dropAnimation={{
+          sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: "0.4" } } }),
+        }}
+      >
+        {activeItem ? render(activeItem, animating) : null}
+      </DragOverlay>
     </DndContext>
-  );
-}
-
-type SortableOverlayProps = {
-  children: React.ReactNode;
-};
-
-function SortableOverlay({ children }: SortableOverlayProps) {
-  return (
-    <DragOverlay
-      dropAnimation={{
-        sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: "0.4" } } }),
-      }}
-    >
-      {children}
-    </DragOverlay>
   );
 }
 
@@ -83,7 +90,7 @@ type Context = {
 const SortableItemContext = createContext({} as Context);
 
 type SortableItemProps = {
-  className: string;
+  className?: string;
   id: UniqueIdentifier;
   children: React.ReactNode;
 };
@@ -105,7 +112,7 @@ function SortableItem({ className, id, children }: SortableItemProps) {
 
   return (
     <SortableItemContext.Provider value={context}>
-      <li
+      <div
         className={className}
         ref={setNodeRef}
         style={{
@@ -115,12 +122,12 @@ function SortableItem({ className, id, children }: SortableItemProps) {
         }}
       >
         {children}
-      </li>
+      </div>
     </SortableItemContext.Provider>
   );
 }
 
-function DragHandle({ className, children }: { className: string; children: React.ReactNode }) {
+function DragHandle({ className, children }: { className?: string; children: React.ReactNode }) {
   const { attributes, listeners, ref } = useContext(SortableItemContext);
 
   return (

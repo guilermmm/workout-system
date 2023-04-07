@@ -54,12 +54,12 @@ const MultiSelect = <T,>({
         }
         <button
           type="button"
-          className="absolute inset-0 block h-full w-full cursor-pointer appearance-none rounded-lg border-1 border-gray-300 bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-gray-900 text-opacity-0 focus:border-blue-600 focus:outline-none focus:ring-0"
+          className="absolute inset-0 block h-full w-full cursor-text appearance-none rounded-lg border-1 border-gray-300 bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-gray-900 text-opacity-0 focus:border-blue-600 focus:outline-none focus:ring-0"
           onClick={() => setOpen(!open)}
         />
         <label
           className={classList(
-            "pointer-events-none absolute top-2 left-1 z-10 origin-[0] -translate-y-4 scale-75 transform cursor-pointer bg-inherit px-2 text-sm text-gray-500 duration-300",
+            "pointer-events-none absolute top-2 left-1 origin-[0] -translate-y-4 scale-75 transform cursor-text bg-inherit px-2 text-sm text-gray-500 duration-300",
             {
               "top-1/2 -translate-y-1/2 scale-100": !open && !selected.length,
               "top-2 -translate-y-4 scale-75 px-2 text-blue-600": open,
