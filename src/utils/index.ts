@@ -132,3 +132,18 @@ export default function useEndOfScroll<T extends HTMLElement>(
     };
   }, [ref, handleScroll]);
 }
+
+export const getDateArrayFromDate = (startDate: Date) => {
+  const currentDate = new Date();
+  const timeDiff = Math.abs(currentDate.getTime() - startDate.getTime());
+  const numDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+  const daysArray = [];
+
+  for (let i = 0; i <= numDays; i++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + i);
+    daysArray.push({ day: currentDate.getDate(), month: currentDate.getMonth() });
+  }
+
+  return daysArray;
+};
