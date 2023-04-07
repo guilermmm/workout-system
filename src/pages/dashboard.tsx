@@ -45,7 +45,7 @@ const Dashboard = () => {
   return (
     <FullPage>
       <AdminHeader user={session?.user} />
-      <div className="m-2 flex h-full flex-1 grow flex-col gap-4">
+      <div className="m-2 flex flex-col gap-4">
         <div className="relative">
           <input
             type="text"

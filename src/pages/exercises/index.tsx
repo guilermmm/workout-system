@@ -12,15 +12,57 @@ import { env } from "../../env/server.mjs";
 import { getServerAuthSession } from "../../server/auth";
 import { reduceByCategory } from "../../utils";
 import { api } from "../../utils/api";
+import Link from "next/link";
+import PlusIcon from "../../components/icons/PlusIcon";
+import TrashIcon from "../../components/icons/TrashIcon";
 
 const Dashboard = () => {
   const { data: session } = useSession();
 
   const [searchInput, setSearchInput] = useState("");
 
-  const exercises = api.exercise.getMany.useQuery();
+  const [newExercise, setNewExercise] = useState({
+    name: "",
+    category: "",
+  });
 
   const [organizeBy, setOrganizeBy] = useState<"name" | "category">("category");
+
+  const exercises = api.exercise.getMany.useQuery();
+
+  const filteredExercises = useMemo(
+    () =>
+      exercises.data
+        ?.filter(exercise => {
+          const name = exercise.name.toLowerCase();
+          const category = exercise.category.toLowerCase();
+          const searchLower = searchInput.toLowerCase();
+
+          return name.includes(searchLower) || category.includes(searchLower);
+        })
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [exercises, searchInput],
+  );
+
+  const categories = useMemo(
+    () => filteredExercises?.reduce(reduceByCategory, []),
+    [filteredExercises],
+  );
+
+  const addExercise = api.exercise.create.useMutation({
+    onSuccess: () => {
+      void exercises.refetch();
+      setNewExercise({ name: "", category: "" });
+    },
+  });
+
+  const removeExercise = api.exercise.delete.useMutation({
+    onSuccess: () => void exercises.refetch(),
+  });
+
+  const handleRemoveExercise = (id: string) => () => {
+    removeExercise.mutate({ id });
+  };
 
   if (exercises.error) {
     return <ErrorPage />;
@@ -55,15 +97,50 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-      <div className="grow overflow-y-scroll">
+      <div className="relative grow overflow-y-scroll">
         <div className="mx-4 flex h-full flex-1 grow flex-col gap-4">
           {exercises.isLoading ? (
             <div className="flex flex-1 items-center justify-center">
               <Spinner className="fill-blue-600 text-gray-200" />
             </div>
           ) : (
-            <ExerciseList exercises={exercises.data} search={searchInput} organizeBy={organizeBy} />
+            <ExerciseList
+              filteredExercises={filteredExercises}
+              categories={categories}
+              organizeBy={organizeBy}
+              handleRemoveExercise={handleRemoveExercise}
+            />
           )}
+          <div>
+            <input
+              type="text"
+              placeholder="Nome"
+              className="rounded-md px-1 text-center shadow-md"
+              value={newExercise.name}
+              onChange={e => setNewExercise({ ...newExercise, name: e.target.value })}
+            />
+            <input
+              type="text"
+              list="categories"
+              placeholder="Categoria"
+              className="rounded-md text-center shadow-md"
+              value={newExercise.category}
+              onChange={e => setNewExercise({ ...newExercise, category: e.target.value })}
+            />
+            <datalist id="categories">
+              {categories?.map(category => (
+                <option key={category.category} value={category.category} />
+              ))}
+            </datalist>
+            <button
+              onClick={() =>
+                addExercise.mutate({ name: newExercise.name, category: newExercise.category })
+              }
+              className="rounded-md bg-blue-500 px-3 py-1 text-white shadow-md"
+            >
+              Salvar
+            </button>
+          </div>
         </div>
       </div>
       <AdminNavbar />
@@ -72,64 +149,78 @@ const Dashboard = () => {
 };
 
 const ExerciseList = ({
-  exercises,
-  search,
+  filteredExercises,
+  categories,
   organizeBy,
+  handleRemoveExercise,
 }: {
-  exercises: Exercise[];
-  search: string;
+  filteredExercises: Exercise[] | undefined;
+  categories:
+    | {
+        category: string;
+        exercises: Exercise[];
+      }[]
+    | undefined;
   organizeBy: "name" | "category";
+  handleRemoveExercise: (id: string) => () => void;
 }) => {
-  const filteredExercises = useMemo(
-    () =>
-      exercises
-        .filter(exercise => {
-          const name = exercise.name.toLowerCase();
-          const category = exercise.category.toLowerCase();
-          const searchLower = search.toLowerCase();
-
-          return name.includes(searchLower) || category.includes(searchLower);
-        })
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [exercises, search],
-  );
-
-  const categories = useMemo(
-    () => filteredExercises.reduce(reduceByCategory, []),
-    [filteredExercises],
-  );
-
   return (
     <div className="flex flex-col flex-wrap items-stretch gap-1 sm:flex-row">
       {organizeBy === "category"
-        ? categories.map(category => <CategoryCard {...category} key={category.category} />)
-        : filteredExercises.map(exercise => (
-            <ExerciseCard {...exercise} key={exercise.id} showCategory />
+        ? categories?.map(category => (
+            <CategoryCard
+              {...category}
+              key={category.category}
+              handleRemoveExercise={handleRemoveExercise}
+            />
+          ))
+        : filteredExercises?.map(exercise => (
+            <ExerciseCard
+              {...exercise}
+              key={exercise.id}
+              showCategory
+              handleRemoveExercise={handleRemoveExercise}
+            />
           ))}
     </div>
   );
 };
 
 const ExerciseCard = ({
+  id,
   name,
   category,
   showCategory = false,
+  handleRemoveExercise,
 }: {
+  id: string;
   name: string;
   category: string;
   showCategory?: boolean;
+  handleRemoveExercise: (id: string) => () => void;
 }) => {
   return (
     <div className="flex max-w-[calc(100vw_-_2rem)] flex-1 flex-row items-center justify-between rounded-md bg-blue-500">
-      <div className="truncate px-3 py-2">
+      <div className="flex w-full justify-between truncate px-3 py-2">
         <div className="text-md truncate text-white">{name}</div>
+        <button onClick={handleRemoveExercise(id)}>
+          <TrashIcon className="h-6 w-6 text-red-500" />
+        </button>
         {showCategory && <div className="truncate text-sm text-slate-100">{category}</div>}
       </div>
     </div>
   );
 };
 
-const CategoryCard = ({ category, exercises }: { category: string; exercises: Exercise[] }) => {
+const CategoryCard = ({
+  category,
+  exercises,
+  handleRemoveExercise,
+}: {
+  category: string;
+  exercises: Exercise[];
+  handleRemoveExercise: (id: string) => () => void;
+}) => {
   return (
     <div className="flex flex-1 flex-col" key={category}>
       <div className="w-min">
@@ -138,7 +229,11 @@ const CategoryCard = ({ category, exercises }: { category: string; exercises: Ex
       </div>
       <div className="flex flex-col gap-1">
         {exercises.map(exercise => (
-          <ExerciseCard {...exercise} key={exercise.id} />
+          <ExerciseCard
+            {...exercise}
+            key={exercise.id}
+            handleRemoveExercise={handleRemoveExercise}
+          />
         ))}
       </div>
     </div>
