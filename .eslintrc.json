@@ -16,7 +16,6 @@
   "extends": ["next/core-web-vitals", "plugin:@typescript-eslint/recommended"],
   "rules": {
     "@typescript-eslint/consistent-type-imports": "warn",
-    "@typescript-eslint/no-non-null-assertion": "off",
-    "@typescript-eslint/no-unnecessary-type-constraint": "off"
+    "@typescript-eslint/no-non-null-assertion": "off"
   }
 }

@@ -45,7 +45,7 @@ const Dashboard = () => {
   return (
     <FullPage>
       <AdminHeader user={session?.user} />
-      <div className="m-2 flex flex-col gap-4">
+      <div className="m-2">
         <div className="relative">
           <input
             type="text"
@@ -57,13 +57,13 @@ const Dashboard = () => {
         </div>
       </div>
       <div className="grow overflow-y-scroll" ref={ref}>
-        <div className="mx-4 flex h-full flex-1 grow flex-col gap-4">
+        <div className="mx-4 flex h-full flex-1 grow flex-col items-center gap-4">
           {!profiles.data && profiles.isLoading ? (
             <div className="flex flex-1 items-center justify-center">
               <Spinner className="fill-blue-600 text-gray-200" />
             </div>
           ) : (
-            <div className="flex flex-col flex-wrap items-stretch gap-2 pb-4 sm:flex-row">
+            <div className="flex w-full max-w-[32rem] flex-col flex-wrap items-stretch gap-2 pb-4">
               {profiles.data.pages.flatMap(({ items }) =>
                 items.map(profile => (
                   <UserCard
@@ -90,10 +90,8 @@ const UserCard = ({
   refetch: () => Promise<void>;
 }) => {
   return (
-    <div
-      className={`flex max-w-[calc(100vw_-_2rem)] flex-1 flex-row items-center justify-between rounded-md bg-slate-50 shadow-md transition-shadow hover:shadow-xl`}
-    >
-      <Link href={`/manage/${profile.id}`} className="flex grow items-center truncate p-3 pr-0">
+    <div className="flex w-full grow flex-row items-center justify-between rounded-md bg-slate-50 shadow-md transition-shadow hover:shadow-xl">
+      <Link href={`/manage/${profile.id}`} className="flex grow items-center truncate p-3 pr-2">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
           <ProfilePic user={profile.user} size="md" />
         </div>

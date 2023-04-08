@@ -39,6 +39,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
   - [ ] mostrar historico de medidas
   - [ ] mostrar historico de treinos finalizados
 - [ ] admin criar os exercicios
+- [ ] dialog pra confirmar todos os delete
 
 - [x] validacao de usuario
 - [x] permitir que o professor faça o treino do aluno mesmo antes dele logar a primeira vez, e quando logar já tiver tudo bonitin
@@ -47,7 +48,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [ ] permitir apenas um timer ativo por vez
 
 - [x] ajustar a lógica dos sets
-- [ ] permitir ao instrutor reorganizar a ordem dos exercícios de um treino
+- [x] permitir ao instrutor reorganizar a ordem dos exercícios de um treino
 - [x] arrumar as categorias dos treinos
 - [ ] usuario contar as series
 
