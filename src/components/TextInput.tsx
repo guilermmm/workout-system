@@ -11,7 +11,7 @@ type Props = {
 const TextInput: React.FC<Props> = ({ value, onChange, label, className, model }) => {
   return (
     <div className={className}>
-      <div className="relative h-full min-h-[3rem] w-full bg-inherit">
+      <div className="relative h-full w-full bg-inherit">
         <input
           type="text"
           className={classList(

@@ -1,18 +1,23 @@
 import { Method, Weekday } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import type { Dispatch, SetStateAction } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import Dropdown from "../../../components/Dropdown";
 import ErrorPage from "../../../components/ErrorPage";
+import FullPage from "../../../components/FullPage";
 import MultiSelect from "../../../components/MultiSelect";
+import NumberInput from "../../../components/NumberInput";
 import ProfilePic from "../../../components/ProfilePic";
 import Select from "../../../components/Select";
 import Sortable from "../../../components/SortableList";
 import Spinner from "../../../components/Spinner";
+import TextArea from "../../../components/TextArea";
 import TextInput from "../../../components/TextInput";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
 import Bars2Icon from "../../../components/icons/Bars2Icon";
 import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
+import ChevronDownIcon from "../../../components/icons/ChevronDownIcon";
+import ChevronUpIcon from "../../../components/icons/ChevronUpIcon";
 import PlusIcon from "../../../components/icons/PlusIcon";
 import TrashIcon from "../../../components/icons/TrashIcon";
 import XMarkIcon from "../../../components/icons/XMarkIcon";
@@ -74,16 +79,24 @@ const CreateWorkout = () => {
 
   const handleSave = () => {
     setSaving(true);
-    mutate({
-      name,
-      profileId,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      exercises: exercises.map(({ id, ...exercise }, index) => ({ ...exercise, index })),
-      biSets: biSets.map(([a, b]) => [
-        exercises.findIndex(e => e.id === a)!,
-        exercises.findIndex(e => e.id === b)!,
-      ]),
-    });
+    mutate(
+      {
+        name,
+        profileId,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        exercises: exercises.map(({ id, ...exercise }, index) => ({ ...exercise, index })),
+        biSets: biSets.map(([a, b]) => [
+          exercises.findIndex(e => e.id === a)!,
+          exercises.findIndex(e => e.id === b)!,
+        ]),
+      },
+      {
+        onSuccess: () => {
+          setSaving(false);
+          router.back();
+        },
+      },
+    );
   };
 
   const groups: (ExerciseGroup | Exercise)[] = exercises.reduce((acc, exercise) => {
@@ -102,7 +115,7 @@ const CreateWorkout = () => {
           ? ([exercise, exercises.find(e => e.id === b)!] as const)
           : ([exercises.find(e => e.id === a)!, exercise] as const);
 
-      return [...acc, { id: idGenerator.current++, exercises: group }];
+      return [...acc, { id: group.reduce((n, e) => (n > e.id ? n : e.id), 0), exercises: group }];
     }
 
     return [...acc, exercise];
@@ -120,7 +133,7 @@ const CreateWorkout = () => {
   };
 
   return (
-    <div className="flex h-full flex-col bg-slate-100">
+    <FullPage>
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
         <div className="flex flex-row items-center justify-between">
           <button
@@ -246,13 +259,13 @@ const CreateWorkout = () => {
           disabled={name === "" || exercises.length === 0 || weekdays.length === 0 || saving}
         >
           {saving ? "Salvando..." : "Salvar treino"}
-          {name !== "" && exercises.length !== 0 && weekdays.length !== 0 && (
+          {!saving && name !== "" && exercises.length !== 0 && weekdays.length !== 0 && (
             <CheckCircleIcon className="h-8 w-8" />
           )}
           {saving && <Spinner className="h-8 w-8 fill-blue-600 text-gray-200" />}
         </button>
       </div>
-    </div>
+    </FullPage>
   );
 };
 
@@ -279,7 +292,17 @@ const ExerciseCard = ({
 }: ExerciseCardProps) => {
   const [type, setType] = useState<"reps" | "time">("reps");
 
-  const [sets, setSets] = useState([{ reps: 0, weight: 0, time: 0 }]);
+  const [hidden, setHidden] = useState(false);
+
+  const [sets, setSets] = useState(() =>
+    exercise.sets.length > 0
+      ? exercise.sets.map(set => ({
+          weight: set.weight,
+          reps: "reps" in set ? set.reps : 0,
+          time: "time" in set ? set.time : 0,
+        }))
+      : [{ reps: 0, weight: 0, time: 0 }],
+  );
   const [biSet, setBiSet] = useState<number>();
 
   useEffect(() => {
@@ -338,79 +361,106 @@ const ExerciseCard = ({
     }
   };
 
+  const isCollapsed = collapsed || hidden;
+
   return (
     <div className="relative m-2 flex flex-col justify-between rounded-lg bg-white p-2 shadow-md">
       <div className="absolute right-2 top-2">{dragHandle}</div>
+      <button
+        className={classList(
+          "absolute rounded-full p-2 text-gray-400 shadow-md transition-all hover:bg-gray-300 hover:text-white",
+          {
+            "right-2 top-14 sm:right-14 sm:top-2": !!onDelete && !isCollapsed,
+            "right-14 top-2": !!onDelete && isCollapsed,
+            "right-2 top-2": !onDelete,
+          },
+        )}
+        onClick={() => setHidden(!isCollapsed)}
+      >
+        {isCollapsed ? (
+          <ChevronDownIcon className="h-6 w-6" />
+        ) : (
+          <ChevronUpIcon className="h-6 w-6" />
+        )}
+      </button>
       <div
         className={classList(
-          "flex h-10 flex-row items-center justify-between overflow-y-hidden transition-all duration-200",
+          "flex h-10 flex-row items-center justify-between transition-all duration-200",
           {
-            "max-h-[200rem]": !!collapsed,
-            "max-h-0": !collapsed,
+            "max-h-[2.5rem]": !!isCollapsed,
+            "max-h-0 overflow-y-hidden": !isCollapsed,
           },
         )}
       >
-        <div className="ml-2 text-sm font-medium">
+        <div className="ml-2 w-1/3 text-sm font-medium">
           {categories.flatMap(g => g.exercises).find(e => e.id === exercise.exerciseId)?.name}
         </div>
-        <div className="text-xs text-gray-500">{exercise.sets.length || 1} sets</div>
+        <div className="w-1/3 text-xs text-gray-500">
+          {exercise.sets.length || 1} série{exercise.sets.length > 1 ? "s" : ""}
+        </div>
         <div className="w-10" />
       </div>
-
       <div
-        className={classList(
-          "flex flex-col justify-between gap-4 overflow-y-hidden transition-all duration-200",
-          {
-            "max-h-[200rem]": !collapsed,
-            "max-h-0": !!collapsed,
-          },
-        )}
+        className={classList("flex flex-col justify-between gap-2 transition-all duration-200", {
+          "max-h-[100rem]": !isCollapsed,
+          "max-h-0 overflow-y-hidden": !!isCollapsed,
+        })}
       >
         <div className="flex flex-1 flex-col gap-2">
-          <div className="flex flex-row items-start gap-2">
-            <div className="flex grow flex-col gap-2 bg-white py-1 sm:flex-row">
-              <Select
-                className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
-                value={exercise.exerciseId}
-                onChange={handleSelectExercise}
-                defaultValue=""
-                model="outline"
-                label="Exercício"
-              >
-                <option value="" className="text-slate-600" disabled>
-                  Selecione um exercício
-                </option>
-                {categories.map(group => (
-                  <optgroup
-                    label={group.category}
-                    key={group.category}
-                    className="my-2 block text-sm text-slate-700/70"
-                  >
-                    {group.exercises.map(e => (
-                      <option key={e.id} className="text-blue-600" value={e.id}>
-                        {e.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </Select>
-              <Select
-                className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
-                value={exercise.method}
-                onChange={e => updateMethod(e.target.value as Method)}
-                defaultValue="Standard"
-                model="outline"
-                label="Método"
-              >
-                {Object.values(Method).map(method => (
-                  <option key={method} value={method} className="text-sm">
-                    {methodTranslation[method]}
+          <div className="flex">
+            <div className="flex grow flex-col gap-2">
+              <div className="flex grow flex-col gap-2 bg-white py-1 sm:flex-row">
+                <Select
+                  className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
+                  value={exercise.exerciseId}
+                  onChange={handleSelectExercise}
+                  defaultValue=""
+                  model="outline"
+                  label="Exercício"
+                >
+                  <option value="" className="text-slate-600" disabled>
+                    Selecione um exercício
                   </option>
-                ))}
-              </Select>
+                  {categories.map(group => (
+                    <optgroup
+                      label={group.category}
+                      key={group.category}
+                      className="my-2 block text-sm text-slate-700/70"
+                    >
+                      {group.exercises.map(e => (
+                        <option key={e.id} className="text-blue-600" value={e.id}>
+                          {e.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </Select>
+                <Select
+                  className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
+                  value={exercise.method}
+                  onChange={e => updateMethod(e.target.value as Method)}
+                  defaultValue="Standard"
+                  model="outline"
+                  label="Método"
+                >
+                  {Object.values(Method).map(method => (
+                    <option key={method} value={method} className="text-sm">
+                      {methodTranslation[method]}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <TextArea
+                className="h-full w-full rounded-lg bg-white"
+                label="Descrição"
+                value={exercise.description ?? ""}
+                onChange={description => onEdit({ ...exercise, description })}
+                model="outline"
+                // rows={exercise.description?.split("\n").length ?? 1}
+              />
             </div>
-            {onDelete && (
-              <div className="mt-12 mr-0 sm:mr-12 sm:mt-0">
+            {onDelete ? (
+              <div className="mt-24 ml-2 mr-0 flex flex-col items-start gap-2 sm:mr-24 sm:mt-0 sm:flex-row-reverse">
                 <button
                   className="rounded-full p-2 text-red-400 shadow-md transition-colors hover:bg-red-500 hover:text-white"
                   onClick={onDelete}
@@ -418,68 +468,96 @@ const ExerciseCard = ({
                   <TrashIcon className="h-6 w-6" />
                 </button>
               </div>
+            ) : (
+              <div className="ml-12" />
             )}
           </div>
-          <textarea
-            className="block w-full resize-none border-b-2 p-1 text-sm text-slate-800 focus:border-blue-600 focus:outline-none"
-            placeholder="Descrição"
-            value={exercise.description ?? ""}
-            onChange={e => onEdit({ ...exercise, description: e.target.value })}
-            rows={exercise.description?.split("\n").length ?? 1}
-          />
         </div>
-
-        <div className="grid grid-cols-[auto_auto] grid-rows-[auto_auto] gap-2">
-          {/* toggler */}
-          <div className="ml-1 flex grow flex-col items-center justify-center">
-            <div className="inline-flex">
-              <span className="mr-1 text-xs font-medium text-gray-900">Repetições</span>
-              <label className="relative cursor-pointer items-center">
-                <input
-                  type="checkbox"
-                  checked={type === "time"}
-                  onChange={e => updateType(e.target.checked ? "time" : "reps")}
-                  className="peer sr-only"
-                />
-                <div className="peer h-5 w-9 rounded-full bg-blue-600 after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300" />
-              </label>
-              <span className="ml-1 text-xs font-medium text-gray-900">Tempo</span>
+        <div className="flex flex-row gap-2">
+          <div className="flex grow flex-col gap-2">
+            <div className="flex grow flex-col items-center justify-center">
+              <div className="inline-flex">
+                <span className="mr-1 text-xs font-medium text-gray-900">Reps</span>
+                <label className="relative cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    checked={type === "time"}
+                    onChange={e => updateType(e.target.checked ? "time" : "reps")}
+                    className="peer sr-only"
+                  />
+                  <div className="peer h-5 w-9 rounded-full bg-blue-600 after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300" />
+                </label>
+                <span className="ml-1 text-xs font-medium text-gray-900">Tempo</span>
+              </div>
+            </div>
+            <div className="flex grow flex-col">
+              {otherExercises && otherExercises.length !== 0 && (
+                // TODO: switch to a dropdown
+                <div className="flex items-center justify-center overflow-visible">
+                  <Dropdown
+                    className="flex items-center justify-center"
+                    options={otherExercises}
+                    onSelect={e => setBiSet(e.id)}
+                    itemToKey={e => e.id.toString()}
+                    itemToString={exercise =>
+                      categories
+                        .flatMap(group => group.exercises)
+                        .find(e => e.id === exercise.exerciseId)!.name
+                    }
+                  >
+                    {(_, toggle) => (
+                      <button
+                        className="flex h-10 flex-row items-center justify-center gap-2 rounded-lg bg-gray-50 px-4 text-sm font-medium text-slate-900 shadow-md"
+                        onClick={toggle}
+                      >
+                        Criar bi-set
+                      </button>
+                    )}
+                  </Dropdown>
+                </div>
+              )}
             </div>
           </div>
-          {/* series */}
-          <div className="row-span-1 flex grow flex-col text-sm sm:row-span-2">
-            <div className="flex flex-col rounded-md px-2 py-1 font-medium shadow-md">
+          <div className="flex flex-col text-sm">
+            <div className="m-2 flex flex-col rounded-md px-2 py-1 font-medium shadow-md">
               <span className="text-slate-700">Séries</span>
               {sets.map((set, index) => (
                 <div
-                  className="m-0.5 flex flex-row items-center justify-between rounded bg-gray-100 p-0.5 shadow-md"
+                  className="m-0.5 flex flex-row items-center justify-between rounded border-1 bg-white p-1.5 shadow-md"
                   key={index}
                 >
                   <div className="flex flex-row items-center gap-2">
-                    <input
-                      type="number"
-                      className="w-10 rounded-md border-2 text-center"
+                    {/* <div className="flex grow items-center"> */}
+                    <NumberInput
+                      label={type === "reps" ? "Reps" : "Tempo"}
+                      className="bg-white"
                       value={type === "reps" ? set.reps : set.time}
-                      onChange={e => {
+                      onChange={n => {
                         const newSets = [...sets];
-                        newSets[index]![type === "reps" ? "reps" : "time"] = Number(e.target.value);
+                        newSets[index]![type === "reps" ? "reps" : "time"] = n;
                         updateSets(newSets);
                       }}
                       min={0}
+                      model="outline"
+                      suffix={type === "time" ? ["seg", "pr-9"] : undefined}
                     />
-                    <span className="mr-2 text-slate-700">{type === "reps" ? "reps" : "seg"}</span>
-                    <input
-                      type="number"
-                      className="w-10 rounded-md border-2 text-center"
+                    {/* </div> */}
+                    {/* <div className="flex grow items-center"> */}
+                    <NumberInput
+                      label="Peso"
+                      className="bg-white"
                       value={set.weight}
-                      onChange={e => {
+                      onChange={n => {
                         const newSets = [...sets];
-                        newSets[index]!.weight = Number(e.target.value);
+                        newSets[index]!.weight = n;
                         updateSets(newSets);
                       }}
                       min={0}
+                      step={0.25}
+                      model="outline"
+                      suffix={["kg", "pr-7"]}
                     />
-                    <span className="mr-2 text-slate-700">kg</span>
+                    {/* </div> */}
                   </div>
                   <div className="flex flex-row items-center gap-2">
                     {sets.length !== 1 && (
@@ -497,55 +575,22 @@ const ExerciseCard = ({
                   </div>
                 </div>
               ))}
-              <button
-                className="m-0.5 flex flex-row items-center justify-center gap-2 rounded bg-gray-100 p-0.5 shadow-md"
-                onClick={() => {
-                  const lastSet = sets.at(-1);
-                  if (lastSet) {
-                    updateSets([...sets, { ...lastSet }]);
-                  } else {
-                    updateSets([{ reps: 0, weight: 0, time: 0 }]);
-                  }
-                }}
-              >
-                <PlusIcon className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-          {/* bi-set */}
-          <div className="col-span-1 flex grow flex-col justify-end">
-            {otherExercises && otherExercises.length !== 0 && (
-              // TODO: switch to a dropdown
-              <label>
-                <Select
-                  label="Criar bi-set"
-                  className="w-full rounded-lg bg-white font-medium"
-                  value=""
-                  onChange={e => {
-                    if (e.target.value === "") {
-                      setBiSet(undefined);
+              <div className="m-0.5 flex items-center justify-center">
+                <button
+                  className="rounded-full p-1.5 shadow-md hover:bg-gray-100"
+                  onClick={() => {
+                    const lastSet = sets.at(-1);
+                    if (lastSet) {
+                      updateSets([...sets, { ...lastSet }]);
                     } else {
-                      setBiSet(Number(e.target.value));
+                      updateSets([{ reps: 0, weight: 0, time: 0 }]);
                     }
                   }}
-                  model="outline"
-                  defaultValue=""
                 >
-                  <option className="text-sm text-slate-600" value="" disabled>
-                    Criar bi-set
-                  </option>
-                  {otherExercises.map(exercise => (
-                    <option key={exercise.id} value={exercise.id} className="text-sm font-medium">
-                      {
-                        categories
-                          .flatMap(group => group.exercises)
-                          .find(e => e.id === exercise.exerciseId)?.name
-                      }
-                    </option>
-                  ))}
-                </Select>
-              </label>
-            )}
+                  <PlusIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -579,9 +624,9 @@ const BiSetCard: React.FC<BiSetCardProps> = ({
         <span className="font-medium text-gray-50">Bi-set</span>
       </div>
       <div
-        className={classList("h-12 overflow-y-hidden transition-all duration-200", {
-          "max-h-[200rem]": !!collapsed,
-          "max-h-0": !collapsed,
+        className={classList("h-12 transition-all duration-200", {
+          "max-h-[3rem]": !!collapsed,
+          "max-h-0 overflow-y-hidden": !collapsed,
         })}
       >
         <div className="flex h-full items-center justify-center pb-2">
@@ -597,9 +642,9 @@ const BiSetCard: React.FC<BiSetCardProps> = ({
         </div>
       </div>
       <div
-        className={classList("flex flex-col overflow-y-hidden transition-all duration-200", {
-          "max-h-[200rem]": !collapsed,
-          "max-h-0": !!collapsed,
+        className={classList("flex flex-col transition-all duration-200", {
+          "max-h-[100rem]": !collapsed,
+          "max-h-0 overflow-y-hidden": !!collapsed,
         })}
       >
         <div className="flex flex-row items-center justify-between px-2">

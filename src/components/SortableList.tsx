@@ -64,18 +64,18 @@ function SortableList<T extends BaseItem>(props: Props<T>) {
       }}
     >
       <SortableContext items={items}>
-        <ul className={className} role="application">
+        <div className={className} role="application">
           {items.map(item => (
-            <Fragment key={item.id}>{render(item, animating)}</Fragment>
+            <Fragment key={item.id}>{render(item, !!active || animating)}</Fragment>
           ))}
-        </ul>
+        </div>
       </SortableContext>
       <DragOverlay
         dropAnimation={{
           sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: "0.4" } } }),
         }}
       >
-        {activeItem ? render(activeItem, animating) : null}
+        {activeItem ? render(activeItem, !!active || animating) : null}
       </DragOverlay>
     </DndContext>
   );
