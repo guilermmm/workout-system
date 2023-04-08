@@ -135,4 +135,20 @@ export const userRouter = createTRPCRouter({
         },
       });
     }),
+
+  getFinishedWorkouts: adminProcedure
+    .input(z.object({ profileId: z.string() }))
+    .query(async ({ ctx, input: { profileId } }) => {
+      return ctx.prisma.finishedWorkout.findMany({
+        where: { profileId },
+        orderBy: { date: "desc" },
+      });
+    }),
+
+  getFinishedWorkoutsBySession: userProcedure.query(async ({ ctx }) => {
+    return ctx.prisma.finishedWorkout.findMany({
+      where: { profile: { userId: ctx.session.user.id } },
+      orderBy: { date: "desc" },
+    });
+  }),
 });

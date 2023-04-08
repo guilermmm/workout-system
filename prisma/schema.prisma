@@ -35,7 +35,7 @@ enum Method {
 
 model ExerciseInWorkout {
     id          String   @id @default(cuid())
-    exercise    Exercise @relation(fields: [exerciseId], references: [id])
+    exercise    Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
     exerciseId  String
     workout     Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
     workoutId   String
