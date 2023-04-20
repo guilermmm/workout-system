@@ -15,7 +15,7 @@ import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
 import XCircleIcon from "../components/icons/XCircleIcon";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
-import { classList, useEndOfScroll, useOutsideClick } from "../utils";
+import { classList, useClickOutside, useEndOfScroll } from "../utils";
 import { api } from "../utils/api";
 
 const Dashboard = () => {
@@ -119,7 +119,7 @@ const StatusButton = ({
     ? api.user.deactivate.useMutation()
     : api.user.activate.useMutation();
 
-  const ref = useOutsideClick<HTMLDivElement>(() => setOpened(false));
+  const ref = useClickOutside<HTMLDivElement>(() => setOpened(false));
 
   return (
     <div

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { classList, useOutsideClick } from "../utils";
+import { classList, useClickOutside } from "../utils";
 
 type Props<T> = {
   label: string;
@@ -30,7 +30,7 @@ const MultiSelect = <T,>({
     }
   }, [disabled]);
 
-  const ref = useOutsideClick<HTMLDivElement>(() => setOpen(false));
+  const ref = useClickOutside<HTMLDivElement>(() => setOpen(false));
 
   const handleSelect = useCallback(
     (option: T) => {

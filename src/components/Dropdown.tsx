@@ -4,7 +4,7 @@
 // Compare this snippet from src/components/MultiSelect.tsx:
 
 import { useEffect, useState } from "react";
-import { useOutsideClick } from "../utils";
+import { useClickOutside } from "../utils";
 
 type Props<T> = {
   className: string;
@@ -33,7 +33,7 @@ const Dropdown = <T,>({
     }
   }, [disabled]);
 
-  const ref = useOutsideClick<HTMLDivElement>(() => setOpen(false));
+  const ref = useClickOutside<HTMLDivElement>(() => setOpen(false));
 
   return (
     <div className={className} ref={ref}>

@@ -86,7 +86,7 @@ export async function never() {
   return new Promise(() => void 0);
 }
 
-export const useOutsideClick = <T extends HTMLElement>(callback: (e: Event) => void) => {
+export const useClickOutside = <T extends HTMLElement>(callback: (e: Event) => void) => {
   const ref = useRef<T | null>(null);
 
   useEffect(() => {
@@ -262,7 +262,7 @@ export const useForm = <T extends Record<string, unknown>>({
   );
 
   return [
-    { form, isSubmitting, values, errors: Object.values(errors).length > 0 ? errors : undefined },
+    { form, isSubmitting, values, errors },
     { handleSubmit, reset },
   ] as const;
 };
