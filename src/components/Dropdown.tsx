@@ -3,7 +3,7 @@
 // Path: src/components/Dropdown.tsx
 // Compare this snippet from src/components/MultiSelect.tsx:
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useOutsideClick } from "../utils";
 
 type Props<T> = {
@@ -13,6 +13,7 @@ type Props<T> = {
   itemToString: (option: T) => string;
   itemToKey: (option: T) => string;
   children: (isOpen: boolean, toggle: () => void) => React.ReactNode;
+  disabled?: boolean;
 };
 
 const Dropdown = <T,>({
@@ -22,8 +23,15 @@ const Dropdown = <T,>({
   itemToString,
   itemToKey,
   children,
+  disabled,
 }: Props<T>) => {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (disabled) {
+      setOpen(false);
+    }
+  }, [disabled]);
 
   const ref = useOutsideClick<HTMLDivElement>(() => setOpen(false));
 
@@ -31,7 +39,9 @@ const Dropdown = <T,>({
     <div className={className} ref={ref}>
       <div className="relative h-full w-full bg-inherit">
         {children(open, () => {
-          console.log("toggle");
+          if (disabled) {
+            return;
+          }
           setOpen(o => !o);
         })}
         {open && (
@@ -41,7 +51,12 @@ const Dropdown = <T,>({
                 <button
                   key={itemToKey(option)}
                   className="flex items-center px-4 py-2 text-sm hover:bg-gold-100"
-                  onClick={() => onSelect(option)}
+                  onClick={() => {
+                    if (disabled) {
+                      return;
+                    }
+                    onSelect(option);
+                  }}
                 >
                   {itemToString(option)}
                 </button>

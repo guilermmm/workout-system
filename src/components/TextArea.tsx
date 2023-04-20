@@ -5,10 +5,11 @@ type Props = {
   onChange: (e: string) => void;
   label: string;
   className?: string;
-  model: "outline" | "floor";
+  model?: "outline" | "floor";
+  disabled?: boolean;
 };
 
-const TextArea = ({ value, onChange, label, className, model }: Props) => {
+const TextArea = ({ onChange, label, className, model = "outline", ...props }: Props) => {
   return (
     <div className={className}>
       <div className="relative h-full w-full bg-inherit">
@@ -21,10 +22,10 @@ const TextArea = ({ value, onChange, label, className, model }: Props) => {
             },
           )}
           placeholder=" "
-          value={value}
           onChange={e => onChange(e.target.value)}
           autoComplete="off"
-          rows={value.split("\n").length}
+          rows={props.value.split("\n").length}
+          {...props}
         />
         <label className="pointer-events-none absolute top-2 left-1 origin-[0] -translate-y-4 scale-75 transform cursor-text bg-inherit px-2 text-sm text-gray-500 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-blue-600">
           {label}

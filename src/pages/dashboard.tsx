@@ -15,7 +15,7 @@ import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
 import XCircleIcon from "../components/icons/XCircleIcon";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
-import useEndOfScroll, { classList, useOutsideClick } from "../utils";
+import { classList, useEndOfScroll, useOutsideClick } from "../utils";
 import { api } from "../utils/api";
 
 const Dashboard = () => {
@@ -63,7 +63,7 @@ const Dashboard = () => {
               <Spinner className="fill-blue-600 text-gray-200" />
             </div>
           ) : (
-            <div className="flex w-full max-w-[32rem] flex-col flex-wrap items-stretch gap-2 pb-4">
+            <div className="flex w-full max-w-[32rem] flex-col gap-1 pb-4">
               {profiles.data.pages.flatMap(({ items }) =>
                 items.map(profile => (
                   <UserCard

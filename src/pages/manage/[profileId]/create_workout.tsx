@@ -1,7 +1,8 @@
 import { Method, Weekday } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
 import Dropdown from "../../../components/Dropdown";
 import ErrorPage from "../../../components/ErrorPage";
 import FullPage from "../../../components/FullPage";
@@ -23,18 +24,37 @@ import TrashIcon from "../../../components/icons/TrashIcon";
 import XMarkIcon from "../../../components/icons/XMarkIcon";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
-import { classList } from "../../../utils";
+import { classList, useFormValidation, useLocalStorage } from "../../../utils";
 import { api, type RouterOutputs } from "../../../utils/api";
 import { methodTranslation, weekdaysOrder, weekdaysTranslation } from "../../../utils/consts";
-import type { Sets } from "../../../utils/types";
 
-type Exercise = {
-  id: number;
-  exerciseId: string;
-  description: string | null;
-  method: Method;
-  sets: Sets;
-};
+const exerciseParser = z.object({
+  id: z.number(),
+  exerciseId: z.string(),
+  description: z.string().nullable(),
+  method: z.nativeEnum(Method),
+  biSet: z.number().nullable(),
+  type: z.union([z.literal("reps"), z.literal("time")]),
+  sets: z.array(
+    z.object({
+      reps: z.number().min(1),
+      weightKg: z.number().min(0),
+      time: z.object({
+        minutes: z.number().min(0),
+        seconds: z.number().min(0).max(59),
+      }),
+    }),
+  ),
+  hidden: z.boolean(),
+});
+
+type Exercise = z.infer<typeof exerciseParser>;
+
+const workoutParser = z.object({
+  name: z.string(),
+  weekdays: z.array(z.nativeEnum(Weekday)),
+  exercises: z.array(exerciseParser),
+});
 
 type ExerciseGroup = { id: number; exercises: readonly [Exercise, Exercise] };
 
@@ -43,36 +63,81 @@ type Categories = RouterOutputs["exercise"]["getGroups"];
 const CreateWorkout = () => {
   const router = useRouter();
 
-  const idGenerator = useRef(1);
-
   const { profileId } = router.query as { profileId: string };
 
   const profile = api.user.getProfileById.useQuery(profileId);
 
   const categories = api.exercise.getGroups.useQuery();
 
-  const { mutate } = api.workout.create.useMutation({ onSuccess: () => router.back() });
+  const { mutate } = api.workout.create.useMutation();
 
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [biSets, setBiSets] = useState<[number, number][]>([]);
-  const [weekdays, setWeekdays] = useState<Weekday[]>([]);
-  const [name, setName] = useState("");
+  const [workout, setWorkout, resetWorkout] = useLocalStorage("create-workout", workoutParser, {
+    name: "",
+    exercises: [],
+    weekdays: [],
+  });
+
+  const idGenerator = useRef(1);
+
+  useEffect(() => {
+    if (workout.exercises.length === 0) {
+      idGenerator.current = 1;
+    } else {
+      idGenerator.current = Math.max(...workout.exercises.map(e => e.id)) + 1;
+    }
+  }, [workout.exercises]);
 
   const [saving, setSaving] = useState(false);
+
+  const groups = useMemo(
+    () =>
+      workout.exercises.reduce((acc, exercise) => {
+        const isAlreadyInAGroup = acc.find(
+          g => "exercises" in g && g.exercises.find(e => e.id === exercise.id),
+        );
+        if (isAlreadyInAGroup) {
+          return acc;
+        }
+
+        if (workout.exercises.some(e => e.biSet === exercise.id)) {
+          return acc;
+        }
+
+        if (exercise.biSet !== null) {
+          const group = [exercise, workout.exercises.find(e => e.id === exercise.biSet)!] as const;
+
+          return [...acc, { id: exercise.id, exercises: group }];
+        }
+
+        return [...acc, exercise];
+      }, [] as (ExerciseGroup | Exercise)[]),
+    [workout.exercises],
+  );
 
   if (profile.error || categories.error) {
     return <ErrorPage />;
   }
 
+  const setExercises = (exercises: Exercise[] | ((exercises: Exercise[]) => Exercise[])) => {
+    if (typeof exercises === "function") {
+      setWorkout(prev => ({ ...prev, exercises: exercises(prev.exercises) }));
+    } else {
+      setWorkout(prev => ({ ...prev, exercises }));
+    }
+  };
+
   const handleAddExercise = () => {
     setExercises([
-      ...exercises,
+      ...workout.exercises,
       {
         id: idGenerator.current++,
         exerciseId: "",
-        sets: [],
         description: "",
         method: Method.Standard,
+        type: "reps",
+        hidden: false,
+        sets: [{ reps: 1, weightKg: 0, time: { minutes: 0, seconds: 0 } }],
+        biSet: null,
       },
     ]);
   };
@@ -81,17 +146,35 @@ const CreateWorkout = () => {
     setSaving(true);
     mutate(
       {
-        name,
+        name: workout.name,
         profileId,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        exercises: exercises.map(({ id, ...exercise }, index) => ({ ...exercise, index })),
-        biSets: biSets.map(([a, b]) => [
-          exercises.findIndex(e => e.id === a)!,
-          exercises.findIndex(e => e.id === b)!,
-        ]),
+        exercises: workout.exercises.map((exercise, index) => ({
+          exerciseId: exercise.exerciseId,
+          description: exercise.description,
+          method: exercise.method,
+          sets:
+            exercise.type === "reps"
+              ? exercise.sets.map(({ reps, weightKg }) => ({
+                  reps,
+                  weight: weightKg * 1000,
+                }))
+              : exercise.sets.map(({ time, weightKg }) => ({
+                  time: time.minutes * 60 + time.seconds,
+                  weight: weightKg * 1000,
+                })),
+          index,
+        })),
+        biSets: workout.exercises
+          .map((exercise, index) => ({ ...exercise, index }))
+          .filter(exercise => exercise.biSet !== null)
+          .map(exercise => {
+            const other = workout.exercises.findIndex(e => e.id === exercise.biSet);
+            return [exercise.index, other] as [number, number];
+          }),
       },
       {
         onSuccess: () => {
+          resetWorkout();
           setSaving(false);
           router.back();
         },
@@ -99,38 +182,17 @@ const CreateWorkout = () => {
     );
   };
 
-  const groups: (ExerciseGroup | Exercise)[] = exercises.reduce((acc, exercise) => {
-    const isAlreadyInAGroup = acc.find(
-      g => "exercises" in g && g.exercises.find(e => e.id === exercise.id),
-    );
-    if (isAlreadyInAGroup) {
-      return acc;
-    }
-
-    const biSet = biSets.find(([a, b]) => a === exercise.id || b === exercise.id);
-    if (biSet) {
-      const [a, b] = biSet;
-      const group =
-        a === exercise.id
-          ? ([exercise, exercises.find(e => e.id === b)!] as const)
-          : ([exercises.find(e => e.id === a)!, exercise] as const);
-
-      return [...acc, { id: group.reduce((n, e) => (n > e.id ? n : e.id), 0), exercises: group }];
-    }
-
-    return [...acc, exercise];
-  }, [] as (ExerciseGroup | Exercise)[]);
-
   const handleChangeGroups = (newGroups: typeof groups) => {
     const newExercises = newGroups.flatMap(g => ("exercises" in g ? g.exercises : g));
-    const newBiSets = newGroups
-      .filter(g => "exercises" in g)
-      .map(g => (g as ExerciseGroup).exercises)
-      .map(([a, b]) => [a.id, b.id] as [number, number]);
 
     setExercises(newExercises);
-    setBiSets(newBiSets);
   };
+
+  const canSubmit =
+    workout.name !== "" &&
+    workout.weekdays.length > 0 &&
+    workout.exercises.length > 0 &&
+    workout.exercises.every(e => e.exerciseId !== "");
 
   return (
     <FullPage>
@@ -166,29 +228,40 @@ const CreateWorkout = () => {
         </div>
       </div>
 
-      <div className="flex grow flex-col overflow-y-scroll">
-        <div className="flex flex-col gap-2 bg-white py-4 px-2 sm:flex-row">
+      <div className="flex grow flex-col items-center overflow-y-scroll">
+        <div className="flex w-full flex-col gap-2 bg-white py-4 px-2 sm:flex-row">
           <TextInput
             label="Nome do treino"
-            model="outline"
             className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
-            value={name}
-            onChange={setName}
+            value={workout.name}
+            onChange={name => setWorkout({ ...workout, name })}
           />
           <MultiSelect
-            label="Dias da semana"
+            label="Dia(s)"
             className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
             options={Object.values(Weekday)}
-            onChange={days => setWeekdays(days.sort((a, b) => weekdaysOrder[a] - weekdaysOrder[b]))}
-            selected={weekdays}
+            onChange={days =>
+              setWorkout({
+                ...workout,
+                weekdays: days.sort((a, b) => weekdaysOrder[a] - weekdaysOrder[b]),
+              })
+            }
+            selected={workout.weekdays}
             itemToString={it => weekdaysTranslation[it]}
             itemToKey={it => it}
+            disabled={saving}
           />
         </div>
         {categories.isLoading ? (
-          <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
+          <div className="flex h-full w-full items-center justify-center">
+            <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
+          </div>
         ) : (
-          <Sortable.List items={groups} onChange={handleChangeGroups}>
+          <Sortable.List
+            className="w-full max-w-[48rem]"
+            items={groups}
+            onChange={handleChangeGroups}
+          >
             {(group, animating) => (
               <Sortable.Item className="" id={group.id}>
                 {(() => {
@@ -203,14 +276,18 @@ const CreateWorkout = () => {
 
                     return (
                       <BiSetCard
-                        key={group.id}
                         first={a}
                         second={b}
-                        setBiSets={setBiSets}
+                        separate={() => {
+                          setExercises(
+                            workout.exercises.map(e => (e.id === a.id ? { ...e, biSet: null } : e)),
+                          );
+                        }}
                         setExercises={setExercises}
                         categories={categories.data}
                         dragHandle={dragHandle}
                         collapsed={animating}
+                        disabled={saving}
                       />
                     );
                   }
@@ -220,20 +297,23 @@ const CreateWorkout = () => {
                     <ExerciseCard
                       key={exercise.id}
                       exercise={exercise}
-                      setBiSets={setBiSets}
                       onEdit={it => {
-                        setExercises(exercises.map(e => (e.id === exercise.id ? it : e)));
+                        setExercises(workout.exercises.map(e => (e.id === exercise.id ? it : e)));
                       }}
-                      onDelete={() => setExercises(exercises.filter(e => e.id !== exercise.id))}
+                      onDelete={() =>
+                        setExercises(workout.exercises.filter(e => e.id !== exercise.id))
+                      }
                       categories={categories.data}
-                      otherExercises={exercises.filter(
-                        ({ id, exerciseId }) =>
-                          id !== exercise.id &&
-                          !biSets.some(([a, b]) => a === id || b === id) &&
-                          exerciseId !== "",
+                      otherExercises={workout.exercises.filter(
+                        other =>
+                          other.id !== exercise.id &&
+                          other.exerciseId !== "" &&
+                          other.biSet === null &&
+                          workout.exercises.find(e => e.biSet === other.id) === undefined,
                       )}
                       dragHandle={dragHandle}
                       collapsed={animating}
+                      disabled={saving}
                     />
                   );
                 })()}
@@ -241,28 +321,31 @@ const CreateWorkout = () => {
             )}
           </Sortable.List>
         )}
-        <div className="flex flex-row items-center justify-center">
-          <button
-            className="mt-2 flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600"
-            onClick={handleAddExercise}
-          >
-            Adicionar exercício
-            <PlusIcon className="h-8 w-8" />
-          </button>
-        </div>
+        {!categories.isLoading && (
+          <div className="flex flex-row items-center justify-center">
+            <button
+              className="mt-2 flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
+              onClick={handleAddExercise}
+            >
+              Adicionar exercício
+              <PlusIcon className="h-8 w-8" />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="fixed bottom-0 right-0 p-4">
         <button
           className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
           onClick={handleSave}
-          disabled={name === "" || exercises.length === 0 || weekdays.length === 0 || saving}
+          disabled={!canSubmit || saving}
         >
           {saving ? "Salvando..." : "Salvar treino"}
-          {!saving && name !== "" && exercises.length !== 0 && weekdays.length !== 0 && (
-            <CheckCircleIcon className="h-8 w-8" />
+          {saving ? (
+            <Spinner className="h-8 w-8 fill-blue-600 text-gray-200" />
+          ) : (
+            canSubmit && <CheckCircleIcon className="h-8 w-8" />
           )}
-          {saving && <Spinner className="h-8 w-8 fill-blue-600 text-gray-200" />}
         </button>
       </div>
     </FullPage>
@@ -271,85 +354,44 @@ const CreateWorkout = () => {
 
 type ExerciseCardProps = {
   exercise: Exercise;
-  setBiSets?: Dispatch<SetStateAction<[number, number][]>>;
   onEdit: (exercise: Exercise) => void;
   onDelete?: () => void;
   categories: Categories;
   otherExercises?: Exercise[];
   dragHandle?: React.ReactNode;
   collapsed?: boolean;
+  disabled?: boolean;
 };
 
 const ExerciseCard = ({
   exercise,
-  setBiSets,
   onEdit,
   onDelete,
   categories,
   otherExercises,
   dragHandle,
   collapsed,
+  disabled,
 }: ExerciseCardProps) => {
-  const [type, setType] = useState<"reps" | "time">("reps");
-
-  const [hidden, setHidden] = useState(false);
-
-  const [sets, setSets] = useState(() =>
-    exercise.sets.length > 0
-      ? exercise.sets.map(set => ({
-          weight: set.weight,
-          reps: "reps" in set ? set.reps : 0,
-          time: "time" in set ? set.time : 0,
-        }))
-      : [{ reps: 0, weight: 0, time: 0 }],
+  const exerciseIdProps = useFormValidation(
+    exercise.exerciseId,
+    v => v === "" && "Selecione um exercício",
+    true,
   );
-  const [biSet, setBiSet] = useState<number>();
 
-  useEffect(() => {
-    if (!setBiSets) return;
-
-    if (biSet) {
-      setBiSets(biSets => {
-        const thisBiSet = biSets.find(([a]) => a === exercise.id);
-
-        if (thisBiSet) {
-          return biSets.map(biSetEl => (biSetEl === thisBiSet ? [exercise.id, biSet] : biSetEl));
-        } else {
-          return [...biSets, [exercise.id, biSet]];
-        }
-      });
-    } else {
-      setBiSets(biSets => biSets.filter(([a]) => a !== exercise.id));
-    }
-  }, [exercise.id, biSet, setBiSets]);
-
-  const updateSets = (newSets: typeof sets) => {
+  const updateSets = (newSets: typeof exercise.sets) => {
     if (newSets.length === 0) {
-      newSets = [{ reps: 0, weight: 0, time: 0 }];
+      newSets = [{ reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } }];
     }
 
-    setSets(newSets);
-
-    if (type === "reps") {
-      onEdit({ ...exercise, sets: newSets.map(set => ({ reps: set.reps, weight: set.weight })) });
-    } else {
-      onEdit({ ...exercise, sets: newSets.map(set => ({ time: set.time, weight: set.weight })) });
-    }
+    onEdit({ ...exercise, sets: newSets });
   };
 
-  const updateMethod = (newMethod: Method) => {
-    onEdit({ ...exercise, method: newMethod });
-  };
+  const updateMethod = (newMethod: Method) => onEdit({ ...exercise, method: newMethod });
 
-  const updateType = (newType: typeof type) => {
-    setType(newType);
+  const updateType = (newType: typeof exercise.type) => onEdit({ ...exercise, type: newType });
 
-    if (newType === "reps") {
-      onEdit({ ...exercise, sets: sets.map(set => ({ reps: set.reps, weight: set.weight })) });
-    } else {
-      onEdit({ ...exercise, sets: sets.map(set => ({ time: set.time, weight: set.weight })) });
-    }
-  };
+  const setHidden = (hidden: boolean) => onEdit({ ...exercise, hidden });
 
   const handleSelectExercise: React.ChangeEventHandler<HTMLSelectElement> = e => {
     const newExercise = categories
@@ -361,14 +403,16 @@ const ExerciseCard = ({
     }
   };
 
-  const isCollapsed = collapsed || hidden;
+  const setBiSet = (biSet: number) => onEdit({ ...exercise, biSet });
+
+  const isCollapsed = collapsed || exercise.hidden;
 
   return (
     <div className="relative m-2 flex flex-col justify-between rounded-lg bg-white p-2 shadow-md">
       <div className="absolute right-2 top-2">{dragHandle}</div>
       <button
         className={classList(
-          "absolute rounded-full p-2 text-gray-400 shadow-md transition-all hover:bg-gray-300 hover:text-white",
+          "absolute rounded-full bg-white p-2 text-gray-400 shadow-md transition-all hover:bg-gray-300 hover:text-white",
           {
             "right-2 top-14 sm:right-14 sm:top-2": !!onDelete && !isCollapsed,
             "right-14 top-2": !!onDelete && isCollapsed,
@@ -393,10 +437,14 @@ const ExerciseCard = ({
         )}
       >
         <div className="ml-2 w-1/3 text-sm font-medium">
-          {categories.flatMap(g => g.exercises).find(e => e.id === exercise.exerciseId)?.name}
+          {categories.flatMap(g => g.exercises).find(e => e.id === exercise.exerciseId)?.name ?? (
+            <span className="rounded bg-slate-50 p-0.5 font-medium text-red-500">
+              Exercício não selecionado
+            </span>
+          )}
         </div>
         <div className="w-1/3 text-xs text-gray-500">
-          {exercise.sets.length || 1} série{exercise.sets.length > 1 ? "s" : ""}
+          {exercise.sets.length || 1} {exercise.sets.length > 1 ? "séries" : "série"}
         </div>
         <div className="w-10" />
       </div>
@@ -414,9 +462,9 @@ const ExerciseCard = ({
                   className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
                   value={exercise.exerciseId}
                   onChange={handleSelectExercise}
-                  defaultValue=""
-                  model="outline"
                   label="Exercício"
+                  disabled={disabled}
+                  {...exerciseIdProps}
                 >
                   <option value="" className="text-slate-600" disabled>
                     Selecione um exercício
@@ -439,9 +487,8 @@ const ExerciseCard = ({
                   className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
                   value={exercise.method}
                   onChange={e => updateMethod(e.target.value as Method)}
-                  defaultValue="Standard"
-                  model="outline"
                   label="Método"
+                  disabled={disabled}
                 >
                   {Object.values(Method).map(method => (
                     <option key={method} value={method} className="text-sm">
@@ -455,14 +502,13 @@ const ExerciseCard = ({
                 label="Descrição"
                 value={exercise.description ?? ""}
                 onChange={description => onEdit({ ...exercise, description })}
-                model="outline"
-                // rows={exercise.description?.split("\n").length ?? 1}
+                disabled={disabled}
               />
             </div>
-            {onDelete ? (
+            {onDelete && !disabled ? (
               <div className="mt-24 ml-2 mr-0 flex flex-col items-start gap-2 sm:mr-24 sm:mt-0 sm:flex-row-reverse">
                 <button
-                  className="rounded-full p-2 text-red-400 shadow-md transition-colors hover:bg-red-500 hover:text-white"
+                  className="rounded-full bg-white p-2 text-red-400 shadow-md transition-colors hover:bg-red-500 hover:text-white"
                   onClick={onDelete}
                 >
                   <TrashIcon className="h-6 w-6" />
@@ -474,25 +520,47 @@ const ExerciseCard = ({
           </div>
         </div>
         <div className="flex flex-row gap-2">
-          <div className="flex grow flex-col gap-2">
+          <div className="flex grow-1 flex-col gap-2">
             <div className="flex grow flex-col items-center justify-center">
+              <span
+                className={classList("mb-1 text-xs font-medium", {
+                  "text-gray-900": exercise.type === "reps",
+                  "text-gray-500": exercise.type !== "reps",
+                })}
+              >
+                Repetições
+              </span>
               <div className="inline-flex">
-                <span className="mr-1 text-xs font-medium text-gray-900">Reps</span>
                 <label className="relative cursor-pointer items-center">
                   <input
                     type="checkbox"
-                    checked={type === "time"}
+                    checked={exercise.type === "time"}
                     onChange={e => updateType(e.target.checked ? "time" : "reps")}
                     className="peer sr-only"
+                    disabled={disabled}
                   />
-                  <div className="peer h-5 w-9 rounded-full bg-blue-600 after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300" />
+                  <div
+                    className={classList(
+                      "peer h-5 w-9 rounded-full bg-blue-600",
+                      "after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-['']",
+                      "peer-checked:after:translate-x-full peer-checked:after:border-white",
+                      "peer-focus:outline-none peer-focus:ring-0",
+                      "disabled:after:bg-gray-300 peer-disabled:bg-gray-300",
+                    )}
+                  />
                 </label>
-                <span className="ml-1 text-xs font-medium text-gray-900">Tempo</span>
               </div>
+              <span
+                className={classList("text-xs font-medium", {
+                  "text-gray-900": exercise.type === "time",
+                  "text-gray-500": exercise.type !== "time",
+                })}
+              >
+                Tempo
+              </span>
             </div>
-            <div className="flex grow flex-col">
+            <div className="flex flex-col">
               {otherExercises && otherExercises.length !== 0 && (
-                // TODO: switch to a dropdown
                 <div className="flex items-center justify-center overflow-visible">
                   <Dropdown
                     className="flex items-center justify-center"
@@ -504,6 +572,7 @@ const ExerciseCard = ({
                         .flatMap(group => group.exercises)
                         .find(e => e.id === exercise.exerciseId)!.name
                     }
+                    disabled={disabled}
                   >
                     {(_, toggle) => (
                       <button
@@ -518,74 +587,102 @@ const ExerciseCard = ({
               )}
             </div>
           </div>
-          <div className="flex flex-col text-sm">
-            <div className="m-2 flex flex-col rounded-md px-2 py-1 font-medium shadow-md">
-              <span className="text-slate-700">Séries</span>
-              {sets.map((set, index) => (
+          <div className="flex grow-2 flex-col text-sm">
+            <div className="flex flex-col items-center rounded-md px-2 py-1">
+              <span className="mb-2 font-medium text-slate-700">Séries</span>
+              {exercise.sets.map((set, index) => (
                 <div
-                  className="m-0.5 flex flex-row items-center justify-between rounded border-1 bg-white p-1.5 shadow-md"
+                  className="m-0.5 flex w-full items-center justify-between rounded border-1 bg-white p-1.5 shadow-md"
                   key={index}
                 >
-                  <div className="flex flex-row items-center gap-2">
-                    {/* <div className="flex grow items-center"> */}
+                  <div className="flex grow flex-row items-center gap-1">
+                    {exercise.type === "reps" ? (
+                      <NumberInput
+                        label="Repetições"
+                        className="grow bg-white"
+                        value={set.reps}
+                        onChange={n => {
+                          const newSets = [...exercise.sets];
+                          newSets[index]!.reps = n;
+                          updateSets(newSets);
+                        }}
+                        min={0}
+                        disabled={disabled}
+                      />
+                    ) : (
+                      <>
+                        <NumberInput
+                          label="Minutos"
+                          className="grow bg-white"
+                          value={set.time.minutes}
+                          onChange={n => {
+                            const newSets = [...exercise.sets];
+                            newSets[index]!.time.minutes = n;
+                            updateSets(newSets);
+                          }}
+                          min={0}
+                          max={1000}
+                          disabled={disabled}
+                        />
+                        <NumberInput
+                          label="Segundos"
+                          className="grow bg-white"
+                          value={set.time.seconds}
+                          onChange={n => {
+                            const newSets = [...exercise.sets];
+                            newSets[index]!.time.seconds = n;
+                            updateSets(newSets);
+                          }}
+                          min={0}
+                          max={59}
+                          disabled={disabled}
+                        />
+                      </>
+                    )}
                     <NumberInput
-                      label={type === "reps" ? "Reps" : "Tempo"}
-                      className="bg-white"
-                      value={type === "reps" ? set.reps : set.time}
+                      label="Peso (kg)"
+                      className="grow bg-white"
+                      value={set.weightKg}
                       onChange={n => {
-                        const newSets = [...sets];
-                        newSets[index]![type === "reps" ? "reps" : "time"] = n;
+                        const newSets = [...exercise.sets];
+                        newSets[index]!.weightKg = n;
                         updateSets(newSets);
                       }}
                       min={0}
-                      model="outline"
-                      suffix={type === "time" ? ["seg", "pr-9"] : undefined}
+                      step={0.01}
+                      max={1000}
+                      disabled={disabled}
                     />
-                    {/* </div> */}
-                    {/* <div className="flex grow items-center"> */}
-                    <NumberInput
-                      label="Peso"
-                      className="bg-white"
-                      value={set.weight}
-                      onChange={n => {
-                        const newSets = [...sets];
-                        newSets[index]!.weight = n;
-                        updateSets(newSets);
-                      }}
-                      min={0}
-                      step={0.25}
-                      model="outline"
-                      suffix={["kg", "pr-7"]}
-                    />
-                    {/* </div> */}
                   </div>
-                  <div className="flex flex-row items-center gap-2">
-                    {sets.length !== 1 && (
+                  {exercise.sets.length !== 1 && (
+                    <div className="ml-1 flex items-center">
                       <button
-                        className="p-1 text-red-500"
+                        className="rounded-full border-1 border-gray-300 p-1 text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                         onClick={() => {
-                          const newSets = [...sets];
+                          const newSets = [...exercise.sets];
                           newSets.splice(index, 1);
                           updateSets(newSets);
                         }}
+                        disabled={disabled}
                       >
                         <XMarkIcon className="h-4 w-4" />
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               ))}
-              <div className="m-0.5 flex items-center justify-center">
+              <div className="m-0.5 w-full">
                 <button
-                  className="rounded-full p-1.5 shadow-md hover:bg-gray-100"
+                  className="flex w-full items-center justify-center rounded border-1 bg-white p-1.5 shadow-md hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
-                    const lastSet = sets.at(-1);
+                    const lastSet = exercise.sets.at(-1);
                     if (lastSet) {
-                      updateSets([...sets, { ...lastSet }]);
+                      updateSets([...exercise.sets, { ...lastSet }]);
                     } else {
-                      updateSets([{ reps: 0, weight: 0, time: 0 }]);
+                      updateSets([{ reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } }]);
                     }
                   }}
+                  disabled={disabled}
                 >
                   <PlusIcon className="h-5 w-5" />
                 </button>
@@ -601,63 +698,102 @@ const ExerciseCard = ({
 type BiSetCardProps = {
   first: Exercise;
   second: Exercise;
-  setBiSets: Dispatch<SetStateAction<[number, number][]>>;
-  setExercises: Dispatch<SetStateAction<Exercise[]>>;
+  separate: () => void;
+  setExercises: (fn: (exercises: Exercise[]) => Exercise[]) => void;
   categories: Categories;
   dragHandle: React.ReactNode;
   collapsed: boolean;
+  disabled?: boolean;
 };
 
 const BiSetCard: React.FC<BiSetCardProps> = ({
   first,
   second,
-  setBiSets,
+  separate,
   setExercises,
   categories,
   dragHandle,
   collapsed,
+  disabled,
 }: BiSetCardProps) => {
+  const [hidden, setHidden] = useState(false);
+
+  const isCollapsed = collapsed || hidden;
+
+  const setCollapsed = (collapsed: boolean) => {
+    setHidden(collapsed);
+    const collapseExercises = () =>
+      setExercises(exercises =>
+        exercises.map(e =>
+          e.id === first.id || e.id === second.id ? { ...e, hidden: collapsed } : e,
+        ),
+      );
+
+    if (collapsed) {
+      setTimeout(collapseExercises, 200);
+    } else {
+      collapseExercises();
+    }
+  };
+
   return (
     <div className="relative m-2 flex flex-col rounded-xl bg-blue-500 pt-2">
       <div className="absolute right-2 top-2">{dragHandle}</div>
       <div className="absolute left-4 top-4">
         <span className="font-medium text-gray-50">Bi-set</span>
       </div>
+      <button
+        className="absolute right-24 top-2 mr-2 flex justify-center rounded-full bg-slate-50 p-2 text-blue-500 transition-colors hover:bg-slate-200 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+        onClick={separate}
+        disabled={disabled}
+      >
+        <XMarkIcon className="h-6 w-6" />
+      </button>
+      <button
+        className={classList(
+          "absolute right-14 top-2 rounded-full bg-white p-2 text-gray-400 shadow-md transition-all hover:bg-gray-300 hover:text-white",
+        )}
+        onClick={() => setCollapsed(!isCollapsed)}
+      >
+        {isCollapsed ? (
+          <ChevronDownIcon className="h-6 w-6" />
+        ) : (
+          <ChevronUpIcon className="h-6 w-6" />
+        )}
+      </button>
       <div
         className={classList("h-12 transition-all duration-200", {
-          "max-h-[3rem]": !!collapsed,
-          "max-h-0 overflow-y-hidden": !collapsed,
+          "max-h-[3rem]": !!isCollapsed,
+          "max-h-0 overflow-y-hidden": !isCollapsed,
         })}
       >
         <div className="flex h-full items-center justify-center pb-2">
-          <div className="flex flex-row gap-2 text-sm text-gray-50">
-            <span>
-              {categories.flatMap(g => g.exercises).find(e => e.id === first.exerciseId)?.name}
-            </span>
+          <div className="flex gap-2 text-sm text-gray-50">
+            <div>
+              {categories.flatMap(g => g.exercises).find(e => e.id === first.exerciseId)?.name ?? (
+                <span className="rounded bg-slate-50 p-0.5 font-medium text-red-500">
+                  Exercício não selecionado
+                </span>
+              )}
+            </div>
             <span>x</span>
-            <span>
-              {categories.flatMap(g => g.exercises).find(e => e.id === second.exerciseId)?.name}
-            </span>
+            <div>
+              {categories.flatMap(g => g.exercises).find(e => e.id === second.exerciseId)?.name ?? (
+                <span className="rounded bg-slate-50 p-0.5 font-medium text-red-500">
+                  Exercício não selecionado
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
       <div
         className={classList("flex flex-col transition-all duration-200", {
-          "max-h-[100rem]": !collapsed,
-          "max-h-0 overflow-y-hidden": !!collapsed,
+          "max-h-[100rem]": !isCollapsed,
+          "max-h-0 overflow-y-hidden": !!isCollapsed,
         })}
       >
-        <div className="flex flex-row items-center justify-between px-2">
-          <div />
-          <button
-            className="mr-12 flex justify-center rounded-full bg-slate-50 p-2 text-blue-500 transition-colors hover:bg-slate-200 hover:text-blue-600"
-            onClick={() => {
-              setBiSets(biSets => biSets.filter(([a, b]) => a !== first.id && b !== second.id));
-            }}
-          >
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
+        <div className="h-10" />
         <div className="flex flex-col items-stretch">
           <ExerciseCard
             exercise={first}
@@ -665,6 +801,7 @@ const BiSetCard: React.FC<BiSetCardProps> = ({
             onEdit={it =>
               setExercises(exercises => exercises.map(e => (e.id === first.id ? it : e)))
             }
+            disabled={disabled}
           />
           <ExerciseCard
             exercise={second}
@@ -672,6 +809,7 @@ const BiSetCard: React.FC<BiSetCardProps> = ({
             onEdit={it =>
               setExercises(exercises => exercises.map(e => (e.id === second.id ? it : e)))
             }
+            disabled={disabled}
           />
         </div>
       </div>

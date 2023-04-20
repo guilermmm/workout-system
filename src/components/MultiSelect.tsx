@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { classList, useOutsideClick } from "../utils";
 
 type Props<T> = {
@@ -9,6 +9,7 @@ type Props<T> = {
   onChange: (selected: T[]) => void;
   itemToString: (option: T) => string;
   itemToKey: (option: T) => string;
+  disabled?: boolean;
 };
 
 const MultiSelect = <T,>({
@@ -19,8 +20,15 @@ const MultiSelect = <T,>({
   onChange,
   itemToString,
   itemToKey,
+  disabled,
 }: Props<T>) => {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (disabled) {
+      setOpen(false);
+    }
+  }, [disabled]);
 
   const ref = useOutsideClick<HTMLDivElement>(() => setOpen(false));
 
@@ -54,8 +62,9 @@ const MultiSelect = <T,>({
         }
         <button
           type="button"
-          className="absolute inset-0 block h-full w-full cursor-default appearance-none rounded-lg border-1 border-gray-300 bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-gray-900 text-opacity-0 focus:border-blue-600 focus:outline-none focus:ring-0"
+          className="absolute inset-0 block h-full w-full cursor-default appearance-none rounded-lg border-1 border-gray-300 bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-gray-900 text-opacity-0 focus:border-blue-600 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
           onClick={() => setOpen(!open)}
+          disabled={disabled}
         />
         <label
           className={classList(
@@ -80,7 +89,12 @@ const MultiSelect = <T,>({
                     <input
                       type="checkbox"
                       checked={selected.includes(option)}
-                      onChange={() => handleSelect(option)}
+                      onChange={() => {
+                        if (disabled) {
+                          return;
+                        }
+                        handleSelect(option);
+                      }}
                     />
                     <span className="ml-2">{itemToString(option)}</span>
                   </div>

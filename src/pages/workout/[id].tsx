@@ -3,6 +3,7 @@ import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
+import { z } from "zod";
 import Spinner from "../../components/Spinner";
 import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
 import CheckCircleIcon from "../../components/icons/CheckCircleIcon";
@@ -163,14 +164,19 @@ const BiSetCard: React.FC<BiSetCardProps> = ({ first, second }: BiSetCardProps) 
   );
 };
 
+const storageParser = z.record(
+  z.object({
+    startedAt: z.string(),
+    finishedAt: z.string(),
+  }),
+);
+
 const Footer = ({ id }: { id: string }) => {
   type State = "not-started" | "started" | "finished";
 
   const [state, setState] = useState<State>("not-started");
 
-  const [storage, setStorage] = useLocalStorage<
-    Record<string, { startedAt: string; finishedAt: string }>
-  >("workout-times", {});
+  const [storage, setStorage] = useLocalStorage("workout-times", storageParser, {});
 
   // const finishWorkout = api.workout.recommendNext.useMutation();
 

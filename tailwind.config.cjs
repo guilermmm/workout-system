@@ -3,6 +3,16 @@ module.exports = {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      width: {
+        "3/10": "30%",
+        "4/10": "40%",
+        "6/10": "60%",
+      },
+      flexGrow: {
+        1: 1,
+        2: 2,
+        3: 3,
+      },
       boxShadow: {
         up: "0 -20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);",
       },

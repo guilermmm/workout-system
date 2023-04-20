@@ -1,6 +1,14 @@
-import type { Exercise } from "@prisma/client";
-import type { MutableRefObject, RefObject } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+  type RefObject,
+} from "react";
+import type { JSONValue } from "superjson/dist/types";
+import type { ZodType } from "zod";
 
 export const join = (array: string[], separator = ", ") => {
   return array.length === 0
@@ -27,31 +35,47 @@ export const classList = (...classes: (string | Record<string, boolean>)[]) => {
     .join(" ");
 };
 
-export const useLocalStorage = <T>(key: string, initialValue: T) => {
-  const [storedValue, setStoredValue] = useState<T>(() => {
+export const useLocalStorage = <T extends JSONValue>(
+  key: string,
+  parser: ZodType<T>,
+  initialValue: T,
+) => {
+  const [storedValue, setStoredValue] = useState(initialValue);
+
+  const setValue = useCallback(
+    (value: T | ((value: T) => T)) => {
+      const newValue = typeof value === "function" ? value(storedValue) : value;
+      try {
+        const parsedValue = parser.parse(newValue);
+        window.localStorage.setItem(key, JSON.stringify(parsedValue));
+        setStoredValue(newValue);
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    [key, storedValue, parser],
+  );
+
+  // this is a delayed state initializer, we want to useEffect to run this not on the server,
+  // but only when the client renders to make sure we have access to the window object
+  useEffect(() => {
     try {
-      const item = window.localStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : initialValue;
+      const json = window.localStorage.getItem(key);
+      const value = json ? parser.parse(JSON.parse(json)) : initialValue;
+      setValue(value);
     } catch (error) {
       console.log(error);
-      return initialValue;
+      setValue(initialValue);
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const setValue = (value: Partial<T> | ((val: T) => Partial<T>)) => {
-    const newValue = value instanceof Function ? value(storedValue) : value;
-    const valueToStore = typeof newValue === "object" ? { ...storedValue, ...newValue } : newValue;
+  const resetValue = useCallback(() => {
+    window.localStorage.removeItem(key);
+    setStoredValue(initialValue);
+  }, [key, initialValue]);
 
-    setStoredValue(valueToStore);
-
-    try {
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  return [storedValue, setValue] as const;
+  return [storedValue, setValue, resetValue] as const;
 };
 
 export async function sleep(ms: number) {
@@ -60,21 +84,6 @@ export async function sleep(ms: number) {
 
 export async function never() {
   return new Promise(() => void 0);
-}
-
-export function reduceByCategory(
-  acc: { category: string; exercises: Exercise[] }[],
-  exercise: Exercise,
-) {
-  const existingCategory = acc.find(item => item.category === exercise.category);
-
-  if (existingCategory) {
-    existingCategory.exercises.push(exercise);
-  } else {
-    acc.push({ category: exercise.category, exercises: [exercise] });
-  }
-
-  return acc;
 }
 
 export const useOutsideClick = <T extends HTMLElement>(callback: (e: Event) => void) => {
@@ -97,10 +106,7 @@ export const useOutsideClick = <T extends HTMLElement>(callback: (e: Event) => v
   return ref as MutableRefObject<T>;
 };
 
-export default function useEndOfScroll<T extends HTMLElement>(
-  ref: RefObject<T>,
-  callback: () => void,
-) {
+export function useEndOfScroll<T extends HTMLElement>(ref: RefObject<T>, callback: () => void) {
   const endOfScrollRef = useRef(false);
 
   const handleScroll = useCallback(() => {
@@ -146,4 +152,144 @@ export const getDateArrayFromDate = (startDate: Date) => {
   }
 
   return daysArray;
+};
+
+export const useForm = <T extends Record<string, unknown>>({
+  initialValues,
+  onSubmit,
+  validators,
+}: {
+  initialValues: T;
+  onSubmit: (values: T, reset: () => void) => Promise<void> | void;
+  validators?: {
+    [K in keyof T]?: (value: T[K]) => string | undefined;
+  };
+}) => {
+  const [values, setValues] = useState<T>(initialValues);
+  const [errors, setErrors] = useState<{
+    [K in keyof T]?: string;
+  }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = useCallback(
+    (key: keyof T, value: T[keyof T]) => {
+      setValues(values => ({ ...values, [key]: value }));
+    },
+    [setValues],
+  );
+
+  const validate = useCallback(() => {
+    const errors: {
+      [K in keyof T]?: string | undefined;
+    } = {};
+
+    for (const key in validators) {
+      errors[key] = validators[key]?.(values[key]);
+    }
+
+    return errors;
+  }, [values, validators]);
+
+  const reset = useCallback(() => {
+    setValues(initialValues);
+    setErrors({});
+  }, [initialValues]);
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+
+      const errors = validate();
+
+      if (Object.values(errors).some(error => !!error)) {
+        setErrors(errors);
+        return;
+      }
+
+      const res = onSubmit(values, reset);
+
+      if (res instanceof Promise) {
+        setIsSubmitting(true);
+        res.finally(() => setIsSubmitting(false));
+      }
+    },
+    [values, onSubmit, reset, validate],
+  );
+
+  const onFocus = useCallback(
+    (key: keyof T) => {
+      setErrors(errors => ({ ...errors, [key]: undefined }));
+    },
+    [setErrors],
+  );
+
+  const onBlur = useCallback(
+    (key: keyof T) => {
+      const error = validators?.[key]?.(values[key]);
+      setErrors(errors => ({ ...errors, [key]: error }));
+    },
+    [values, validators],
+  );
+
+  const form = useMemo(
+    () =>
+      Object.keys(values).reduce(
+        (acc, key: keyof T) => {
+          const value = values[key];
+          const error = errors[key];
+          return {
+            ...acc,
+            [key]: {
+              value,
+              onChange: (value: T[keyof T]) => handleChange(key, value),
+              onFocus: () => onFocus(key),
+              onBlur: () => onBlur(key),
+              error,
+            },
+          };
+        },
+        {} as {
+          [K in keyof T]: {
+            value: T[K];
+            onChange: (value: T[K]) => void;
+            onFocus: () => void;
+            onBlur: () => void;
+            error: string | undefined;
+          };
+        },
+      ),
+    [values, errors, handleChange, onFocus, onBlur],
+  );
+
+  return [
+    { form, isSubmitting, values, errors: Object.values(errors).length > 0 ? errors : undefined },
+    { handleSubmit, reset },
+  ] as const;
+};
+
+export const useFormValidation = <T>(
+  value: T,
+  validate: (value: T) => string | undefined | false,
+  validateOnFirstRender = false,
+) => {
+  const [error, setError] = useState<string | undefined>(() =>
+    validateOnFirstRender ? validate?.(value) || undefined : undefined,
+  );
+
+  const handleBlur = useCallback(() => {
+    const error = validate?.(value);
+
+    setError(error === false ? undefined : error);
+  }, [value, validate]);
+
+  const props = useMemo(
+    () => ({
+      onFocus: () => setError(undefined),
+      onBlur: handleBlur,
+      error,
+    }),
+    [handleBlur, error],
+  );
+
+  return props;
 };

@@ -3,6 +3,7 @@ import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
 import type { Session } from "next-auth";
 import superjson from "superjson";
 import { env } from "../../env/server.mjs";
+import { sleep } from "../../utils";
 import { getServerAuthSession } from "../auth";
 import { prisma } from "../db";
 
@@ -87,8 +88,16 @@ const enforceUserIsNotAdmin = t.middleware(async ({ ctx, next }) => {
   });
 });
 
-// export const publicProcedure = t.procedure.use(logProcedure);
+// export const baseProcedure = t.procedure.use(
+//   t.middleware(async ({ ctx, next }) => {
+//     await sleep(20000);
 
-export const adminProcedure = t.procedure.use(logProcedure).use(enforceUserIsAdmin);
+//     return next({ ctx });
+//   }),
+// );
 
-export const userProcedure = t.procedure.use(logProcedure).use(enforceUserIsNotAdmin);
+export const baseProcedure = t.procedure;
+
+export const adminProcedure = baseProcedure.use(logProcedure).use(enforceUserIsAdmin);
+
+export const userProcedure = baseProcedure.use(logProcedure).use(enforceUserIsNotAdmin);

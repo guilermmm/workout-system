@@ -1,70 +1,84 @@
 import type { Exercise } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import AdminHeader from "../../components/AdminHeader";
 import AdminNavbar from "../../components/AdminNavbar";
 import ErrorPage from "../../components/ErrorPage";
 import FullPage from "../../components/FullPage";
-import Spinner from "../../components/Spinner";
 import MagnifyingGlassIcon from "../../components/icons/MagnifyingGlassIcon";
-import { env } from "../../env/server.mjs";
-import { getServerAuthSession } from "../../server/auth";
-import { reduceByCategory } from "../../utils";
-import { api } from "../../utils/api";
-import Link from "next/link";
 import PlusIcon from "../../components/icons/PlusIcon";
 import TrashIcon from "../../components/icons/TrashIcon";
+import Spinner from "../../components/Spinner";
+import { env } from "../../env/server.mjs";
+import { getServerAuthSession } from "../../server/auth";
+
+import { z } from "zod";
+import { useLocalStorage } from "../../utils";
+import { api, type RouterOutputs } from "../../utils/api";
+
+const organizeByParser = z.union([z.literal("name"), z.literal("category")]);
+
+type Groups = RouterOutputs["exercise"]["getGroups"];
 
 const Dashboard = () => {
   const { data: session } = useSession();
 
   const [searchInput, setSearchInput] = useState("");
 
-  const [newExercise, setNewExercise] = useState({
-    name: "",
-    category: "",
-  });
+  const [newExercise, setNewExercise] = useState({ name: "", category: "" });
 
-  const [organizeBy, setOrganizeBy] = useState<"name" | "category">("category");
-
-  const exercises = api.exercise.getMany.useQuery();
-
-  const filteredExercises = useMemo(
-    () =>
-      exercises.data
-        ?.filter(exercise => {
-          const name = exercise.name.toLowerCase();
-          const category = exercise.category.toLowerCase();
-          const searchLower = searchInput.toLowerCase();
-
-          return name.includes(searchLower) || category.includes(searchLower);
-        })
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [exercises, searchInput],
+  const [organizeBy, setOrganizeBy] = useLocalStorage(
+    "exercises-organize-by",
+    organizeByParser,
+    "category",
   );
 
-  const categories = useMemo(
-    () => filteredExercises?.reduce(reduceByCategory, []),
-    [filteredExercises],
+  const groups = api.exercise.getGroups.useQuery();
+
+  const filteredGroups = useMemo(
+    () =>
+      searchInput === ""
+        ? groups.data
+        : groups.data
+            ?.map(group => {
+              const searchLower = searchInput.toLowerCase();
+
+              if (group.category.toLowerCase().includes(searchLower)) {
+                return group;
+              } else {
+                const filteredExercises = group.exercises.filter(e =>
+                  e.name.toLowerCase().includes(searchLower),
+                );
+                return { category: group.category, exercises: filteredExercises };
+              }
+            })
+            .filter(g => g.exercises.length > 0),
+    [groups, searchInput],
+  );
+
+  const filteredExercises = useMemo(
+    () => filteredGroups?.flatMap(g => g.exercises) ?? groups.data?.flatMap(g => g.exercises),
+    [filteredGroups, groups],
   );
 
   const addExercise = api.exercise.create.useMutation({
     onSuccess: () => {
-      void exercises.refetch();
+      void groups.refetch();
       setNewExercise({ name: "", category: "" });
     },
   });
 
   const removeExercise = api.exercise.delete.useMutation({
-    onSuccess: () => void exercises.refetch(),
+    onSuccess: () => void groups.refetch(),
   });
 
   const handleRemoveExercise = (id: string) => () => {
     removeExercise.mutate({ id });
   };
 
-  if (exercises.error) {
+  if (groups.error) {
     return <ErrorPage />;
   }
 
@@ -98,15 +112,15 @@ const Dashboard = () => {
         </div>
       </div>
       <div className="relative grow overflow-y-scroll">
-        <div className="mx-4 flex h-full flex-1 grow flex-col gap-4">
-          {exercises.isLoading ? (
+        <div className="mx-4 flex h-full flex-1 grow flex-col items-center gap-4">
+          {groups.isLoading ? (
             <div className="flex flex-1 items-center justify-center">
               <Spinner className="fill-blue-600 text-gray-200" />
             </div>
           ) : (
             <ExerciseList
               filteredExercises={filteredExercises}
-              categories={categories}
+              groups={groups.data}
               organizeBy={organizeBy}
               handleRemoveExercise={handleRemoveExercise}
             />
@@ -128,14 +142,12 @@ const Dashboard = () => {
               onChange={e => setNewExercise({ ...newExercise, category: e.target.value })}
             />
             <datalist id="categories">
-              {categories?.map(category => (
-                <option key={category.category} value={category.category} />
+              {groups.data?.map(group => (
+                <option key={group.category} value={group.category} />
               ))}
             </datalist>
             <button
-              onClick={() =>
-                addExercise.mutate({ name: newExercise.name, category: newExercise.category })
-              }
+              onClick={() => addExercise.mutate(newExercise)}
               className="rounded-md bg-blue-500 px-3 py-1 text-white shadow-md"
             >
               Salvar
@@ -150,24 +162,19 @@ const Dashboard = () => {
 
 const ExerciseList = ({
   filteredExercises,
-  categories,
+  groups,
   organizeBy,
   handleRemoveExercise,
 }: {
   filteredExercises: Exercise[] | undefined;
-  categories:
-    | {
-        category: string;
-        exercises: Exercise[];
-      }[]
-    | undefined;
+  groups: Groups;
   organizeBy: "name" | "category";
   handleRemoveExercise: (id: string) => () => void;
 }) => {
   return (
-    <div className="flex flex-col flex-wrap items-stretch gap-1 sm:flex-row">
+    <div className="flex w-full max-w-[32rem] flex-col gap-1">
       {organizeBy === "category"
-        ? categories?.map(category => (
+        ? groups?.map(category => (
             <CategoryCard
               {...category}
               key={category.category}
@@ -201,12 +208,14 @@ const ExerciseCard = ({
 }) => {
   return (
     <div className="flex max-w-[calc(100vw_-_2rem)] flex-1 flex-row items-center justify-between rounded-md bg-blue-500">
-      <div className="flex w-full justify-between truncate px-3 py-2">
+      <div className="flex w-full flex-col justify-between truncate px-3 py-2">
         <div className="text-md truncate text-white">{name}</div>
+        {showCategory && <div className="truncate text-sm text-slate-100">{category}</div>}
+      </div>
+      <div className="flex items-center justify-center px-3">
         <button onClick={handleRemoveExercise(id)}>
           <TrashIcon className="h-6 w-6 text-red-500" />
         </button>
-        {showCategory && <div className="truncate text-sm text-slate-100">{category}</div>}
       </div>
     </div>
   );

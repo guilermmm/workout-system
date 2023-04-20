@@ -45,7 +45,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] permitir que o professor faça o treino do aluno mesmo antes dele logar a primeira vez, e quando logar já tiver tudo bonitin
 
 - [x] botar dias da semana na tela de treinos do aluno
-- [ ] permitir apenas um timer ativo por vez
+- [x] permitir apenas um timer ativo por vez
 
 - [x] ajustar a lógica dos sets
 - [x] permitir ao instrutor reorganizar a ordem dos exercícios de um treino
@@ -53,3 +53,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [ ] usuario contar as series
 
 - [ ] pensar em opção para quem nao usa celular
+
+- [ ] página de editar treino
+- [x] fazer validação de form
+- [ ] alerta para confirmar cada mutation
