@@ -22,6 +22,10 @@ const Manage = () => {
   const profile = api.user.getProfileById.useQuery(profileId);
   const workouts = api.workout.getMany.useQuery({ profileId });
 
+  const deleteWorkout = api.workout.delete.useMutation({
+    onSuccess: () => void workouts.refetch(),
+  });
+
   if (profile.error || workouts.error) {
     return <ErrorPage />;
   }
@@ -78,13 +82,33 @@ const Manage = () => {
       ) : (
         <div className="mt-8 flex flex-col flex-wrap items-stretch sm:flex-row">
           {workouts.data.map(workout => (
-            <WorkoutCard
-              onDelete={() => void workouts.refetch()}
+            <div
+              className="m-2 flex min-w-fit flex-1 justify-between rounded-md bg-blue-500 p-6 text-white shadow-lg transition-colors hover:bg-blue-600"
               key={workout.id}
-              id={workout.id}
-              name={workout.name}
-              description={capitalize(join(workout.categories))}
-            />
+            >
+              <div className="ml-5">
+                <div className="text-xl">
+                  Treino <span className="font-medium">{workout.name}</span>
+                </div>
+                <div className="text-sm font-thin opacity-90">
+                  {capitalize(join(workout.categories))}
+                </div>
+              </div>
+              <div className="flex justify-center gap-2">
+                <Link
+                  href={`/manage/${profileId}/edit_workout/${workout.id}`}
+                  className="h-12 w-12 rounded-full p-3 text-gold-400 transition-colors hover:bg-white hover:text-gold-600"
+                >
+                  <PencilSquareIcon className="h-6 w-6" />
+                </Link>
+                <button
+                  onClick={() => deleteWorkout.mutate({ id: workout.id })}
+                  className="h-12 w-12 rounded-full p-3 text-red-400 transition-colors hover:bg-white hover:text-red-500"
+                >
+                  <TrashIcon className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -94,48 +118,6 @@ const Manage = () => {
             <PlusIcon className="h-10 w-10" />
           </button>
         </Link>
-      </div>
-    </div>
-  );
-};
-
-type WorkoutCardProps = {
-  id: string;
-  name: string;
-  description: string;
-  onDelete: () => void;
-};
-
-const WorkoutCard = ({ id, name, description, onDelete }: WorkoutCardProps) => {
-  const deleteWorkout = api.workout.delete.useMutation({
-    onSuccess: () => {
-      onDelete();
-    },
-  });
-
-  return (
-    <div className="m-2 flex min-w-fit flex-1 justify-between rounded-md bg-blue-500 p-6 text-white shadow-lg transition-colors hover:bg-blue-600">
-      <div className="ml-5">
-        <div className="text-xl">
-          Treino <span className="font-medium">{name}</span>
-        </div>
-        <div className="text-sm font-thin opacity-90">{description}</div>
-      </div>
-      <div className="flex justify-center gap-2">
-        <Link
-          href={`/manage/edit/${id}`}
-          className="h-12 w-12 rounded-full p-3 text-gold-400 transition-colors hover:bg-white hover:text-gold-600"
-        >
-          <PencilSquareIcon className="h-6 w-6" />
-        </Link>
-        <button
-          onClick={() => {
-            deleteWorkout.mutate({ id });
-          }}
-          className="h-12 w-12 rounded-full p-3 text-red-400 transition-colors hover:bg-white hover:text-red-500"
-        >
-          <TrashIcon className="h-6 w-6" />
-        </button>
       </div>
     </div>
   );

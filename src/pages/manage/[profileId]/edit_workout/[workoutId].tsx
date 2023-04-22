@@ -1,56 +1,89 @@
-import { Method, Weekday } from "@prisma/client";
+import deepEqual from "deep-equal";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { z } from "zod";
-import ErrorPage from "../../../components/ErrorPage";
-import FullPage from "../../../components/FullPage";
-import MultiSelect from "../../../components/MultiSelect";
-import ProfilePic from "../../../components/ProfilePic";
-import Sortable from "../../../components/SortableList";
-import Spinner from "../../../components/Spinner";
-import TextInput from "../../../components/TextInput";
-import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
-import Bars2Icon from "../../../components/icons/Bars2Icon";
-import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
-import PlusIcon from "../../../components/icons/PlusIcon";
-import { env } from "../../../env/server.mjs";
-import { getServerAuthSession } from "../../../server/auth";
-import { useLocalStorage } from "../../../utils";
-import { api } from "../../../utils/api";
-import { weekdaysOrder, weekdaysTranslation } from "../../../utils/consts";
-import BiSetCard from "../../../components/admin/BiSetCard";
-import ExerciseCard from "../../../components/admin/ExerciseCard";
+import ErrorPage from "../../../../components/ErrorPage";
+import ProfilePic from "../../../../components/ProfilePic";
+import Spinner from "../../../../components/Spinner";
+import ArrowUturnLeftIcon from "../../../../components/icons/ArrowUturnLeftIcon";
+import CheckCircleIcon from "../../../../components/icons/CheckCircleIcon";
+import PlusIcon from "../../../../components/icons/PlusIcon";
+import { env } from "../../../../env/server.mjs";
+import { getServerAuthSession } from "../../../../server/auth";
+import { type RouterOutputs, api } from "../../../../utils/api";
+import FullPage from "../../../../components/FullPage";
+import { Method, Weekday } from "@prisma/client";
+import TextInput from "../../../../components/TextInput";
+import MultiSelect from "../../../../components/MultiSelect";
+import { weekdaysOrder, weekdaysTranslation } from "../../../../utils/consts";
+import Sortable from "../../../../components/SortableList";
+import Bars2Icon from "../../../../components/icons/Bars2Icon";
+import BiSetCard from "../../../../components/admin/BiSetCard";
+import ExerciseCard from "../../../../components/admin/ExerciseCard";
 
-const exerciseParser = z.object({
-  id: z.number(),
-  exerciseId: z.string(),
-  description: z.string().nullable(),
-  method: z.nativeEnum(Method),
-  biSet: z.number().nullable(),
-  type: z.union([z.literal("reps"), z.literal("time")]),
-  sets: z.array(
-    z.object({
-      reps: z.number().min(1),
-      weightKg: z.number().min(0),
-      time: z.object({
-        minutes: z.number().min(0),
-        seconds: z.number().min(0).max(59),
+const apiToState = (workout: RouterOutputs["workout"]["getById"]) => {
+  return {
+    name: workout.name,
+    days: workout.days,
+    exercises: workout.exercises.map(exercise => ({
+      id: exercise.id as string | number,
+      exerciseId: exercise.exercise.id,
+      description: exercise.description,
+      method: exercise.method,
+      biSet: (workout.biSets.find(biSet => biSet[0] === exercise.id)?.[1] ?? null) as
+        | string
+        | number
+        | null,
+      type: "reps" in exercise.sets[0]! ? ("reps" as const) : ("time" as const),
+      sets: exercise.sets.map(set => ({
+        reps: "reps" in set ? set.reps : 1,
+        weightKg: set.weight / 1000,
+        time:
+          "time" in set
+            ? { minutes: Math.floor(set.time / 60), seconds: set.time % 60 }
+            : { minutes: 0, seconds: 0 },
+      })),
+      hidden: true,
+    })),
+  };
+};
+
+type WorkoutState = ReturnType<typeof apiToState>;
+
+const stateToApi = (workout: WorkoutState, id: string) => {
+  return {
+    id,
+    name: workout.name,
+    days: workout.days,
+    exercises: workout.exercises.map((exercise, index) => ({
+      exerciseId: exercise.exerciseId,
+      description: exercise.description,
+      method: exercise.method,
+      sets:
+        exercise.type === "reps"
+          ? exercise.sets.map(({ reps, weightKg }) => ({
+              reps,
+              weight: weightKg * 1000,
+            }))
+          : exercise.sets.map(({ time, weightKg }) => ({
+              time: time.minutes * 60 + time.seconds,
+              weight: weightKg * 1000,
+            })),
+      index,
+    })),
+    biSets: workout.exercises
+      .map((exercise, index) => ({ ...exercise, index }))
+      .filter(exercise => exercise.biSet !== null)
+      .map(exercise => {
+        const other = workout.exercises.findIndex(e => e.id === exercise.biSet);
+        return [exercise.index, other] as [number, number];
       }),
-    }),
-  ),
-  hidden: z.boolean(),
-});
+  };
+};
 
-type Exercise = z.infer<typeof exerciseParser>;
+type Exercise = WorkoutState["exercises"][number];
 
-const workoutParser = z.object({
-  name: z.string(),
-  days: z.array(z.nativeEnum(Weekday)),
-  exercises: z.array(exerciseParser),
-});
-
-type ExerciseGroup = { id: number; exercises: readonly [Exercise, Exercise] };
+type ExerciseGroup = { id: string | number; exercises: readonly [Exercise, Exercise] };
 
 const dragHandle = (
   <Sortable.DragHandle className="rounded-full bg-white p-2 text-gray-400 shadow-md transition-colors hover:bg-gray-300 hover:text-white">
@@ -58,30 +91,49 @@ const dragHandle = (
   </Sortable.DragHandle>
 );
 
-const CreateWorkout = () => {
+const EditWorkout = () => {
   const router = useRouter();
 
-  const { profileId } = router.query as { profileId: string };
+  const { profileId, workoutId } = router.query as { profileId: string; workoutId: string };
 
   const profile = api.user.getProfileById.useQuery(profileId);
 
   const categories = api.exercise.getGroups.useQuery();
 
-  const { mutate } = api.workout.create.useMutation();
+  const originalWorkout = api.workout.getById.useQuery(workoutId, { refetchOnWindowFocus: false });
 
-  const [workout, setWorkout, resetWorkout] = useLocalStorage("create-workout", workoutParser, {
+  const originalWorkoutData = useMemo(
+    () => originalWorkout.data && stateToApi(apiToState(originalWorkout.data), workoutId),
+    [originalWorkout.data, workoutId],
+  );
+
+  const { mutate } = api.workout.update.useMutation();
+
+  const [workout, setWorkout] = useState<WorkoutState>({
     name: "",
     days: [],
     exercises: [],
   });
 
+  const workoutStateAsApi = useMemo(() => stateToApi(workout, workoutId), [workout, workoutId]);
+
+  useEffect(() => {
+    if (originalWorkout.data) {
+      setWorkout(apiToState(originalWorkout.data));
+    }
+  }, [originalWorkout.data]);
+
   const idGenerator = useRef(1);
 
   useEffect(() => {
-    if (workout.exercises.length === 0) {
+    const exercises = workout.exercises.filter(exercise => typeof exercise.id === "number");
+
+    console.log(exercises);
+
+    if (exercises.length === 0) {
       idGenerator.current = 1;
     } else {
-      idGenerator.current = Math.max(...workout.exercises.map(e => e.id)) + 1;
+      idGenerator.current = Math.max(...exercises.map(e => e.id as number)) + 1;
     }
   }, [workout.exercises]);
 
@@ -112,7 +164,7 @@ const CreateWorkout = () => {
     [workout.exercises],
   );
 
-  if (profile.error || categories.error) {
+  if (profile.error || categories.error || originalWorkout.error) {
     return <ErrorPage />;
   }
 
@@ -142,42 +194,7 @@ const CreateWorkout = () => {
 
   const handleSave = () => {
     setSaving(true);
-    mutate(
-      {
-        name: workout.name,
-        days: workout.days,
-        profileId,
-        exercises: workout.exercises.map((exercise, index) => ({
-          exerciseId: exercise.exerciseId,
-          description: exercise.description,
-          method: exercise.method,
-          sets:
-            exercise.type === "reps"
-              ? exercise.sets.map(({ reps, weightKg }) => ({
-                  reps,
-                  weight: weightKg * 1000,
-                }))
-              : exercise.sets.map(({ time, weightKg }) => ({
-                  time: time.minutes * 60 + time.seconds,
-                  weight: weightKg * 1000,
-                })),
-          index,
-        })),
-        biSets: workout.exercises
-          .map((exercise, index) => ({ ...exercise, index }))
-          .filter(exercise => exercise.biSet !== null)
-          .map(exercise => {
-            const other = workout.exercises.findIndex(e => e.id === exercise.biSet);
-            return [exercise.index, other] as [number, number];
-          }),
-      },
-      {
-        onSuccess: () => {
-          resetWorkout();
-          router.back();
-        },
-      },
-    );
+    mutate(workoutStateAsApi, { onSuccess: () => router.back() });
   };
 
   const handleChangeGroups = (newGroups: typeof groups) => {
@@ -185,6 +202,10 @@ const CreateWorkout = () => {
 
     setExercises(newExercises);
   };
+
+  const changes = !deepEqual(originalWorkoutData, workoutStateAsApi);
+
+  console.log(originalWorkoutData, workoutStateAsApi);
 
   const canSubmit =
     workout.name !== "" &&
@@ -209,7 +230,7 @@ const CreateWorkout = () => {
               {profile.data && (
                 <>
                   <h1 className="truncate text-xl text-blue-700">
-                    Criar treino para <span className="font-bold">{profile.data.user?.name}</span>
+                    Editar treino de <span className="font-bold">{profile.data.user?.name}</span>
                   </h1>
                   <p className="truncate font-medium text-slate-700">{profile.data.email}</p>
                 </>
@@ -250,7 +271,8 @@ const CreateWorkout = () => {
             disabled={saving}
           />
         </div>
-        {categories.isLoading ? (
+
+        {categories.isLoading || originalWorkout.isLoading ? (
           <div className="flex h-full w-full items-center justify-center">
             <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
           </div>
@@ -313,7 +335,8 @@ const CreateWorkout = () => {
             )}
           </Sortable.List>
         )}
-        {!categories.isLoading && (
+
+        {!categories.isLoading && !originalWorkout.isLoading && (
           <div className="flex flex-row items-center justify-center">
             <button
               className="mt-2 flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
@@ -330,13 +353,13 @@ const CreateWorkout = () => {
         <button
           className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
           onClick={handleSave}
-          disabled={!canSubmit || saving}
+          disabled={!changes || !canSubmit || saving}
         >
-          {saving ? "Salvando..." : "Salvar"}
+          {saving ? "Salvando..." : "Salvar alterações"}
           {saving ? (
             <Spinner className="h-8 w-8 fill-blue-600 text-gray-200" />
           ) : (
-            canSubmit && <CheckCircleIcon className="h-8 w-8" />
+            changes && canSubmit && <CheckCircleIcon className="h-8 w-8" />
           )}
         </button>
       </div>
@@ -344,7 +367,7 @@ const CreateWorkout = () => {
   );
 };
 
-export default CreateWorkout;
+export default EditWorkout;
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   const session = await getServerAuthSession(ctx);

@@ -1,4 +1,4 @@
-import { Method } from "@prisma/client";
+import { Method, Weekday } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import type { ParseJsonValues } from "../../../utils/types";
@@ -61,39 +61,46 @@ export const workoutRouter = createTRPCRouter({
   create: adminProcedure
     .input(
       z.object({
-        name: z.string(),
         profileId: z.string(),
-        exercises: z.array(
-          z.object({
-            exerciseId: z.string(),
-            sets: z
-              .array(z.object({ reps: z.number(), weight: z.number() }))
-              .or(z.array(z.object({ time: z.number(), weight: z.number() }))),
-            description: z.string().nullish(),
-            method: z.nativeEnum(Method),
-            index: z.number(),
-          }),
-        ),
-        biSets: z.array(z.tuple([z.number(), z.number()])),
+        name: z.string(),
+        days: z.array(z.nativeEnum(Weekday)).min(1),
+        exercises: z
+          .array(
+            z.object({
+              exerciseId: z.string(),
+              sets: z.union([
+                z.array(z.object({ reps: z.number().min(1), weight: z.number().min(0) })).min(1),
+                z.array(z.object({ time: z.number().min(0), weight: z.number().min(0) })).min(1),
+              ]),
+              description: z.string().nullish(),
+              method: z.nativeEnum(Method),
+              index: z.number().min(0),
+            }),
+          )
+          .min(1),
+        biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
       }),
     )
-    .mutation(async ({ ctx, input: { name, profileId, biSets, exercises } }) => {
-      const workout = await ctx.prisma.workout.create({
-        data: {
-          name,
-          biSets: [],
-          profile: { connect: { id: profileId } },
-          exercises: { createMany: { data: exercises } },
-        },
-        include: { exercises: true },
+    .mutation(({ ctx, input: { profileId, name, days, exercises, biSets } }) => {
+      return ctx.prisma.$transaction(async tx => {
+        const workout = await tx.workout.create({
+          data: {
+            name,
+            days,
+            biSets: [],
+            profile: { connect: { id: profileId } },
+            exercises: { createMany: { data: exercises } },
+          },
+          include: { exercises: true },
+        });
+
+        const biSetsData = biSets.map(([index1, index2]) => [
+          workout.exercises.find(exercise => exercise.index === index1)!.id,
+          workout.exercises.find(exercise => exercise.index === index2)!.id,
+        ]);
+
+        return await tx.workout.update({ where: { id: workout.id }, data: { biSets: biSetsData } });
       });
-
-      const biSetsData = biSets.map(([index1, index2]) => [
-        workout.exercises.find(exercise => exercise.index === index1)!.id,
-        workout.exercises.find(exercise => exercise.index === index2)!.id,
-      ]);
-
-      await ctx.prisma.workout.update({ where: { id: workout.id }, data: { biSets: biSetsData } });
     }),
 
   update: adminProcedure
@@ -101,49 +108,75 @@ export const workoutRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         name: z.string(),
-        exercises: z.object({
-          create: z.array(
+        days: z.array(z.nativeEnum(Weekday)).min(1),
+        exercises: z
+          .array(
             z.object({
+              id: z.string().optional(),
               exerciseId: z.string(),
-              sets: z
-                .array(z.object({ reps: z.number(), weight: z.number() }))
-                .or(z.array(z.object({ time: z.number(), weight: z.number() }))),
+              sets: z.union([
+                z.array(z.object({ reps: z.number().min(1), weight: z.number().min(0) })).min(1),
+                z.array(z.object({ time: z.number().min(0), weight: z.number().min(0) })).min(1),
+              ]),
               description: z.string().nullish(),
               method: z.nativeEnum(Method),
-              index: z.number(),
+              index: z.number().min(0),
             }),
-          ),
-          update: z.array(
-            z.object({
-              id: z.string(),
-              exerciseId: z.string(),
-              sets: z
-                .array(z.object({ reps: z.number(), weight: z.number() }))
-                .or(z.array(z.object({ time: z.number(), weight: z.number() }))),
-              description: z.string().nullish(),
-              method: z.nativeEnum(Method),
-              index: z.number(),
-            }),
-          ),
-          delete: z.array(z.string()),
-        }),
-        biSets: z.array(z.tuple([z.string(), z.string()])),
+          )
+          .min(1),
+        biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
       }),
     )
-    .mutation(({ ctx, input: { id, name, exercises } }) => {
-      return ctx.prisma.workout.update({
-        where: { id },
-        data: {
-          name,
-          exercises: {
-            createMany: { data: exercises.create },
-            updateMany: exercises.update.map(({ id, exerciseId, ...exercise }) => ({
+    .mutation(({ ctx, input: { id: workoutId, name, days, exercises, biSets } }) => {
+      return ctx.prisma.$transaction(async tx => {
+        const workout = await tx.workout.update({
+          where: { id: workoutId },
+          data: { name, days },
+          include: { exercises: { include: { exercise: true } } },
+        });
+
+        const exercisesToCreate = exercises.filter(exercise => typeof exercise.id !== "string");
+
+        await tx.exerciseInWorkout.createMany({
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          data: exercisesToCreate.map(({ id: _, ...exercise }) => ({
+            workoutId,
+            ...exercise,
+          })),
+        });
+
+        const exercisesToUpdate = exercises.filter(exercise =>
+          workout.exercises.some(e => exercise.id === e.id),
+        );
+
+        await Promise.all(
+          exercisesToUpdate.map(async ({ id, ...exercise }) => {
+            await tx.exerciseInWorkout.update({
               where: { id },
-              data: { exercise: { connect: { id: exerciseId } }, ...exercise },
-            })),
-            deleteMany: exercises.delete.map(id => ({ id })),
-          },
-        },
+              data: exercise,
+            });
+          }),
+        );
+
+        const exercisesToDelete = workout.exercises.filter(exercise =>
+          exercises.every(e => exercise.id !== e.id),
+        );
+
+        await tx.exerciseInWorkout.deleteMany({
+          where: { id: { in: exercisesToDelete.map(exercise => exercise.id) } },
+        });
+
+        const { exercises: newExercises } = await tx.workout.findUniqueOrThrow({
+          where: { id: workoutId },
+          include: { exercises: { include: { exercise: true } } },
+        });
+
+        const biSetsData = biSets.map(([index1, index2]) => [
+          newExercises.find(exercise => exercise.index === index1)!.id,
+          newExercises.find(exercise => exercise.index === index2)!.id,
+        ]);
+
+        return await tx.workout.update({ where: { id: workoutId }, data: { biSets: biSetsData } });
       });
     }),
 
