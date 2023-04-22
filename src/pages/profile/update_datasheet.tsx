@@ -9,7 +9,7 @@ import { dataSheetTranslation } from "../../utils/consts";
 import type { ParsedDatasheet } from "../../utils/types";
 import CreateDatasheetPage from "../../components/pages/CreateDatasheetPage";
 
-const UserUpdateMeasure = () => {
+const UserUpdateDatasheet = () => {
   const router = useRouter();
 
   const [editedDataSheet, setEditedDataSheet] = useState<ParsedDatasheet>(
@@ -19,7 +19,7 @@ const UserUpdateMeasure = () => {
     }, {} as ParsedDatasheet),
   );
 
-  const createDataSheet = api.user.createDatasheet.useMutation({
+  const createDataSheet = api.user.createDatasheetBySession.useMutation({
     onSuccess: () => {
       void router.back();
     },
@@ -43,7 +43,7 @@ const UserUpdateMeasure = () => {
   );
 };
 
-export default UserUpdateMeasure;
+export default UserUpdateDatasheet;
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   const session = await getServerAuthSession(ctx);
