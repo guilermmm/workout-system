@@ -34,10 +34,10 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] arrumar a tela de manage q ta quebrando
 - [x] diminuir o tamanho do JS da pagina /manage/edit/\[id\] (remover cuid)
 - [x] ficha pessoal do aluno
-  - [ ] tela index mostrando as ultimas medidas e os botoes pras funcoes abaixo
+  - [x] tela index mostrando as ultimas medidas e os botoes pras funcoes abaixo
   - [x] atualizar medidas
-  - [ ] mostrar historico de medidas
-  - [ ] mostrar historico de treinos finalizados
+  - [x] mostrar historico de medidas
+  - [x] mostrar historico de treinos finalizados
 - [ ] admin criar os exercicios
 - [ ] dialog pra confirmar todos os delete
 

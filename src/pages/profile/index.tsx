@@ -1,6 +1,5 @@
 import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { signOut } from "next-auth/react";
-import Link from "next/link";
 import FullPage from "../../components/FullPage";
 import ProfilePic from "../../components/ProfilePic";
 import UserNavbar from "../../components/UserNavbar";
@@ -8,6 +7,7 @@ import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectan
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 import { dataSheetTranslation } from "../../utils/consts";
+import UserProfileButton from "../../components/UserProfileButton";
 
 const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const latestDataSheet = api.user.getLatestDatasheetBySession.useQuery();
@@ -31,9 +31,9 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
       </div>
       <div className="grow overflow-y-scroll pb-4">
         <div className="mt-4">
-          <OptionCard title="Histórico de treinos" href="/profile/workout_history" />
-          <OptionCard title="Histórico de medidas" href="/profile/datasheet_history" />
-          <OptionCard title="Atualizar medidas" href="/profile/update" />
+          <UserProfileButton title="Histórico de treinos" href="/profile/workout_history" />
+          <UserProfileButton title="Histórico de medidas" href="/profile/datasheet_history" />
+          <UserProfileButton title="Atualizar medidas" href="/profile/update_datasheet" />
         </div>
         <div>
           <h2 className="my-3 flex justify-center text-xl font-medium text-slate-800">
@@ -66,22 +66,6 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
 };
 
 export default Profile;
-
-interface OptionCardProps {
-  title: string;
-  href: string;
-}
-
-const OptionCard = ({ title, href }: OptionCardProps) => {
-  return (
-    <Link
-      href={href}
-      className="m-2 flex min-w-fit flex-col justify-center rounded-md bg-blue-500 py-6 px-9 text-white shadow-lg transition-colors hover:bg-blue-600"
-    >
-      <div className="text-xl">{title}</div>
-    </Link>
-  );
-};
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   const session = await getServerAuthSession(ctx);
