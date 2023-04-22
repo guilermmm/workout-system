@@ -29,4 +29,4 @@ export type ParseBiSets<T> = T extends { biSets: Prisma.JsonValue }
 
 export type ParseJsonValues<T> = Simplify<ParseSets<T> & ParseBiSets<T>>;
 
-export type ParsedDatasheet = Omit<Datasheet, "profileId" | "createdAt">;
+export type ParsedDatasheet = Omit<Datasheet, "createdAt">;

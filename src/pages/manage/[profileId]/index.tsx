@@ -12,6 +12,7 @@ import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { capitalize, join } from "../../../utils";
 import { api } from "../../../utils/api";
+import UserProfileButton from "../../../components/UserProfileButton";
 
 const Manage = () => {
   const router = useRouter();
@@ -55,6 +56,20 @@ const Manage = () => {
             )}
           </div>
         </div>
+      </div>
+      <div className="mt-4">
+        <UserProfileButton
+          title="Histórico de treinos"
+          href={`/manage/${profileId}/workout_history`}
+        />
+        <UserProfileButton
+          title="Histórico de medidas"
+          href={`/manage/${profileId}/datasheet_history`}
+        />
+        <UserProfileButton
+          title="Atualizar medidas"
+          href={`/manage/${profileId}/update_datasheet`}
+        />
       </div>
       {workouts.isLoading ? (
         <div className="flex flex-1 items-center justify-center">

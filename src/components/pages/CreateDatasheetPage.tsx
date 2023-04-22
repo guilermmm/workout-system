@@ -1,37 +1,30 @@
-import type { GetServerSidePropsContext } from "next";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useState } from "react";
-import ErrorPage from "../../components/ErrorPage";
-import FullPage from "../../components/FullPage";
-import Spinner from "../../components/Spinner";
-import UserNavbar from "../../components/UserNavbar";
-import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
-import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
-import { getServerAuthSession } from "../../server/auth";
-import { api } from "../../utils/api";
 import { dataSheetTranslation } from "../../utils/consts";
 import type { ParsedDatasheet } from "../../utils/types";
+import FullPage from "../FullPage";
+import Spinner from "../Spinner";
+import ArrowRightOnRectangleIcon from "../icons/ArrowRightOnRectangleIcon";
+import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
 
-const UpdateMeasure = () => {
+interface Props {
+  isLoading: boolean;
+  editedDataSheet: ParsedDatasheet;
+  setEditedDataSheet: (dataSheet: ParsedDatasheet) => void;
+  createDataSheet: (editedDataSheet: ParsedDatasheet) => void;
+  children: React.ReactNode;
+}
+
+const CreateDatasheetPage = ({
+  isLoading,
+  createDataSheet,
+  editedDataSheet,
+  setEditedDataSheet,
+  children,
+}: Props) => {
   const router = useRouter();
 
-  const [editedDataSheet, setEditedDataSheet] = useState<ParsedDatasheet>(
-    Object.keys(dataSheetTranslation).reduce((acc, key) => {
-      acc[key as keyof typeof dataSheetTranslation] = 0;
-      return acc;
-    }, {} as ParsedDatasheet),
-  );
-
   const changed = Object.values(editedDataSheet).every(value => value !== 0);
-
-  const createDataSheet = api.user.createDatasheet.useMutation({
-    onSuccess: () => {
-      void router.push("/profile");
-    },
-  });
-
-  if (createDataSheet.isError) return <ErrorPage />;
 
   return (
     <FullPage>
@@ -91,31 +84,16 @@ const UpdateMeasure = () => {
               (changed ? "bg-blue-500 hover:bg-blue-600" : " bg-gray-400")
             }
             onClick={() => {
-              createDataSheet.mutate(editedDataSheet);
+              createDataSheet(editedDataSheet);
             }}
           >
-            {createDataSheet.isLoading ? (
-              <Spinner className="h-7 w-7 fill-blue-600 text-gray-200" />
-            ) : (
-              "Salvar"
-            )}
+            {isLoading ? <Spinner className="h-7 w-7 fill-blue-600 text-gray-200" /> : "Salvar"}
           </button>
         </div>
       </div>
-
-      <UserNavbar />
+      {children}
     </FullPage>
   );
 };
 
-export default UpdateMeasure;
-
-export async function getServerSideProps(ctx: GetServerSidePropsContext) {
-  const session = await getServerAuthSession(ctx);
-
-  if (!session || session.user.role === "admin") {
-    return { redirect: { destination: "/", permanent: false } };
-  }
-
-  return { props: { user: session.user } };
-}
+export default CreateDatasheetPage;

@@ -92,6 +92,32 @@ export const userRouter = createTRPCRouter({
       });
     }),
 
+  createDatasheet: adminProcedure
+    .input(
+      z.object({
+        profileId: z.string(),
+        weight: z.number(),
+        height: z.number(),
+        thorax: z.number(),
+        waist: z.number(),
+        abdomen: z.number(),
+        hips: z.number(),
+        rightThigh: z.number(),
+        leftThigh: z.number(),
+        rightArm: z.number(),
+        leftArm: z.number(),
+        rightCalf: z.number(),
+        leftCalf: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.prisma.datasheet.create({
+        data: {
+          ...input,
+        },
+      });
+    }),
+
   getLatestDatasheetBySession: userProcedure.query(async ({ ctx }) => {
     return ctx.prisma.datasheet.findFirstOrThrow({
       where: { profile: { userId: ctx.session.user.id } },
@@ -106,7 +132,7 @@ export const userRouter = createTRPCRouter({
     });
   }),
 
-  createDatasheet: userProcedure
+  createDatasheetBySession: userProcedure
     .input(
       z.object({
         weight: z.number(),
