@@ -3,6 +3,7 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  TouchSensor,
   defaultDropAnimationSideEffects,
   useSensor,
   useSensors,
@@ -28,7 +29,9 @@ function SortableList<T extends BaseItem>(props: Props<T>) {
   const [active, setActive] = useState<Active | null>(null);
   const [animating, setAnimating] = useState(false);
   const activeItem = useMemo(() => items.find(item => item.id === active?.id), [active, items]);
-  const sensors = useSensors(useSensor(PointerSensor));
+  const pointerSensor = useSensor(PointerSensor);
+  const touchSensor = useSensor(TouchSensor);
+  const sensors = useSensors(pointerSensor, touchSensor);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout | undefined;
@@ -131,7 +134,13 @@ function DragHandle({ className, children }: { className?: string; children: Rea
   const { attributes, listeners, ref } = useContext(SortableItemContext);
 
   return (
-    <button className={className} {...attributes} {...listeners} ref={ref}>
+    <button
+      className={className}
+      {...attributes}
+      {...listeners}
+      style={{ touchAction: "none" }}
+      ref={ref}
+    >
       {children}
     </button>
   );
