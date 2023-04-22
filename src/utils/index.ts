@@ -86,11 +86,11 @@ export async function never() {
   return new Promise(() => void 0);
 }
 
-export const useClickOutside = <T extends HTMLElement>(callback: (e: Event) => void) => {
+export const useClickOutside = <T extends HTMLElement>(callback: (e: MouseEvent) => void) => {
   const ref = useRef<T | null>(null);
 
   useEffect(() => {
-    const handleClick = (e: Event) => {
+    const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         callback(e);
       }

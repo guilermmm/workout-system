@@ -1,32 +1,9 @@
 import { useState } from "react";
-import { useModal } from "../components/ModalProvider";
-import NumberInput from "../components/NumberInput";
-import TextInput from "../components/TextInput";
-import { useForm } from "../utils";
+import Alert from "../components/Alert";
+import XMarkIcon from "../components/icons/XMarkIcon";
 
 export default function Test() {
-  const [, ShowModal] = useModal();
-  const [showModal, setShowModal] = useState(false);
-
-  const [{ form, isSubmitting }, { handleSubmit }] = useForm({
-    initialValues: {
-      name: "",
-      surname: "",
-      age: 0,
-    },
-    onSubmit: values => {
-      console.log(values);
-      setShowModal(false);
-    },
-    validators: {
-      // name: value => {
-      //   if (!value) return "Campo obrigatório";
-      // },
-      // surname: value => {
-      //   if (!value) return "Campo obrigatório";
-      // },
-    },
-  });
+  const [showAlert, setShowAlert] = useState(true);
 
   const [color, setColor] = useState([0, 0, 0] as [number, number, number]);
 
@@ -35,7 +12,7 @@ export default function Test() {
       <button
         type="button"
         className="rounded-md bg-slate-50 p-2 shadow-md"
-        onClick={() => setShowModal(true)}
+        onClick={() => setShowAlert(true)}
       >
         Abrir
       </button>
@@ -54,17 +31,18 @@ export default function Test() {
       >
         Change
       </button>
-      {showModal && (
-        <ShowModal className="bg-black bg-opacity-30">
-          <div className="flex h-1/2 w-3/5 items-center justify-center rounded-md bg-slate-50 p-4 shadow-md">
-            <button
-              className="rounded-md bg-slate-50 p-2 shadow-md"
-              onClick={() => setShowModal(false)}
-            >
-              Fechar
-            </button>
-          </div>
-        </ShowModal>
+      {showAlert && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-200 p-2 text-red-500" />}
+          title="Deletar"
+          text="Tem certeza que deseja deletar?"
+          confirmButtonColor="red"
+          onCancel={() => setShowAlert(false)}
+          onConfirm={() => {
+            console.log("a");
+            setShowAlert(false);
+          }}
+        />
       )}
     </div>
   );
