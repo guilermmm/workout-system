@@ -1,18 +1,18 @@
 import type { Exercise, ExerciseInWorkout } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
+import type { ParseJsonValues, Sets } from "../../../utils/types";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
 import { z } from "zod";
-import Spinner from "../../components/Spinner";
-import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
-import CheckCircleIcon from "../../components/icons/CheckCircleIcon";
-import CheckIcon from "../../components/icons/CheckIcon";
-import ClockIcon from "../../components/icons/ClockIcon";
-import { getServerAuthSession } from "../../server/auth";
-import { classList, useLocalStorage } from "../../utils";
-import { api } from "../../utils/api";
-import type { ParseJsonValues, Sets } from "../../utils/types";
+import Spinner from "../../../components/Spinner";
+import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
+import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
+import CheckIcon from "../../../components/icons/CheckIcon";
+import ClockIcon from "../../../components/icons/ClockIcon";
+import { getServerAuthSession } from "../../../server/auth";
+import { classList, useLocalStorage } from "../../../utils";
+import { api } from "../../../utils/api";
 
 const Workout = () => {
   const router = useRouter();
@@ -106,23 +106,21 @@ type ExerciseCardProps = {
 const ExerciseCard = ({ description, exercise, sets }: ExerciseCardProps) => {
   const [completed, setCompleted] = useState(false);
 
+  const isRep = Object.keys(sets).includes("reps");
+
   return (
     <div className="m-2 flex justify-between rounded-lg bg-white p-4 shadow-md">
       <div>
         <div className="text-md font-medium text-blue-600">{exercise.name}</div>
         <div className="text-sm text-slate-600">{exercise.category}</div>
         <div className="text-sm">{description}</div>
-        {/* q porra é essa aq --->> */}{" "}
       </div>
       <div className="flex items-center justify-between">
         <div className="mr-5 text-right text-sm">
           <div className="font-medium text-slate-700">
-            <div className="font-medium text-slate-700">{sets.length} séries</div>
-            {/* {exercise.exercise.hasReps ? (
-              <div className="font-medium text-slate-700">{exercise.reps} repetições</div>
-            ) : (
-              <div className="font-medium text-slate-700">{exercise.time} segundos</div>
-            )} */}
+            <div className="font-medium text-slate-700">
+              {sets.length} série{sets.length > 1 && "s"}
+            </div>
           </div>
         </div>
         <button
