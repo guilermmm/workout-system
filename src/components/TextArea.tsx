@@ -15,7 +15,7 @@ const TextArea = ({ onChange, label, className, model = "outline", ...props }: P
       <div className="relative h-full w-full bg-inherit">
         <textarea
           className={classList(
-            "peer block h-full w-full resize-none appearance-none border-gray-300 bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0",
+            "peer block h-full w-full resize-none appearance-none border-gray-300 bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
             {
               "rounded-lg border-1": model === "outline",
               "border-b-2": model === "floor",

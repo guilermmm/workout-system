@@ -1,12 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type MutableRefObject,
-  type RefObject,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { JSONValue } from "superjson/dist/types";
 import type { ZodType } from "zod";
 
@@ -103,7 +95,7 @@ export const useClickOutside = <T extends HTMLElement>(callback: (e: MouseEvent)
     };
   }, [ref, callback]);
 
-  return ref as MutableRefObject<T>;
+  return ref;
 };
 
 export function useEndOfScroll<T extends HTMLElement>(ref: RefObject<T>, callback: () => void) {

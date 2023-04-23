@@ -1,8 +1,7 @@
 import deepEqual from "deep-equal";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import ErrorPage from "../../../../components/ErrorPage";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ProfilePic from "../../../../components/ProfilePic";
 import Spinner from "../../../../components/Spinner";
 import ArrowUturnLeftIcon from "../../../../components/icons/ArrowUturnLeftIcon";
@@ -20,6 +19,9 @@ import Sortable from "../../../../components/SortableList";
 import Bars2Icon from "../../../../components/icons/Bars2Icon";
 import BiSetCard from "../../../../components/admin/BiSetCard";
 import ExerciseCard from "../../../../components/admin/ExerciseCard";
+import { useClickOutside } from "../../../../utils";
+import Alert from "../../../../components/Alert";
+import XMarkIcon from "../../../../components/icons/XMarkIcon";
 
 const apiToState = (workout: RouterOutputs["workout"]["getById"]) => {
   return {
@@ -96,11 +98,26 @@ const EditWorkout = () => {
 
   const { profileId, workoutId } = router.query as { profileId: string; workoutId: string };
 
-  const profile = api.user.getProfileById.useQuery(profileId);
+  const profile = api.user.getProfileById.useQuery(profileId, {
+    refetchOnWindowFocus: false,
+    onError: () => {
+      setErroredQueries(q => [...q, profile]);
+    },
+  });
 
-  const categories = api.exercise.getGroups.useQuery();
+  const categories = api.exercise.getGroups.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    onError: () => {
+      setErroredQueries(q => [...q, categories]);
+    },
+  });
 
-  const originalWorkout = api.workout.getById.useQuery(workoutId, { refetchOnWindowFocus: false });
+  const originalWorkout = api.workout.getById.useQuery(workoutId, {
+    refetchOnWindowFocus: false,
+    onError: () => {
+      setErroredQueries(q => [...q, originalWorkout]);
+    },
+  });
 
   const originalWorkoutData = useMemo(
     () => originalWorkout.data && stateToApi(apiToState(originalWorkout.data), workoutId),
@@ -164,9 +181,17 @@ const EditWorkout = () => {
     [workout.exercises],
   );
 
-  if (profile.error || categories.error || originalWorkout.error) {
-    return <ErrorPage />;
-  }
+  const [erroredQueries, setErroredQueries] = useState<
+    (typeof profile | typeof categories | typeof originalWorkout)[]
+  >([]);
+
+  const refetch = useCallback(() => {
+    for (const query of erroredQueries) {
+      void query.refetch();
+    }
+  }, [erroredQueries]);
+
+  const errorAlertRef = useClickOutside<HTMLDivElement>(refetch);
 
   const setExercises = (exercises: Exercise[] | ((exercises: Exercise[]) => Exercise[])) => {
     if (typeof exercises === "function") {
@@ -215,6 +240,27 @@ const EditWorkout = () => {
 
   return (
     <FullPage>
+      {(profile.error || categories.error || originalWorkout.error) && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
+          title="Não conseguimos buscar estes dados"
+          text="Não foi possível buscar os dados necessários para acessar esta página, verifique sua conexão e tente novamente"
+          ref={errorAlertRef}
+        >
+          <button
+            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+            onClick={router.back}
+          >
+            Voltar à página anterior
+          </button>
+          <button
+            className="rounded-md border-1 bg-blue-600 py-2 px-4 text-white shadow-md"
+            onClick={refetch}
+          >
+            Tentar novamente
+          </button>
+        </Alert>
+      )}
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
         <div className="flex flex-row items-center justify-between">
           <button
@@ -241,7 +287,7 @@ const EditWorkout = () => {
             {profile.isLoading ? (
               <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
             ) : (
-              <ProfilePic size="md" user={profile.data.user} />
+              profile.data && <ProfilePic size="md" user={profile.data.user} />
             )}
           </div>
         </div>
@@ -254,6 +300,7 @@ const EditWorkout = () => {
             className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
             value={workout.name}
             onChange={name => setWorkout({ ...workout, name })}
+            disabled={saving || originalWorkout.isLoading}
           />
           <MultiSelect
             label="Dia(s)"
@@ -268,7 +315,7 @@ const EditWorkout = () => {
             selected={workout.days}
             itemToString={it => weekdaysTranslation[it]}
             itemToKey={it => it}
-            disabled={saving}
+            disabled={saving || originalWorkout.isLoading}
           />
         </div>
 
@@ -277,66 +324,71 @@ const EditWorkout = () => {
             <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
           </div>
         ) : (
-          <Sortable.List
-            className="w-full max-w-[48rem]"
-            items={groups}
-            onChange={handleChangeGroups}
-          >
-            {(group, animating) => (
-              <Sortable.Item className="" id={group.id}>
-                {(() => {
-                  if ("exercises" in group) {
-                    const [a, b] = group.exercises;
+          categories.data &&
+          originalWorkout.data && (
+            <Sortable.List
+              className="w-full max-w-[48rem]"
+              items={groups}
+              onChange={handleChangeGroups}
+            >
+              {(group, animating) => (
+                <Sortable.Item className="" id={group.id}>
+                  {(() => {
+                    if ("exercises" in group) {
+                      const [a, b] = group.exercises;
 
+                      return (
+                        <BiSetCard
+                          first={a}
+                          second={b}
+                          separate={() => {
+                            setExercises(
+                              workout.exercises.map(e =>
+                                e.id === a.id ? { ...e, biSet: null } : e,
+                              ),
+                            );
+                          }}
+                          setExercises={setExercises}
+                          categories={categories.data}
+                          dragHandle={dragHandle}
+                          collapsed={animating}
+                          disabled={saving}
+                        />
+                      );
+                    }
+
+                    const exercise = group;
                     return (
-                      <BiSetCard
-                        first={a}
-                        second={b}
-                        separate={() => {
-                          setExercises(
-                            workout.exercises.map(e => (e.id === a.id ? { ...e, biSet: null } : e)),
-                          );
+                      <ExerciseCard
+                        key={exercise.id}
+                        exercise={exercise}
+                        onEdit={it => {
+                          setExercises(workout.exercises.map(e => (e.id === exercise.id ? it : e)));
                         }}
-                        setExercises={setExercises}
+                        onDelete={() =>
+                          setExercises(workout.exercises.filter(e => e.id !== exercise.id))
+                        }
                         categories={categories.data}
+                        otherExercises={workout.exercises.filter(
+                          other =>
+                            other.id !== exercise.id &&
+                            other.exerciseId !== "" &&
+                            other.biSet === null &&
+                            workout.exercises.find(e => e.biSet === other.id) === undefined,
+                        )}
                         dragHandle={dragHandle}
                         collapsed={animating}
                         disabled={saving}
                       />
                     );
-                  }
-
-                  const exercise = group;
-                  return (
-                    <ExerciseCard
-                      key={exercise.id}
-                      exercise={exercise}
-                      onEdit={it => {
-                        setExercises(workout.exercises.map(e => (e.id === exercise.id ? it : e)));
-                      }}
-                      onDelete={() =>
-                        setExercises(workout.exercises.filter(e => e.id !== exercise.id))
-                      }
-                      categories={categories.data}
-                      otherExercises={workout.exercises.filter(
-                        other =>
-                          other.id !== exercise.id &&
-                          other.exerciseId !== "" &&
-                          other.biSet === null &&
-                          workout.exercises.find(e => e.biSet === other.id) === undefined,
-                      )}
-                      dragHandle={dragHandle}
-                      collapsed={animating}
-                      disabled={saving}
-                    />
-                  );
-                })()}
-              </Sortable.Item>
-            )}
-          </Sortable.List>
+                  })()}
+                </Sortable.Item>
+              )}
+            </Sortable.List>
+          )
         )}
 
-        {!categories.isLoading && !originalWorkout.isLoading && (
+        {categories.data && originalWorkout.data && (
           <div className="flex flex-row items-center justify-center">
             <button
               className="mt-2 flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
@@ -349,20 +401,22 @@ const EditWorkout = () => {
         )}
       </div>
 
-      <div className="fixed bottom-0 right-0 p-4">
-        <button
-          className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
-          onClick={handleSave}
-          disabled={!changes || !canSubmit || saving}
-        >
-          {saving ? "Salvando..." : "Salvar alterações"}
-          {saving ? (
-            <Spinner className="h-8 w-8 fill-blue-600 text-gray-200" />
-          ) : (
-            changes && canSubmit && <CheckCircleIcon className="h-8 w-8" />
-          )}
-        </button>
-      </div>
+      {profile.data && categories.data && originalWorkout.data && (
+        <div className="fixed bottom-0 right-0 p-4">
+          <button
+            className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
+            onClick={handleSave}
+            disabled={!changes || !canSubmit || saving}
+          >
+            {saving ? "Salvando..." : "Salvar alterações"}
+            {saving ? (
+              <Spinner className="h-8 w-8 fill-blue-600 text-gray-200" />
+            ) : (
+              changes && canSubmit && <CheckCircleIcon className="h-8 w-8" />
+            )}
+          </button>
+        </div>
+      )}
     </FullPage>
   );
 };

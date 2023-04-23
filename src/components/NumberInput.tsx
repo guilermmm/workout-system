@@ -50,7 +50,7 @@ const NumberInput: React.FC<Props> = ({
         <input
           type="number"
           className={classList(
-            "peer block h-full w-full appearance-none border-gray-300 bg-transparent px-2 pb-1 pt-1.5 text-sm text-gray-900 outline-none ring-0 duration-300 focus:border-blue-600 focus:outline-none focus:ring-0",
+            "peer block h-full w-full appearance-none border-gray-300 bg-transparent px-2 pb-1 pt-1.5 text-sm text-gray-900 outline-none ring-0 duration-300 focus:border-blue-600 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
             {
               "rounded-lg border-1": model === "outline",
               "border-b-2": model === "floor",
