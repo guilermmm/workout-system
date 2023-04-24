@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import type { ExerciseBase } from "./ExerciseCard";
-import type { RouterOutputs } from "../../utils/api";
 import { classList } from "../../utils";
+import type { RouterOutputs } from "../../utils/api";
 import ChevronDownIcon from "../icons/ChevronDownIcon";
 import ChevronUpIcon from "../icons/ChevronUpIcon";
 import XMarkIcon from "../icons/XMarkIcon";
+import type { ExerciseBase } from "./ExerciseCard";
 import ExerciseCard from "./ExerciseCard";
 
 type BiSetCardProps<Exercise extends ExerciseBase> = {

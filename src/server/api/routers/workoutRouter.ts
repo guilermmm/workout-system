@@ -127,7 +127,7 @@ export const workoutRouter = createTRPCRouter({
         biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
       }),
     )
-    .mutation(({ ctx, input: { id: workoutId, name, days, exercises, biSets } }) => {
+    .mutation(async ({ ctx, input: { id: workoutId, name, days, exercises, biSets } }) => {
       return ctx.prisma.$transaction(async tx => {
         const workout = await tx.workout.update({
           where: { id: workoutId },

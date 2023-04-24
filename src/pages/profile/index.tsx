@@ -3,11 +3,11 @@ import { signOut } from "next-auth/react";
 import FullPage from "../../components/FullPage";
 import ProfilePic from "../../components/ProfilePic";
 import UserNavbar from "../../components/UserNavbar";
+import UserProfileButton from "../../components/UserProfileButton";
 import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 import { dataSheetTranslation } from "../../utils/consts";
-import UserProfileButton from "../../components/UserProfileButton";
 
 const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const latestDataSheet = api.user.getLatestDatasheetBySession.useQuery();

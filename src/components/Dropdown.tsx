@@ -1,8 +1,3 @@
-// create a dropdown component with the same style as the MultiSelect component
-//
-// Path: src/components/Dropdown.tsx
-// Compare this snippet from src/components/MultiSelect.tsx:
-
 import { useEffect, useState } from "react";
 import { useClickOutside } from "../utils";
 

@@ -1,5 +1,5 @@
+import { forwardRef, type ForwardedRef } from "react";
 import { useModal } from "./Modal";
-import { type ForwardedRef, forwardRef } from "react";
 
 type Props = {
   icon: React.ReactNode;

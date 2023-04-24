@@ -1,14 +1,14 @@
 import { Method } from "@prisma/client";
-import PlusIcon from "../icons/PlusIcon";
-import type { RouterOutputs } from "../../utils/api";
 import { classList, useFormValidation } from "../../utils";
-import ChevronDownIcon from "../icons/ChevronDownIcon";
-import ChevronUpIcon from "../icons/ChevronUpIcon";
-import Select from "../Select";
+import type { RouterOutputs } from "../../utils/api";
 import { methodTranslation } from "../../utils/consts";
-import TextArea from "../TextArea";
 import Dropdown from "../Dropdown";
 import NumberInput from "../NumberInput";
+import Select from "../Select";
+import TextArea from "../TextArea";
+import ChevronDownIcon from "../icons/ChevronDownIcon";
+import ChevronUpIcon from "../icons/ChevronUpIcon";
+import PlusIcon from "../icons/PlusIcon";
 import TrashIcon from "../icons/TrashIcon";
 import XMarkIcon from "../icons/XMarkIcon";
 

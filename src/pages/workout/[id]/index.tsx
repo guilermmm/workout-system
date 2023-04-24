@@ -1,6 +1,5 @@
 import type { Exercise, ExerciseInWorkout } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
-import type { ParseJsonValues, Sets } from "../../../utils/types";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
@@ -13,6 +12,7 @@ import ClockIcon from "../../../components/icons/ClockIcon";
 import { getServerAuthSession } from "../../../server/auth";
 import { classList, useLocalStorage } from "../../../utils";
 import { api } from "../../../utils/api";
+import type { ParseJsonValues, Sets } from "../../../utils/types";
 
 const Workout = () => {
   const router = useRouter();
@@ -105,8 +105,6 @@ type ExerciseCardProps = {
 
 const ExerciseCard = ({ description, exercise, sets }: ExerciseCardProps) => {
   const [completed, setCompleted] = useState(false);
-
-  const isRep = Object.keys(sets).includes("reps");
 
   return (
     <div className="m-2 flex justify-between rounded-lg bg-white p-4 shadow-md">

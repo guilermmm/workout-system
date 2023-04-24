@@ -4,12 +4,12 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { useDebounce } from "use-debounce";
-import AdminHeader from "../components/AdminHeader";
-import AdminNavbar from "../components/AdminNavbar";
 import ErrorPage from "../components/ErrorPage";
 import FullPage from "../components/FullPage";
 import ProfilePic from "../components/ProfilePic";
 import Spinner from "../components/Spinner";
+import Header from "../components/admin/Header";
+import AdminNavbar from "../components/admin/Navbar";
 import CheckCircleIcon from "../components/icons/CheckCircleIcon";
 import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
 import XCircleIcon from "../components/icons/XCircleIcon";
@@ -44,7 +44,7 @@ const Dashboard = () => {
 
   return (
     <FullPage>
-      <AdminHeader user={session?.user} />
+      <Header user={session?.user} />
       <div className="m-2">
         <div className="relative">
           <input

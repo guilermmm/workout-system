@@ -3,8 +3,8 @@ import type { GetServerSidePropsContext } from "next";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import AdminHeader from "../../components/AdminHeader";
-import AdminNavbar from "../../components/AdminNavbar";
+import Header from "../../components/admin/Header";
+import AdminNavbar from "../../components/admin/Navbar";
 import ErrorPage from "../../components/ErrorPage";
 import FullPage from "../../components/FullPage";
 import MagnifyingGlassIcon from "../../components/icons/MagnifyingGlassIcon";
@@ -84,7 +84,7 @@ const Dashboard = () => {
 
   return (
     <FullPage>
-      <AdminHeader user={session?.user} />
+      <Header user={session?.user} />
       <div className="m-2 flex items-center gap-2">
         <div className="relative grow">
           <input

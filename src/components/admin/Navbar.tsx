@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import ListBulletIcon from "./icons/ListBulletIcon";
-import UserGroupIcon from "./icons/UserGroupIcon";
+import ListBulletIcon from "../icons/ListBulletIcon";
+import UserGroupIcon from "../icons/UserGroupIcon";
 
 const Navbar = () => {
   const router = useRouter();

@@ -1,27 +1,27 @@
+import { Method, Weekday } from "@prisma/client";
 import deepEqual from "deep-equal";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ProfilePic from "../../../../components/ProfilePic";
-import Spinner from "../../../../components/Spinner";
-import ArrowUturnLeftIcon from "../../../../components/icons/ArrowUturnLeftIcon";
-import CheckCircleIcon from "../../../../components/icons/CheckCircleIcon";
-import PlusIcon from "../../../../components/icons/PlusIcon";
-import { env } from "../../../../env/server.mjs";
-import { getServerAuthSession } from "../../../../server/auth";
-import { type RouterOutputs, api } from "../../../../utils/api";
+import Alert from "../../../../components/Alert";
 import FullPage from "../../../../components/FullPage";
-import { Method, Weekday } from "@prisma/client";
-import TextInput from "../../../../components/TextInput";
 import MultiSelect from "../../../../components/MultiSelect";
-import { weekdaysOrder, weekdaysTranslation } from "../../../../utils/consts";
+import ProfilePic from "../../../../components/ProfilePic";
 import Sortable from "../../../../components/SortableList";
-import Bars2Icon from "../../../../components/icons/Bars2Icon";
+import Spinner from "../../../../components/Spinner";
+import TextInput from "../../../../components/TextInput";
 import BiSetCard from "../../../../components/admin/BiSetCard";
 import ExerciseCard from "../../../../components/admin/ExerciseCard";
-import { useClickOutside } from "../../../../utils";
-import Alert from "../../../../components/Alert";
+import ArrowUturnLeftIcon from "../../../../components/icons/ArrowUturnLeftIcon";
+import Bars2Icon from "../../../../components/icons/Bars2Icon";
+import CheckCircleIcon from "../../../../components/icons/CheckCircleIcon";
+import PlusIcon from "../../../../components/icons/PlusIcon";
 import XMarkIcon from "../../../../components/icons/XMarkIcon";
+import { env } from "../../../../env/server.mjs";
+import { getServerAuthSession } from "../../../../server/auth";
+import { useClickOutside } from "../../../../utils";
+import { api, type RouterOutputs } from "../../../../utils/api";
+import { weekdaysOrder, weekdaysTranslation } from "../../../../utils/consts";
 
 const apiToState = (workout: RouterOutputs["workout"]["getById"]) => {
   return {
@@ -124,7 +124,7 @@ const EditWorkout = () => {
     [originalWorkout.data, workoutId],
   );
 
-  const { mutate } = api.workout.update.useMutation();
+  const updateWorkout = api.workout.update.useMutation();
 
   const [workout, setWorkout] = useState<WorkoutState>({
     name: "",
@@ -154,7 +154,7 @@ const EditWorkout = () => {
     }
   }, [workout.exercises]);
 
-  const [saving, setSaving] = useState(false);
+  const saving = updateWorkout.isLoading;
 
   const groups = useMemo(
     () =>
@@ -218,8 +218,9 @@ const EditWorkout = () => {
   };
 
   const handleSave = () => {
-    setSaving(true);
-    mutate(workoutStateAsApi, { onSuccess: () => router.back() });
+    updateWorkout.mutate(workoutStateAsApi, {
+      onSuccess: () => void originalWorkout.refetch(),
+    });
   };
 
   const handleChangeGroups = (newGroups: typeof groups) => {

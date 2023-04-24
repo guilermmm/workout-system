@@ -1,11 +1,11 @@
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import ErrorPage from "../../../components/ErrorPage";
+import AdminNavbar from "../../../components/admin/Navbar";
+import WorkoutHistoryPage from "../../../components/pages/WorkoutHistoryPage";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { api } from "../../../utils/api";
-import AdminNavbar from "../../../components/AdminNavbar";
-import WorkoutHistoryPage from "../../../components/pages/WorkoutHistoryPage";
 
 const AdminWorkoutHistory = () => {
   const router = useRouter();

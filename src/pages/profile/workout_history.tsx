@@ -1,8 +1,8 @@
-import UserNavbar from "../../components/UserNavbar";
 import type { GetServerSidePropsContext } from "next";
+import UserNavbar from "../../components/UserNavbar";
+import WorkoutHistoryPage from "../../components/pages/WorkoutHistoryPage";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
-import WorkoutHistoryPage from "../../components/pages/WorkoutHistoryPage";
 const WorkoutHistory = () => {
   const workouts = api.workout.getManyBySession.useQuery();
   const finishedWorkouts = api.user.getFinishedWorkoutsBySession.useQuery();

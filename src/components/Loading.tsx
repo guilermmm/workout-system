@@ -1,5 +1,5 @@
-import Spinner from "./Spinner";
 import Image from "next/image";
+import Spinner from "./Spinner";
 
 const Loading = () => {
   return (

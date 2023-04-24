@@ -10,6 +10,8 @@ import ProfilePic from "../../../components/ProfilePic";
 import Sortable from "../../../components/SortableList";
 import Spinner from "../../../components/Spinner";
 import TextInput from "../../../components/TextInput";
+import BiSetCard from "../../../components/admin/BiSetCard";
+import ExerciseCard from "../../../components/admin/ExerciseCard";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
 import Bars2Icon from "../../../components/icons/Bars2Icon";
 import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
@@ -19,8 +21,6 @@ import { getServerAuthSession } from "../../../server/auth";
 import { useLocalStorage } from "../../../utils";
 import { api } from "../../../utils/api";
 import { weekdaysOrder, weekdaysTranslation } from "../../../utils/consts";
-import BiSetCard from "../../../components/admin/BiSetCard";
-import ExerciseCard from "../../../components/admin/ExerciseCard";
 
 const exerciseParser = z.object({
   id: z.number(),

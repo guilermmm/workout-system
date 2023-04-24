@@ -1,14 +1,14 @@
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
-import ProfilePic from "./ProfilePic";
-import Spinner from "./Spinner";
-import ArrowRightOnRectangleIcon from "./icons/ArrowRightOnRectangleIcon";
+import ProfilePic from "../ProfilePic";
+import Spinner from "../Spinner";
+import ArrowRightOnRectangleIcon from "../icons/ArrowRightOnRectangleIcon";
 
 type Props = {
   user?: Pick<Session["user"], "name" | "email" | "image"> | null;
 };
 
-const AdminHeader: React.FC<Props> = ({ user }) => {
+const Header: React.FC<Props> = ({ user }) => {
   return (
     <div className="flex items-center justify-between bg-gold-500 p-2">
       <div className="flex items-center">
@@ -33,4 +33,4 @@ const AdminHeader: React.FC<Props> = ({ user }) => {
   );
 };
 
-export default AdminHeader;
+export default Header;

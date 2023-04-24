@@ -2,13 +2,13 @@ import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import ErrorPage from "../../../components/ErrorPage";
+import AdminNavbar from "../../../components/admin/Navbar";
 import CreateDatasheetPage from "../../../components/pages/CreateDatasheetPage";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { api } from "../../../utils/api";
 import { dataSheetTranslation } from "../../../utils/consts";
 import type { ParsedDatasheet } from "../../../utils/types";
-import AdminNavbar from "../../../components/AdminNavbar";
 
 const AdminUpdateDatasheet = () => {
   const router = useRouter();
