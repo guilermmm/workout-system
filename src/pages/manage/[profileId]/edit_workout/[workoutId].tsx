@@ -15,6 +15,7 @@ import ExerciseCard from "../../../../components/admin/ExerciseCard";
 import ArrowUturnLeftIcon from "../../../../components/icons/ArrowUturnLeftIcon";
 import Bars2Icon from "../../../../components/icons/Bars2Icon";
 import CheckCircleIcon from "../../../../components/icons/CheckCircleIcon";
+import ExclamationTriangleIcon from "../../../../components/icons/ExclamationTriangleIcon";
 import PlusIcon from "../../../../components/icons/PlusIcon";
 import XMarkIcon from "../../../../components/icons/XMarkIcon";
 import { env } from "../../../../env/server.mjs";
@@ -189,9 +190,16 @@ const EditWorkout = () => {
     for (const query of erroredQueries) {
       void query.refetch();
     }
+    setErroredQueries([]);
   }, [erroredQueries]);
 
   const errorAlertRef = useClickOutside<HTMLDivElement>(refetch);
+
+  const [isConfirmationAlertOpen, setConfirmationAlertOpen] = useState(false);
+
+  const confirmationAlertRef = useClickOutside<HTMLDivElement>(() => {
+    setConfirmationAlertOpen(false);
+  });
 
   const setExercises = (exercises: Exercise[] | ((exercises: Exercise[]) => Exercise[])) => {
     if (typeof exercises === "function") {
@@ -219,7 +227,10 @@ const EditWorkout = () => {
 
   const handleSave = () => {
     updateWorkout.mutate(workoutStateAsApi, {
-      onSuccess: () => void originalWorkout.refetch(),
+      onSuccess: () => {
+        setConfirmationAlertOpen(false);
+        void originalWorkout.refetch();
+      },
     });
   };
 
@@ -241,7 +252,7 @@ const EditWorkout = () => {
 
   return (
     <FullPage>
-      {(profile.error || categories.error || originalWorkout.error) && (
+      {erroredQueries.length > 0 && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Não conseguimos buscar estes dados"
@@ -249,16 +260,41 @@ const EditWorkout = () => {
           ref={errorAlertRef}
         >
           <button
+            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
+            onClick={refetch}
+          >
+            Tentar novamente
+          </button>
+          <button
             className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
             onClick={router.back}
           >
             Voltar à página anterior
           </button>
+        </Alert>
+      )}
+      {isConfirmationAlertOpen && (
+        <Alert
+          icon={
+            <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-700" />
+          }
+          title="Você tem certeza?"
+          text={`Você tem certeza que deseja salvar as alterações feitas ao treino ${
+            originalWorkout.data!.name
+          } de ${profile.data!.user?.name ?? profile.data!.email}?`}
+          ref={confirmationAlertRef}
+        >
           <button
-            className="rounded-md border-1 bg-blue-600 py-2 px-4 text-white shadow-md"
-            onClick={refetch}
+            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
+            onClick={handleSave}
           >
-            Tentar novamente
+            Salvar alterações
+          </button>
+          <button
+            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+            onClick={() => setConfirmationAlertOpen(false)}
+          >
+            Cancelar
           </button>
         </Alert>
       )}
@@ -277,7 +313,13 @@ const EditWorkout = () => {
               {profile.data && (
                 <>
                   <h1 className="truncate text-xl text-blue-700">
-                    Editar treino de <span className="font-bold">{profile.data.user?.name}</span>
+                    Editar treino{" "}
+                    {workout.name ? (
+                      <span className="font-bold">{workout.name}</span>
+                    ) : (
+                      <span className="font-bold">sem nome</span>
+                    )}{" "}
+                    de <span className="font-bold">{profile.data.user?.name}</span>
                   </h1>
                   <p className="truncate font-medium text-slate-700">{profile.data.email}</p>
                 </>
@@ -406,7 +448,7 @@ const EditWorkout = () => {
         <div className="fixed bottom-0 right-0 p-4">
           <button
             className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
-            onClick={handleSave}
+            onClick={() => setConfirmationAlertOpen(true)}
             disabled={!changes || !canSubmit || saving}
           >
             {saving ? "Salvando..." : "Salvar alterações"}

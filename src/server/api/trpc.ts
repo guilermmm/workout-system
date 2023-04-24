@@ -88,15 +88,17 @@ const enforceUserIsNotAdmin = t.middleware(async ({ ctx, next }) => {
   });
 });
 
-// export const baseProcedure = t.procedure.use(
-//   t.middleware(async ({ ctx, next }) => {
-//     await sleep(20000);
+export const baseProcedure = t.procedure.use(
+  t.middleware(async ({ ctx, next }) => {
+    // return Promise.reject();
 
-//     return next({ ctx });
-//   }),
-// );
+    // await sleep(2000);
 
-export const baseProcedure = t.procedure;
+    return next({ ctx });
+  }),
+);
+
+// export const baseProcedure = t.procedure;
 
 export const adminProcedure = baseProcedure.use(logProcedure).use(enforceUserIsAdmin);
 

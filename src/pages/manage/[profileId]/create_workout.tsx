@@ -1,9 +1,9 @@
 import { Method, Weekday } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
-import ErrorPage from "../../../components/ErrorPage";
+import Alert from "../../../components/Alert";
 import FullPage from "../../../components/FullPage";
 import MultiSelect from "../../../components/MultiSelect";
 import ProfilePic from "../../../components/ProfilePic";
@@ -15,10 +15,12 @@ import ExerciseCard from "../../../components/admin/ExerciseCard";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
 import Bars2Icon from "../../../components/icons/Bars2Icon";
 import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
+import ExclamationTriangleIcon from "../../../components/icons/ExclamationTriangleIcon";
 import PlusIcon from "../../../components/icons/PlusIcon";
+import XMarkIcon from "../../../components/icons/XMarkIcon";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
-import { useLocalStorage } from "../../../utils";
+import { useClickOutside, useLocalStorage } from "../../../utils";
 import { api } from "../../../utils/api";
 import { weekdaysOrder, weekdaysTranslation } from "../../../utils/consts";
 
@@ -63,11 +65,21 @@ const CreateWorkout = () => {
 
   const { profileId } = router.query as { profileId: string };
 
-  const profile = api.user.getProfileById.useQuery(profileId);
+  const profile = api.user.getProfileById.useQuery(profileId, {
+    refetchOnWindowFocus: false,
+    onError: () => {
+      setErroredQueries(q => [...q, profile]);
+    },
+  });
 
-  const categories = api.exercise.getGroups.useQuery();
+  const categories = api.exercise.getGroups.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    onError: () => {
+      setErroredQueries(q => [...q, categories]);
+    },
+  });
 
-  const { mutate } = api.workout.create.useMutation();
+  const createWorkout = api.workout.create.useMutation();
 
   const [workout, setWorkout, resetWorkout] = useLocalStorage("create-workout", workoutParser, {
     name: "",
@@ -85,7 +97,7 @@ const CreateWorkout = () => {
     }
   }, [workout.exercises]);
 
-  const [saving, setSaving] = useState(false);
+  const saving = createWorkout.isLoading;
 
   const groups = useMemo(
     () =>
@@ -112,9 +124,22 @@ const CreateWorkout = () => {
     [workout.exercises],
   );
 
-  if (profile.error || categories.error) {
-    return <ErrorPage />;
-  }
+  const [erroredQueries, setErroredQueries] = useState<(typeof profile | typeof categories)[]>([]);
+
+  const refetch = useCallback(() => {
+    for (const query of erroredQueries) {
+      void query.refetch();
+    }
+    setErroredQueries([]);
+  }, [erroredQueries]);
+
+  const errorAlertRef = useClickOutside<HTMLDivElement>(refetch);
+
+  const [isConfirmationAlertOpen, setConfirmationAlertOpen] = useState(false);
+
+  const confirmationAlertRef = useClickOutside<HTMLDivElement>(() => {
+    setConfirmationAlertOpen(false);
+  });
 
   const setExercises = (exercises: Exercise[] | ((exercises: Exercise[]) => Exercise[])) => {
     if (typeof exercises === "function") {
@@ -141,8 +166,7 @@ const CreateWorkout = () => {
   };
 
   const handleSave = () => {
-    setSaving(true);
-    mutate(
+    createWorkout.mutate(
       {
         name: workout.name,
         days: workout.days,
@@ -194,6 +218,52 @@ const CreateWorkout = () => {
 
   return (
     <FullPage>
+      {erroredQueries.length > 0 && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
+          title="Não conseguimos buscar estes dados"
+          text="Não foi possível buscar os dados necessários para acessar esta página, verifique sua conexão e tente novamente"
+          ref={errorAlertRef}
+        >
+          <button
+            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
+            onClick={refetch}
+          >
+            Tentar novamente
+          </button>
+          <button
+            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+            onClick={router.back}
+          >
+            Voltar à página anterior
+          </button>
+        </Alert>
+      )}
+      {isConfirmationAlertOpen && (
+        <Alert
+          icon={
+            <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-700" />
+          }
+          title="Você tem certeza?"
+          text={`Você tem certeza que deseja salvar o treino ${workout.name} criado para ${
+            profile.data!.user?.name ?? profile.data!.email
+          }?`}
+          ref={confirmationAlertRef}
+        >
+          <button
+            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
+            onClick={handleSave}
+          >
+            Salvar alterações
+          </button>
+          <button
+            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+            onClick={() => setConfirmationAlertOpen(false)}
+          >
+            Cancelar
+          </button>
+        </Alert>
+      )}
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
         <div className="flex flex-row items-center justify-between">
           <button
@@ -220,7 +290,7 @@ const CreateWorkout = () => {
             {profile.isLoading ? (
               <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
             ) : (
-              <ProfilePic size="md" user={profile.data.user} />
+              profile.data && <ProfilePic size="md" user={profile.data.user} />
             )}
           </div>
         </div>
@@ -255,65 +325,69 @@ const CreateWorkout = () => {
             <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
           </div>
         ) : (
-          <Sortable.List
-            className="w-full max-w-[48rem]"
-            items={groups}
-            onChange={handleChangeGroups}
-          >
-            {(group, animating) => (
-              <Sortable.Item className="" id={group.id}>
-                {(() => {
-                  if ("exercises" in group) {
-                    const [a, b] = group.exercises;
+          categories.data && (
+            <Sortable.List
+              className="w-full max-w-[48rem]"
+              items={groups}
+              onChange={handleChangeGroups}
+            >
+              {(group, animating) => (
+                <Sortable.Item className="" id={group.id}>
+                  {(() => {
+                    if ("exercises" in group) {
+                      const [a, b] = group.exercises;
 
+                      return (
+                        <BiSetCard
+                          first={a}
+                          second={b}
+                          separate={() => {
+                            setExercises(
+                              workout.exercises.map(e =>
+                                e.id === a.id ? { ...e, biSet: null } : e,
+                              ),
+                            );
+                          }}
+                          setExercises={setExercises}
+                          categories={categories.data}
+                          dragHandle={dragHandle}
+                          collapsed={animating}
+                          disabled={saving}
+                        />
+                      );
+                    }
+
+                    const exercise = group;
                     return (
-                      <BiSetCard
-                        first={a}
-                        second={b}
-                        separate={() => {
-                          setExercises(
-                            workout.exercises.map(e => (e.id === a.id ? { ...e, biSet: null } : e)),
-                          );
+                      <ExerciseCard
+                        key={exercise.id}
+                        exercise={exercise}
+                        onEdit={it => {
+                          setExercises(workout.exercises.map(e => (e.id === exercise.id ? it : e)));
                         }}
-                        setExercises={setExercises}
+                        onDelete={() =>
+                          setExercises(workout.exercises.filter(e => e.id !== exercise.id))
+                        }
                         categories={categories.data}
+                        otherExercises={workout.exercises.filter(
+                          other =>
+                            other.id !== exercise.id &&
+                            other.exerciseId !== "" &&
+                            other.biSet === null &&
+                            workout.exercises.find(e => e.biSet === other.id) === undefined,
+                        )}
                         dragHandle={dragHandle}
                         collapsed={animating}
                         disabled={saving}
                       />
                     );
-                  }
-
-                  const exercise = group;
-                  return (
-                    <ExerciseCard
-                      key={exercise.id}
-                      exercise={exercise}
-                      onEdit={it => {
-                        setExercises(workout.exercises.map(e => (e.id === exercise.id ? it : e)));
-                      }}
-                      onDelete={() =>
-                        setExercises(workout.exercises.filter(e => e.id !== exercise.id))
-                      }
-                      categories={categories.data}
-                      otherExercises={workout.exercises.filter(
-                        other =>
-                          other.id !== exercise.id &&
-                          other.exerciseId !== "" &&
-                          other.biSet === null &&
-                          workout.exercises.find(e => e.biSet === other.id) === undefined,
-                      )}
-                      dragHandle={dragHandle}
-                      collapsed={animating}
-                      disabled={saving}
-                    />
-                  );
-                })()}
-              </Sortable.Item>
-            )}
-          </Sortable.List>
+                  })()}
+                </Sortable.Item>
+              )}
+            </Sortable.List>
+          )
         )}
-        {!categories.isLoading && (
+        {categories.data && (
           <div className="flex flex-row items-center justify-center">
             <button
               className="mt-2 flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
@@ -325,21 +399,22 @@ const CreateWorkout = () => {
           </div>
         )}
       </div>
-
-      <div className="fixed bottom-0 right-0 p-4">
-        <button
-          className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
-          onClick={handleSave}
-          disabled={!canSubmit || saving}
-        >
-          {saving ? "Salvando..." : "Salvar"}
-          {saving ? (
-            <Spinner className="h-8 w-8 fill-blue-600 text-gray-200" />
-          ) : (
-            canSubmit && <CheckCircleIcon className="h-8 w-8" />
-          )}
-        </button>
-      </div>
+      {profile.data && categories.data && (
+        <div className="fixed bottom-0 right-0 p-4">
+          <button
+            className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
+            onClick={() => setConfirmationAlertOpen(true)}
+            disabled={!canSubmit || saving}
+          >
+            {saving ? "Salvando..." : "Salvar"}
+            {saving ? (
+              <Spinner className="h-8 w-8 fill-blue-600 text-gray-200" />
+            ) : (
+              canSubmit && <CheckCircleIcon className="h-8 w-8" />
+            )}
+          </button>
+        </div>
+      )}
     </FullPage>
   );
 };

@@ -62,7 +62,7 @@ export const workoutRouter = createTRPCRouter({
     .input(
       z.object({
         profileId: z.string(),
-        name: z.string(),
+        name: z.string().min(1),
         days: z.array(z.nativeEnum(Weekday)).min(1),
         exercises: z
           .array(
@@ -107,7 +107,7 @@ export const workoutRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string(),
+        name: z.string().min(1),
         days: z.array(z.nativeEnum(Weekday)).min(1),
         exercises: z
           .array(
