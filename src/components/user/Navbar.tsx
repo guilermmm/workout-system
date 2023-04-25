@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import ListBulletIcon from "./icons/ListBulletIcon";
-import ProfileIcon from "./icons/ProfileIcon";
+import ListBulletIcon from "../icons/ListBulletIcon";
+import ProfileIcon from "../icons/ProfileIcon";
 
 const Navbar = () => {
   const router = useRouter();

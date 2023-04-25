@@ -8,3 +8,7 @@ body,
   height: 100%;
   color: #011936;
 }
+
+input[type="text"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+}

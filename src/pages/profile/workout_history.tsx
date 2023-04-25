@@ -1,6 +1,6 @@
 import type { GetServerSidePropsContext } from "next";
-import UserNavbar from "../../components/UserNavbar";
 import WorkoutHistoryPage from "../../components/pages/WorkoutHistoryPage";
+import UserNavbar from "../../components/user/Navbar";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 const WorkoutHistory = () => {

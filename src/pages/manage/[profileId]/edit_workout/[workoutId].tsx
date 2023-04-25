@@ -101,23 +101,14 @@ const EditWorkout = () => {
 
   const profile = api.user.getProfileById.useQuery(profileId, {
     refetchOnWindowFocus: false,
-    onError: () => {
-      setErroredQueries(q => [...q, profile]);
-    },
   });
 
   const categories = api.exercise.getGroups.useQuery(undefined, {
     refetchOnWindowFocus: false,
-    onError: () => {
-      setErroredQueries(q => [...q, categories]);
-    },
   });
 
   const originalWorkout = api.workout.getById.useQuery(workoutId, {
     refetchOnWindowFocus: false,
-    onError: () => {
-      setErroredQueries(q => [...q, originalWorkout]);
-    },
   });
 
   const originalWorkoutData = useMemo(
@@ -182,15 +173,16 @@ const EditWorkout = () => {
     [workout.exercises],
   );
 
-  const [erroredQueries, setErroredQueries] = useState<
-    (typeof profile | typeof categories | typeof originalWorkout)[]
-  >([]);
+  const erroredQueries = useMemo(() => {
+    const queries = [profile, categories, originalWorkout];
+
+    return queries.filter(query => query.isError);
+  }, [profile, categories, originalWorkout]);
 
   const refetch = useCallback(() => {
     for (const query of erroredQueries) {
       void query.refetch();
     }
-    setErroredQueries([]);
   }, [erroredQueries]);
 
   const errorAlertRef = useClickOutside<HTMLDivElement>(refetch);
@@ -313,12 +305,8 @@ const EditWorkout = () => {
               {profile.data && (
                 <>
                   <h1 className="truncate text-xl text-blue-700">
-                    Editar treino{" "}
-                    {workout.name ? (
-                      <span className="font-bold">{workout.name}</span>
-                    ) : (
-                      <span className="font-bold">sem nome</span>
-                    )}{" "}
+                    Editar treino
+                    {workout.name ? <span className="font-bold"> {workout.name} </span> : " "}
                     de <span className="font-bold">{profile.data.user?.name}</span>
                   </h1>
                   <p className="truncate font-medium text-slate-700">{profile.data.email}</p>

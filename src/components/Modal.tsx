@@ -1,56 +1,27 @@
-import React, { createContext, useContext, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { classList } from "../utils";
+import { forwardRef, type ForwardedRef } from "react";
+import { useModal } from "./ModalContext";
 
-type ModalContext = React.FC<{ className?: string; children: React.ReactNode }>;
+type Props = {
+  children: React.ReactNode;
+  buttons: React.ReactNode;
+};
 
-const modalContext = createContext<ModalContext>([false, {}] as unknown as ModalContext);
-
-const createShowModal: (ref: HTMLDivElement) => ModalContext =
-  ref =>
-  ({ className = "", children }) => {
-    return ref
-      ? createPortal(
-          <div
-            className={classList(
-              "absolute inset-0 flex flex-col items-center justify-center",
-              className,
-            )}
-          >
-            {children}
-          </div>,
-          ref,
-        )
-      : null;
-  };
-
-export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
-  const [mounted, setMounted] = useState(false);
-  const modalContainerRef = useRef<HTMLDivElement | null>(null);
-
-  const ShowModal = useMemo(
-    () => (modalContainerRef.current ? createShowModal(modalContainerRef.current) : () => null),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mounted],
-  );
+function Modal({ children, buttons }: Props, ref: ForwardedRef<HTMLDivElement>) {
+  const ShowModal = useModal();
 
   return (
-    <modalContext.Provider value={ShowModal}>
-      {children}
+    <ShowModal className="bg-black bg-opacity-25">
       <div
-        ref={ref => {
-          modalContainerRef.current = ref;
-          setMounted(true);
-        }}
-      />
-    </modalContext.Provider>
+        className="m-2 flex max-w-lg flex-col gap-4 rounded-md bg-slate-50 p-6 shadow-md"
+        ref={ref}
+      >
+        <div className="flex flex-col gap-2">{children}</div>
+        <div className="flex flex-col items-stretch justify-start gap-2 sm:flex-row-reverse">
+          {buttons}
+        </div>
+      </div>
+    </ShowModal>
   );
-};
+}
 
-export const useModal = () => {
-  const context = useContext(modalContext);
-  if (!context) {
-    throw new Error("useModal must be used within a ModalProvider");
-  }
-  return context;
-};
+export default forwardRef(Modal);

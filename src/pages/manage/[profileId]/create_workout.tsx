@@ -67,19 +67,34 @@ const CreateWorkout = () => {
 
   const profile = api.user.getProfileById.useQuery(profileId, {
     refetchOnWindowFocus: false,
-    onError: () => {
-      setErroredQueries(q => [...q, profile]);
-    },
   });
 
   const categories = api.exercise.getGroups.useQuery(undefined, {
     refetchOnWindowFocus: false,
-    onError: () => {
-      setErroredQueries(q => [...q, categories]);
-    },
   });
 
+  const erroredQueries = useMemo(
+    () => [profile, categories].filter(q => q.isError),
+    [profile, categories],
+  );
+
+  const refetch = useCallback(() => {
+    for (const query of erroredQueries) {
+      void query.refetch();
+    }
+  }, [erroredQueries]);
+
+  const errorAlertRef = useClickOutside<HTMLDivElement>(refetch);
+
   const createWorkout = api.workout.create.useMutation();
+
+  const mutationErrorRef = useClickOutside<HTMLDivElement>(() => createWorkout.reset());
+
+  const [isConfirmationAlertOpen, setConfirmationAlertOpen] = useState(false);
+
+  const confirmationAlertRef = useClickOutside<HTMLDivElement>(() => {
+    setConfirmationAlertOpen(false);
+  });
 
   const [workout, setWorkout, resetWorkout] = useLocalStorage("create-workout", workoutParser, {
     name: "",
@@ -123,23 +138,6 @@ const CreateWorkout = () => {
       }, [] as (ExerciseGroup | Exercise)[]),
     [workout.exercises],
   );
-
-  const [erroredQueries, setErroredQueries] = useState<(typeof profile | typeof categories)[]>([]);
-
-  const refetch = useCallback(() => {
-    for (const query of erroredQueries) {
-      void query.refetch();
-    }
-    setErroredQueries([]);
-  }, [erroredQueries]);
-
-  const errorAlertRef = useClickOutside<HTMLDivElement>(refetch);
-
-  const [isConfirmationAlertOpen, setConfirmationAlertOpen] = useState(false);
-
-  const confirmationAlertRef = useClickOutside<HTMLDivElement>(() => {
-    setConfirmationAlertOpen(false);
-  });
 
   const setExercises = (exercises: Exercise[] | ((exercises: Exercise[]) => Exercise[])) => {
     if (typeof exercises === "function") {
@@ -236,6 +234,21 @@ const CreateWorkout = () => {
             onClick={router.back}
           >
             Voltar à página anterior
+          </button>
+        </Alert>
+      )}
+      {createWorkout.error && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
+          title="Não foi possível criar o treino"
+          text="Não foi possível buscar os dados necessários para acessar esta página, verifique sua conexão e tente novamente"
+          ref={mutationErrorRef}
+        >
+          <button
+            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+            onClick={createWorkout.reset}
+          >
+            OK
           </button>
         </Alert>
       )}

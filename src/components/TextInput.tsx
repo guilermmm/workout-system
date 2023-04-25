@@ -10,6 +10,7 @@ type Props = {
   onFocus?: () => void;
   onBlur?: () => void;
   disabled?: boolean;
+  list?: string;
 };
 
 const TextInput: React.FC<Props> = ({

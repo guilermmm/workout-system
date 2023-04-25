@@ -2,9 +2,9 @@ import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "nex
 import { signOut } from "next-auth/react";
 import FullPage from "../../components/FullPage";
 import ProfilePic from "../../components/ProfilePic";
-import UserNavbar from "../../components/UserNavbar";
 import UserProfileButton from "../../components/UserProfileButton";
 import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
+import UserNavbar from "../../components/user/Navbar";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 import { dataSheetTranslation } from "../../utils/consts";

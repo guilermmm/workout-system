@@ -2,6 +2,7 @@ import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import ErrorPage from "../../../components/ErrorPage";
+import FullPage from "../../../components/FullPage";
 import ProfilePic from "../../../components/ProfilePic";
 import Spinner from "../../../components/Spinner";
 import UserProfileButton from "../../../components/UserProfileButton";
@@ -31,7 +32,7 @@ const Manage = () => {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-slate-100">
+    <FullPage>
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
         <button
           className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
@@ -119,7 +120,7 @@ const Manage = () => {
           </button>
         </Link>
       </div>
-    </div>
+    </FullPage>
   );
 };
 
