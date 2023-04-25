@@ -177,4 +177,25 @@ export const userRouter = createTRPCRouter({
       orderBy: { date: "desc" },
     });
   }),
+
+  finishWorkout: userProcedure
+    .input(
+      z.object({
+        workoutId: z.string(),
+        date: z.date(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const profile = await ctx.prisma.profile.findUniqueOrThrow({
+        where: { userId: ctx.session.user.id },
+      });
+
+      return ctx.prisma.finishedWorkout.create({
+        data: {
+          workoutId: input.workoutId,
+          profileId: profile.id,
+          date: input.date,
+        },
+      });
+    }),
 });

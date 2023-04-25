@@ -1,4 +1,4 @@
-import type { Exercise, ExerciseInWorkout } from "@prisma/client";
+import type { Exercise, ExerciseInWorkout, Method } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -13,6 +13,9 @@ import { getServerAuthSession } from "../../../server/auth";
 import { classList, useLocalStorage } from "../../../utils";
 import { api } from "../../../utils/api";
 import type { ParseJsonValues, Sets } from "../../../utils/types";
+import { methodExplanation, methodTranslation } from "../../../utils/consts";
+import InformationIcon from "../../../components/icons/InformationIcon";
+import Alert from "../../../components/Alert";
 
 const Workout = () => {
   const router = useRouter();
@@ -84,6 +87,7 @@ const Workout = () => {
                   description={exercise.description}
                   exercise={exercise.exercise}
                   sets={exercise.sets}
+                  method={exercise.method}
                 />
               );
             });
@@ -101,37 +105,94 @@ type ExerciseCardProps = {
   description: string | null;
   exercise: ParseJsonValues<Exercise>;
   sets: Sets;
+  method?: Method;
 };
 
-const ExerciseCard = ({ description, exercise, sets }: ExerciseCardProps) => {
-  const [completed, setCompleted] = useState(false);
+const ExerciseCard = ({ description, exercise, sets, method }: ExerciseCardProps) => {
+  const [completedSets, setCompletedSets] = useState<boolean[]>(sets.map(() => false));
+  const [showAlert, setShowAlert] = useState(false);
 
   return (
     <div className="m-2 flex justify-between rounded-lg bg-white p-4 shadow-md">
       <div>
-        <div className="text-md font-medium text-blue-600">{exercise.name}</div>
+        <div className="text-lg font-medium text-blue-600">{exercise.name}</div>
         <div className="text-sm text-slate-600">{exercise.category}</div>
+        {description && <div className="text-sm font-medium text-blue-600">Obs:</div>}
         <div className="text-sm">{description}</div>
+        <div className="text-sm font-medium text-blue-600">Método:</div>
+        {method && (
+          <div className="text-sm">
+            <button className="flex gap-[0.1rem]" onClick={() => setShowAlert(true)}>
+              {methodTranslation[method as keyof typeof methodTranslation]}
+              <InformationIcon className="h-5 w-5" />
+            </button>
+          </div>
+        )}
+
+        {showAlert && (
+          <Alert
+            icon={
+              <InformationIcon className="h-10 w-10 rounded-full bg-yellow-200 p-2 text-blue-500" />
+            }
+            title={methodTranslation[method as keyof typeof methodTranslation]}
+            text={methodExplanation[method as keyof typeof methodExplanation]}
+          >
+            <button
+              className="rounded-md border-1 bg-gold-500 py-2 px-4 text-black shadow-md"
+              onClick={() => {
+                setShowAlert(false);
+              }}
+            >
+              Ok!
+            </button>
+          </Alert>
+        )}
       </div>
       <div className="flex items-center justify-between">
-        <div className="mr-5 text-right text-sm">
+        <div className="text-right text-sm">
           <div className="font-medium text-slate-700">
             <div className="font-medium text-slate-700">
-              {sets.length} série{sets.length > 1 && "s"}
+              {sets.map((set, i) => (
+                <div key={i} className="flex items-center justify-between py-1">
+                  <div>Série {i + 1}:</div>
+                  {"time" in set ? (
+                    <div className="ml-2 flex items-center">
+                      <ClockIcon className="mr-[0.1rem] inline-block h-4 w-4" />{" "}
+                      {set.time < 60
+                        ? `${set.time} segundos`
+                        : set.time === 60
+                        ? "1 minuto"
+                        : `${set.time / 60} minutos ${set.time % 60} segundos`}
+                    </div>
+                  ) : (
+                    <span className="ml-2 flex items-center">
+                      <CheckCircleIcon className="mr-[0.1rem] inline-block h-4 w-4" /> {set.reps}{" "}
+                      {set.reps === 1 ? "repetição" : "repetições"}
+                    </span>
+                  )}
+                  <button
+                    className={classList(
+                      "ml-1 h-7 w-7 rounded-md border-3 text-green-600 transition hover:bg-white",
+                      {
+                        "border-slate-400": !completedSets[i],
+                        "border-green-600": !!completedSets[i],
+                      },
+                    )}
+                    onClick={() =>
+                      setCompletedSets(compSets =>
+                        compSets.map((compSet, j) => (i === j ? !compSet : compSet)),
+                      )
+                    }
+                  >
+                    <div className="flex h-5 w-5 items-center justify-center">
+                      {completedSets[i] && <CheckIcon className="h-6 w-6" />}
+                    </div>
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-        <button
-          className={classList("rounded-xl border-3 text-green-600 transition hover:bg-white", {
-            "border-slate-400": !completed,
-            "border-green-600": completed,
-          })}
-          onClick={() => setCompleted(!completed)}
-        >
-          <div className="flex h-8 w-8 items-center justify-center">
-            {completed && <CheckIcon className="h-6 w-6" />}
-          </div>
-        </button>
       </div>
     </div>
   );
@@ -173,6 +234,22 @@ const Footer = ({ id }: { id: string }) => {
   const [state, setState] = useState<State>("not-started");
 
   const [storage, setStorage] = useLocalStorage("workout-times", storageParser, {});
+
+  const [showAlert, setShowAlert] = useState(false);
+
+  const finishWorkout = api.user.finishWorkout.useMutation({
+    onSuccess: () => {
+      setState("finished");
+      pause();
+      setStorage({
+        [id]: {
+          startedAt: storage[id]!.startedAt,
+          finishedAt: new Date().toISOString(),
+        },
+      });
+      setShowAlert(false);
+    },
+  });
 
   // const finishWorkout = api.workout.recommendNext.useMutation();
 
@@ -235,14 +312,7 @@ const Footer = ({ id }: { id: string }) => {
           <button
             className="flex items-center gap-3 rounded-full border-2 border-gold-200 bg-gold-500 px-6 py-2 font-medium text-slate-900"
             onClick={() => {
-              setState("finished");
-              pause();
-              setStorage({
-                [id]: {
-                  startedAt: storage[id]!.startedAt,
-                  finishedAt: new Date().toISOString(),
-                },
-              });
+              setShowAlert(true);
             }}
           >
             Concluir treino
@@ -258,6 +328,33 @@ const Footer = ({ id }: { id: string }) => {
             <div className="h-8">Treino finalizado</div>
           </div>
         </>
+      )}
+
+      {showAlert && (
+        <Alert
+          icon={
+            <InformationIcon className="h-10 w-10 rounded-full bg-yellow-200 p-2 text-blue-500" />
+          }
+          title="Finalizar"
+          text="Tem certeza que deseja finalizar o treino?"
+        >
+          <button
+            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md"
+            onClick={() => {
+              finishWorkout.mutate({ date: new Date(), workoutId: id });
+            }}
+          >
+            Sim
+          </button>
+          <button
+            className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md"
+            onClick={() => {
+              setShowAlert(false);
+            }}
+          >
+            Não
+          </button>
+        </Alert>
       )}
     </div>
   );

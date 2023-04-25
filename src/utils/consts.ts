@@ -71,6 +71,17 @@ export const methodTranslation = {
   PeakContraction: "Pico de Contração",
 } as const satisfies Record<Method, string>;
 
+export const methodExplanation = {
+  Standard: "Realize o exercício normalmente.",
+  DropSet: "Diminua o peso em 20% e execute as repetições novamente, repita até duas vezes.",
+  RestPause: "Realize o exercício normalmente, mas descanse 10 segundos entre cada série.",
+  Isometric: "Realize uma repetição e segure a contração pelo tempo especificado.",
+  Pyramid:
+    "Realize o exercício normalmente, mas aumente ou diminua o peso dependendo da observação em 20% a cada série.",
+  PeakContraction:
+    "Realize o exercício normalmente, mas segure a contração por 2 a 5 segundos em cada repetição.",
+} as const satisfies Record<Method, string>;
+
 export const errorCodeMessage = {
   INTERNAL_SERVER_ERROR: {
     title: "Erro interno do servidor",

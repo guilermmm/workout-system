@@ -21,7 +21,7 @@ const DataSheetHistoryPage = ({ dataSheetHistory, children, isLoading }: Props) 
 
   return (
     <FullPage>
-      <div className="flex items-center justify-between bg-gold-500 p-2">
+      <div className="flex items-center bg-gold-500 p-2">
         <button
           className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
           onClick={() => router.back()}
@@ -31,14 +31,6 @@ const DataSheetHistoryPage = ({ dataSheetHistory, children, isLoading }: Props) 
         <h1 className="text-lg font-medium text-blue-700">
           <span className="font-bold">Histórico de medidas</span>
         </h1>
-        <button
-          className="rounded-full p-2 text-blue-700 transition-colors hover:bg-white"
-          onClick={() => {
-            void signOut();
-          }}
-        >
-          <ArrowRightOnRectangleIcon className="h-6 w-6" />
-        </button>
       </div>
 
       <div className="grow overflow-y-scroll">
