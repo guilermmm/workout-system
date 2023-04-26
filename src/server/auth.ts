@@ -52,7 +52,7 @@ export const authOptions: NextAuthOptions = {
 
       if (!profile || !profile.isActive) {
         // TODO: redirect to a page telling the user he doesn't have access
-        return '/unauthorized';
+        return "/unauthorized";
       }
 
       return true;

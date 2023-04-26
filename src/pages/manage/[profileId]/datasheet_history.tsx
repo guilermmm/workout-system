@@ -12,7 +12,7 @@ const AdminDatasheetHistory = () => {
 
   const { profileId } = router.query as { profileId: string };
 
-  const { data, isLoading, isError } = api.user.getDatasheets.useQuery({ profileId });
+  const { data, isLoading, isError } = api.datasheet.getMany.useQuery({ profileId });
 
   if (isError) return <ErrorPage />;
 

@@ -63,7 +63,7 @@ enum Weekday {
 model Workout {
     id        String              @id @default(cuid())
     name      String
-    profile   Profile             @relation("workouts", fields: [profileId], references: [id])
+    profile   Profile             @relation("workouts", fields: [profileId], references: [id], onDelete: Cascade)
     profileId String
     exercises ExerciseInWorkout[]
     biSets    Json
@@ -92,7 +92,7 @@ model Profile {
 model Datasheet {
     id        String  @id @default(cuid())
     profileId String
-    profile   Profile @relation(fields: [profileId], references: [id])
+    profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
     weight     Int
     height     Int
@@ -114,7 +114,7 @@ model Datasheet {
 
 model FinishedWorkout {
     id        String   @id @default(cuid())
-    profile   Profile  @relation(fields: [profileId], references: [id])
+    profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
     profileId String
     workoutId String
     date      DateTime

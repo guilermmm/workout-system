@@ -10,7 +10,7 @@ import { api } from "../../utils/api";
 import { dataSheetTranslation } from "../../utils/consts";
 
 const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
-  const latestDataSheet = api.user.getLatestDatasheetBySession.useQuery();
+  const latestDataSheet = api.datasheet.getLatestBySession.useQuery();
   return (
     <FullPage>
       <div className="flex items-center justify-between bg-gold-500 p-2">

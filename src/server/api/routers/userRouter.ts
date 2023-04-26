@@ -58,120 +58,32 @@ export const userRouter = createTRPCRouter({
 
   createProfile: adminProcedure
     .input(z.object({ email: z.string().email() }))
-    .mutation(({ ctx, input }) => {
-      return ctx.prisma.profile.create({ data: { email: input.email } });
+    .mutation(async ({ ctx, input }) => {
+      await ctx.prisma.profile.create({ data: { email: input.email } });
     }),
 
   deactivate: adminProcedure
     .input(z.object({ profileId: z.string() }))
-    .mutation(({ ctx, input: { profileId } }) => {
-      return ctx.prisma.profile.update({ where: { id: profileId }, data: { isActive: false } });
+    .mutation(async ({ ctx, input: { profileId } }) => {
+      await ctx.prisma.profile.update({ where: { id: profileId }, data: { isActive: false } });
     }),
 
   activate: adminProcedure
     .input(z.object({ profileId: z.string() }))
-    .mutation(({ ctx, input: { profileId } }) => {
-      return ctx.prisma.profile.update({ where: { id: profileId }, data: { isActive: true } });
-    }),
-
-  getLatestDatasheet: adminProcedure
-    .input(z.object({ profileId: z.string() }))
-    .query(async ({ ctx, input: { profileId } }) => {
-      return ctx.prisma.datasheet.findFirstOrThrow({
-        where: { profileId },
-        orderBy: { createdAt: "desc" },
-      });
-    }),
-
-  getDatasheets: adminProcedure
-    .input(z.object({ profileId: z.string() }))
-    .query(async ({ ctx, input: { profileId } }) => {
-      return ctx.prisma.datasheet.findMany({
-        where: { profileId },
-        orderBy: { createdAt: "desc" },
-      });
-    }),
-
-  createDatasheet: adminProcedure
-    .input(
-      z.object({
-        profileId: z.string(),
-        weight: z.number(),
-        height: z.number(),
-        thorax: z.number(),
-        waist: z.number(),
-        abdomen: z.number(),
-        hips: z.number(),
-        rightThigh: z.number(),
-        leftThigh: z.number(),
-        rightArm: z.number(),
-        leftArm: z.number(),
-        rightCalf: z.number(),
-        leftCalf: z.number(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      return ctx.prisma.datasheet.create({
-        data: {
-          ...input,
-        },
-      });
-    }),
-
-  getLatestDatasheetBySession: userProcedure.query(async ({ ctx }) => {
-    return ctx.prisma.datasheet.findFirstOrThrow({
-      where: { profile: { userId: ctx.session.user.id } },
-      orderBy: { createdAt: "desc" },
-    });
-  }),
-
-  getDatasheetsBySession: userProcedure.query(async ({ ctx }) => {
-    return ctx.prisma.datasheet.findMany({
-      where: { profile: { userId: ctx.session.user.id } },
-      orderBy: { createdAt: "desc" },
-    });
-  }),
-
-  createDatasheetBySession: userProcedure
-    .input(
-      z.object({
-        weight: z.number(),
-        height: z.number(),
-        thorax: z.number(),
-        waist: z.number(),
-        abdomen: z.number(),
-        hips: z.number(),
-        rightThigh: z.number(),
-        leftThigh: z.number(),
-        rightArm: z.number(),
-        leftArm: z.number(),
-        rightCalf: z.number(),
-        leftCalf: z.number(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const profile = await ctx.prisma.profile.findUniqueOrThrow({
-        where: { userId: ctx.session.user.id },
-      });
-
-      return ctx.prisma.datasheet.create({
-        data: {
-          ...input,
-          profileId: profile.id,
-        },
-      });
+    .mutation(async ({ ctx, input: { profileId } }) => {
+      await ctx.prisma.profile.update({ where: { id: profileId }, data: { isActive: true } });
     }),
 
   getFinishedWorkouts: adminProcedure
     .input(z.object({ profileId: z.string() }))
-    .query(async ({ ctx, input: { profileId } }) => {
+    .query(({ ctx, input: { profileId } }) => {
       return ctx.prisma.finishedWorkout.findMany({
         where: { profileId },
         orderBy: { date: "desc" },
       });
     }),
 
-  getFinishedWorkoutsBySession: userProcedure.query(async ({ ctx }) => {
+  getFinishedWorkoutsBySession: userProcedure.query(({ ctx }) => {
     return ctx.prisma.finishedWorkout.findMany({
       where: { profile: { userId: ctx.session.user.id } },
       orderBy: { date: "desc" },
@@ -190,7 +102,7 @@ export const userRouter = createTRPCRouter({
         where: { userId: ctx.session.user.id },
       });
 
-      return ctx.prisma.finishedWorkout.create({
+      await ctx.prisma.finishedWorkout.create({
         data: {
           workoutId: input.workoutId,
           profileId: profile.id,

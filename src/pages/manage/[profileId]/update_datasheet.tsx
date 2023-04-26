@@ -28,9 +28,7 @@ const AdminUpdateDatasheet = () => {
       profileId: profileId,
     });
 
-  console.log(editedDataSheet);
-
-  const createDataSheet = api.user.createDatasheet.useMutation({
+  const createDataSheet = api.datasheet.create.useMutation({
     onSuccess: () => {
       void router.back();
     },

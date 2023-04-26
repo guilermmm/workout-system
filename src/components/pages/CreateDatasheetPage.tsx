@@ -1,10 +1,8 @@
-import { signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { dataSheetTranslation } from "../../utils/consts";
 import type { ParsedDatasheet } from "../../utils/types";
 import FullPage from "../FullPage";
 import Spinner from "../Spinner";
-import ArrowRightOnRectangleIcon from "../icons/ArrowRightOnRectangleIcon";
 import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
 
 interface Props {

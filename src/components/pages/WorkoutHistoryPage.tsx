@@ -1,12 +1,10 @@
-import { signOut } from "next-auth/react";
+import type { FinishedWorkout, Workout } from "@prisma/client";
 import { useRouter } from "next/router";
 import { getDateArrayFromDate } from "../../utils";
 import { weekdaysAbbrv } from "../../utils/consts";
 import FullPage from "../FullPage";
-import ArrowRightOnRectangleIcon from "../icons/ArrowRightOnRectangleIcon";
-import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
-import type { FinishedWorkout, Workout } from "@prisma/client";
 import Spinner from "../Spinner";
+import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
 
 interface Props {
   workouts: Workout[] | undefined;

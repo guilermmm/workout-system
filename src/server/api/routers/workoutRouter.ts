@@ -81,8 +81,8 @@ export const workoutRouter = createTRPCRouter({
         biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
       }),
     )
-    .mutation(({ ctx, input: { profileId, name, days, exercises, biSets } }) => {
-      return ctx.prisma.$transaction(async tx => {
+    .mutation(async ({ ctx, input: { profileId, name, days, exercises, biSets } }) => {
+      await ctx.prisma.$transaction(async tx => {
         const workout = await tx.workout.create({
           data: {
             name,
@@ -99,7 +99,7 @@ export const workoutRouter = createTRPCRouter({
           workout.exercises.find(exercise => exercise.index === index2)!.id,
         ]);
 
-        return await tx.workout.update({ where: { id: workout.id }, data: { biSets: biSetsData } });
+        await tx.workout.update({ where: { id: workout.id }, data: { biSets: biSetsData } });
       });
     }),
 
@@ -128,7 +128,7 @@ export const workoutRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input: { id: workoutId, name, days, exercises, biSets } }) => {
-      return ctx.prisma.$transaction(async tx => {
+      await ctx.prisma.$transaction(async tx => {
         const workout = await tx.workout.update({
           where: { id: workoutId },
           data: { name, days },
@@ -138,11 +138,7 @@ export const workoutRouter = createTRPCRouter({
         const exercisesToCreate = exercises.filter(exercise => typeof exercise.id !== "string");
 
         await tx.exerciseInWorkout.createMany({
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          data: exercisesToCreate.map(({ id: _, ...exercise }) => ({
-            workoutId,
-            ...exercise,
-          })),
+          data: exercisesToCreate.map(({ id: _, ...exercise }) => ({ workoutId, ...exercise })),
         });
 
         const exercisesToUpdate = exercises.filter(exercise =>
@@ -176,11 +172,11 @@ export const workoutRouter = createTRPCRouter({
           newExercises.find(exercise => exercise.index === index2)!.id,
         ]);
 
-        return await tx.workout.update({ where: { id: workoutId }, data: { biSets: biSetsData } });
+        await tx.workout.update({ where: { id: workoutId }, data: { biSets: biSetsData } });
       });
     }),
 
   delete: adminProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(({ ctx, input: { id } }) => ctx.prisma.workout.delete({ where: { id } })),
+    .mutation(async ({ ctx, input: { id } }) => await ctx.prisma.workout.delete({ where: { id } })),
 });

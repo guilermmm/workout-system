@@ -3,7 +3,6 @@ import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
 import type { Session } from "next-auth";
 import superjson from "superjson";
 import { env } from "../../env/server.mjs";
-import { sleep } from "../../utils";
 import { getServerAuthSession } from "../auth";
 import { prisma } from "../db";
 
@@ -50,7 +49,7 @@ export const logProcedure = t.middleware(async ({ path, type, next, ctx }) => {
   return result;
 });
 
-const enforceUserIsAdmin = t.middleware(async ({ ctx, next }) => {
+const enforceUserIsAdmin = t.middleware(({ ctx, next }) => {
   if (!ctx.session || !ctx.session.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
@@ -69,7 +68,7 @@ const enforceUserIsAdmin = t.middleware(async ({ ctx, next }) => {
   });
 });
 
-const enforceUserIsNotAdmin = t.middleware(async ({ ctx, next }) => {
+const enforceUserIsNotAdmin = t.middleware(({ ctx, next }) => {
   if (!ctx.session || !ctx.session.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }

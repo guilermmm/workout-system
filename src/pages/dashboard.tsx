@@ -10,12 +10,10 @@ import ProfilePic from "../components/ProfilePic";
 import Spinner from "../components/Spinner";
 import Header from "../components/admin/Header";
 import AdminNavbar from "../components/admin/Navbar";
-import CheckCircleIcon from "../components/icons/CheckCircleIcon";
 import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
-import XCircleIcon from "../components/icons/XCircleIcon";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
-import { classList, useClickOutside, useEndOfScroll } from "../utils";
+import { classList, useEndOfScroll } from "../utils";
 import { api } from "../utils/api";
 
 const Dashboard = () => {
@@ -65,13 +63,7 @@ const Dashboard = () => {
           ) : (
             <div className="flex w-full max-w-[32rem] flex-col gap-1 pb-4">
               {profiles.data.pages.flatMap(({ items }) =>
-                items.map(profile => (
-                  <UserCard
-                    key={profile.id}
-                    profile={profile}
-                    refetch={async () => void (await profiles.refetch())}
-                  />
-                )),
+                items.map(profile => <UserCard key={profile.id} profile={profile} />),
               )}
             </div>
           )}
@@ -82,16 +74,13 @@ const Dashboard = () => {
   );
 };
 
-const UserCard = ({
-  profile,
-  refetch,
-}: {
-  profile: Profile & { user: User | null };
-  refetch: () => Promise<void>;
-}) => {
+const UserCard = ({ profile }: { profile: Profile & { user: User | null } }) => {
   return (
-    <div className="flex w-full grow flex-row items-center justify-between rounded-md bg-slate-50 shadow-md transition-shadow hover:shadow-xl">
-      <Link href={`/manage/${profile.id}`} className="flex grow items-center truncate p-3 pr-2">
+    <Link
+      href={`/manage/${profile.id}`}
+      className="flex w-full grow flex-row items-center justify-between rounded-md bg-slate-50 shadow-md transition-shadow hover:shadow-xl"
+    >
+      <div className="flex grow items-center truncate p-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white">
           <ProfilePic user={profile.user} size="md" />
         </div>
@@ -99,34 +88,14 @@ const UserCard = ({
           <div className="truncate text-lg font-medium text-slate-800">{profile.user?.name}</div>
           <div className="truncate text-sm text-slate-500">{profile.email}</div>
         </div>
-      </Link>
-      <StatusBar isActive={profile.isActive} />
-    </div>
-  );
-};
-
-const StatusBar = ({
-  isActive,
-}: {
-  isActive: boolean;
-}) => {
-
-
-  return (
-    <div
-      className="group h-full transition-all pl-8"
-      
-    >
+      </div>
       <div
-        className={classList(
-          "flex w-3 h-full items-center justify-center overflow-x-hidden rounded-r-md transition-all",
-          {
-            "bg-green-500": isActive,
-            "bg-red-500": !isActive,
-          },
-        )}
+        className={classList("h-full w-3 rounded-r-md", {
+          "bg-green-500": profile.isActive,
+          "bg-red-500": !profile.isActive,
+        })}
       />
-    </div>
+    </Link>
   );
 };
 

@@ -1,14 +1,12 @@
 import type { Datasheet } from "@prisma/client";
-import { signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import { classList } from "../../utils";
 import { dataSheetTranslation } from "../../utils/consts";
 import FullPage from "../FullPage";
 import Spinner from "../Spinner";
-import ArrowRightOnRectangleIcon from "../icons/ArrowRightOnRectangleIcon";
 import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
 import UpwardArrowIcon from "../icons/UpwardArrowIcon";
-import { classList } from "../../utils";
 
 interface Props {
   dataSheetHistory: Datasheet[] | undefined;

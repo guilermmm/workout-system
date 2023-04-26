@@ -5,7 +5,7 @@ import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 
 const DataSheetHistory = () => {
-  const { data, isLoading } = api.user.getDatasheetsBySession.useQuery();
+  const { data, isLoading } = api.datasheet.getManyBySession.useQuery();
 
   return (
     <DataSheetHistoryPage dataSheetHistory={data} isLoading={isLoading}>

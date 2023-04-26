@@ -137,8 +137,6 @@ const EditWorkout = () => {
   useEffect(() => {
     const exercises = workout.exercises.filter(exercise => typeof exercise.id === "number");
 
-    console.log(exercises);
-
     if (exercises.length === 0) {
       idGenerator.current = 1;
     } else {
@@ -233,8 +231,6 @@ const EditWorkout = () => {
   };
 
   const changes = !deepEqual(originalWorkoutData, workoutStateAsApi);
-
-  console.log(originalWorkoutData, workoutStateAsApi);
 
   const canSubmit =
     workout.name !== "" &&

@@ -113,7 +113,7 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
       >
         <div className="ml-2 w-1/3 text-sm font-medium">
           {categories.flatMap(g => g.exercises).find(e => e.id === exercise.exerciseId)?.name ?? (
-            <span className="rounded bg-slate-50 p-0.5 font-medium text-red-500">
+            <span className="rounded p-0.5 font-medium text-red-500">
               Exercício não selecionado
             </span>
           )}

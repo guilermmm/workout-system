@@ -19,7 +19,7 @@ const UserUpdateDatasheet = () => {
     }, {} as ParsedDatasheet),
   );
 
-  const createDataSheet = api.user.createDatasheetBySession.useMutation({
+  const createDataSheet = api.datasheet.createBySession.useMutation({
     onSuccess: () => {
       void router.back();
     },
