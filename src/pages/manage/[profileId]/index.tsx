@@ -12,7 +12,7 @@ import PlusIcon from "../../../components/icons/PlusIcon";
 import TrashIcon from "../../../components/icons/TrashIcon";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
-import { capitalize, join } from "../../../utils";
+import { capitalize, classList, join } from "../../../utils";
 import { api } from "../../../utils/api";
 
 const Manage = () => {
@@ -26,6 +26,10 @@ const Manage = () => {
   const deleteWorkout = api.workout.delete.useMutation({
     onSuccess: () => void workouts.refetch(),
   });
+
+  const changeStatus = profile.data?.isActive
+    ? api.user.deactivate.useMutation()
+    : api.user.activate.useMutation();
 
   if (profile.error || workouts.error) {
     return <ErrorPage />;
@@ -63,6 +67,24 @@ const Manage = () => {
         </div>
       </div>
       <div className="mt-4">
+        <div className="flex items-center justify-end px-4">
+          <div className="text-xl text-blue-700">Status: </div>
+          <button
+            onClick={() =>
+              profile.data &&
+              changeStatus.mutate(
+                { profileId: profile.data.id },
+                { onSuccess: () => void profile.refetch() },
+              )
+            }
+            className={classList(
+              "ml-2 rounded-full px-2 py-1 font-bold text-white",
+              profile.data?.isActive ? "bg-green-500" : "bg-red-500",
+            )}
+          >
+            {profile.data?.isActive ? "Ativo" : "Inativo"}
+          </button>
+        </div>
         <UserProfileButton
           title="Histórico de treinos"
           href={`/manage/${profileId}/workout_history`}

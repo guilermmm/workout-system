@@ -114,6 +114,25 @@ const ExerciseCard = ({ description, exercise, sets, method }: ExerciseCardProps
 
   return (
     <div className="m-2 flex justify-between rounded-lg bg-white p-4 shadow-md">
+      {showAlert && (
+        <Alert
+          icon={
+            <InformationIcon className="h-10 w-10 rounded-full bg-yellow-200 p-2 text-blue-500" />
+          }
+          title={methodTranslation[method as keyof typeof methodTranslation]}
+          text={methodExplanation[method as keyof typeof methodExplanation]}
+        >
+          <button
+            className="rounded-md border-1 bg-gold-500 py-2 px-4 text-black shadow-md"
+            onClick={() => {
+              setShowAlert(false);
+            }}
+          >
+            Ok!
+          </button>
+        </Alert>
+      )}
+
       <div>
         <div className="text-lg font-medium text-blue-600">{exercise.name}</div>
         <div className="text-sm text-slate-600">{exercise.category}</div>
@@ -128,25 +147,6 @@ const ExerciseCard = ({ description, exercise, sets, method }: ExerciseCardProps
             </button>
           </div>
         )}
-
-        {showAlert && (
-          <Alert
-            icon={
-              <InformationIcon className="h-10 w-10 rounded-full bg-yellow-200 p-2 text-blue-500" />
-            }
-            title={methodTranslation[method as keyof typeof methodTranslation]}
-            text={methodExplanation[method as keyof typeof methodExplanation]}
-          >
-            <button
-              className="rounded-md border-1 bg-gold-500 py-2 px-4 text-black shadow-md"
-              onClick={() => {
-                setShowAlert(false);
-              }}
-            >
-              Ok!
-            </button>
-          </Alert>
-        )}
       </div>
       <div className="flex items-center justify-between">
         <div className="text-right text-sm">
@@ -155,9 +155,10 @@ const ExerciseCard = ({ description, exercise, sets, method }: ExerciseCardProps
               {sets.map((set, i) => (
                 <div key={i} className="flex items-center justify-between py-1">
                   <div>Série {i + 1}:</div>
+                  <div className="ml-2">{set.weight}kg</div>
                   {"time" in set ? (
-                    <div className="ml-2 flex items-center">
-                      <ClockIcon className="mr-[0.1rem] inline-block h-4 w-4" />{" "}
+                    <div className="flex items-center">
+                      <ClockIcon className="mx-[0.1rem] inline-block h-4 w-4" />{" "}
                       {set.time < 60
                         ? `${set.time} segundos`
                         : set.time === 60
@@ -165,8 +166,8 @@ const ExerciseCard = ({ description, exercise, sets, method }: ExerciseCardProps
                         : `${set.time / 60} minutos ${set.time % 60} segundos`}
                     </div>
                   ) : (
-                    <span className="ml-2 flex items-center">
-                      <CheckCircleIcon className="mr-[0.1rem] inline-block h-4 w-4" /> {set.reps}{" "}
+                    <span className="flex items-center">
+                      <CheckCircleIcon className="mx-[0.1rem] inline-block h-4 w-4" /> {set.reps}{" "}
                       {set.reps === 1 ? "repetição" : "repetições"}
                     </span>
                   )}

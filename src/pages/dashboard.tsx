@@ -100,84 +100,32 @@ const UserCard = ({
           <div className="truncate text-sm text-slate-500">{profile.email}</div>
         </div>
       </Link>
-      <StatusButton isActive={profile.isActive} id={profile.id} refetch={refetch} />
+      <StatusBar isActive={profile.isActive} />
     </div>
   );
 };
 
-const StatusButton = ({
+const StatusBar = ({
   isActive,
-  id,
-  refetch,
 }: {
   isActive: boolean;
-  id: string;
-  refetch: () => Promise<void>;
 }) => {
-  const [opened, setOpened] = useState(false);
-  const changeStatus = isActive
-    ? api.user.deactivate.useMutation()
-    : api.user.activate.useMutation();
 
-  const ref = useClickOutside<HTMLDivElement>(() => setOpened(false));
 
   return (
     <div
-      className={classList("group h-full transition-all", {
-        "pl-0": opened,
-        "pl-8": !opened,
-      })}
-      onClick={() => setOpened(true)}
-      onMouseEnter={() => setOpened(true)}
-      onMouseLeave={() => setOpened(false)}
-      ref={ref}
+      className="group h-full transition-all pl-8"
+      
     >
       <div
         className={classList(
-          "flex h-full items-center justify-center overflow-x-hidden rounded-r-md transition-all",
+          "flex w-3 h-full items-center justify-center overflow-x-hidden rounded-r-md transition-all",
           {
-            "w-[72px] rounded-l-md": opened,
-            "w-3": !opened,
             "bg-green-500": isActive,
             "bg-red-500": !isActive,
           },
         )}
-      >
-        <button
-          className={classList("rounded-full transition-all", {
-            "bg-white": opened,
-            "m-3": !opened,
-            "m-1.5 p-1.5": opened,
-          })}
-          onClick={() =>
-            changeStatus.mutate(
-              { profileId: id },
-              {
-                onSuccess: () => {
-                  void refetch();
-                  setOpened(false);
-                },
-              },
-            )
-          }
-        >
-          {isActive ? (
-            <XCircleIcon
-              className={classList("text-red-500 transition-all", {
-                "h-0 w-0": !opened,
-                "h-10 w-10": opened,
-              })}
-            />
-          ) : (
-            <CheckCircleIcon
-              className={classList("text-green-500 transition-all", {
-                "h-0 w-0": !opened,
-                "h-10 w-10": opened,
-              })}
-            />
-          )}
-        </button>
-      </div>
+      />
     </div>
   );
 };
