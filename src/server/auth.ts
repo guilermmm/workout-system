@@ -50,14 +50,9 @@ export const authOptions: NextAuthOptions = {
 
       const profile = await prisma.profile.findUnique({ where: { email: user.email } });
 
-      if (!profile) {
+      if (!profile || !profile.isActive) {
         // TODO: redirect to a page telling the user he doesn't have access
-        return false;
-      }
-
-      if (!profile.isActive) {
-        // TODO: redirect to a page telling the user his account is inactive
-        return false;
+        return '/unauthorized';
       }
 
       return true;

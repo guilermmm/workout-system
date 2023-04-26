@@ -38,11 +38,12 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
   - [x] atualizar medidas
   - [x] mostrar historico de medidas
   - [x] mostrar historico de treinos finalizados
-- [ ] admin criar os exercicios
-- [ ] dialog pra confirmar todos os delete
+- [x] admin criar os exercicios
+- [x] dialog pra confirmar todos os delete
 
 - [x] validacao de usuario
 - [x] permitir que o professor faça o treino do aluno mesmo antes dele logar a primeira vez, e quando logar já tiver tudo bonitin
+- [x] nao permitir q usuario q nao foi registrado pelo professor logar
 
 - [x] botar dias da semana na tela de treinos do aluno
 - [x] permitir apenas um timer ativo por vez
@@ -50,10 +51,12 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] ajustar a lógica dos sets
 - [x] permitir ao instrutor reorganizar a ordem dos exercícios de um treino
 - [x] arrumar as categorias dos treinos
-- [ ] usuario contar as series
+- [x] usuario contar as series
 
-- [ ] pensar em opção para quem nao usa celular
+- [x] pensar em opção para quem nao usa celular (isso aq ja foi resolvido pq ela disse q o fato do professor acessar ja serve)
 
-- [ ] página de editar treino
+- [x] página de editar treino
 - [x] fazer validação de form
 - [ ] alerta para confirmar cada mutation
+
+- [ ] ui das tela de profile
