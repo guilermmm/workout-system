@@ -18,6 +18,7 @@ import { env } from "../../env/server.mjs";
 import { getServerAuthSession } from "../../server/auth";
 import { useClickOutside, useLocalStorage } from "../../utils";
 import { api } from "../../utils/api";
+import PencilSquareIcon from "../../components/icons/PencilSquareIcon";
 
 const organizeByParser = z.union([z.literal("name"), z.literal("category")]);
 
@@ -72,6 +73,8 @@ const Dashboard = () => {
 
   const [newExercise, setNewExercise] = useState({ name: "", category: "" });
 
+  const [editedExercise, setEditedExercise] = useState({ name: "", category: "", id: "" });
+
   const [showExerciseModal, setShowExerciseModal] = useState(false);
 
   const newExerciseModalRef = useClickOutside<HTMLDivElement>(() => setShowExerciseModal(false));
@@ -85,6 +88,18 @@ const Dashboard = () => {
   });
 
   const addMutationErrorRef = useClickOutside<HTMLDivElement>(() => addExercise.reset());
+
+  const editExercise = api.exercise.update.useMutation({
+    onSuccess: () => {
+      void groups.refetch();
+      setEditedExercise({ name: "", category: "", id: "" });
+      setShowExerciseModal(false);
+    },
+  });
+
+  const showEditModal = editedExercise.id !== "";
+
+  const editMutationErrorRef = useClickOutside<HTMLDivElement>(() => editExercise.reset());
 
   const removeExercise = api.exercise.delete.useMutation({
     onSuccess: () => {
@@ -143,6 +158,21 @@ const Dashboard = () => {
           <button
             className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
             onClick={removeExercise.reset}
+          >
+            OK
+          </button>
+        </Alert>
+      )}
+      {editExercise.error && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
+          title="Não foi possível editar o exercício"
+          text="Não foi possível editar o exercício, tente novamente mais tarde"
+          ref={editMutationErrorRef}
+        >
+          <button
+            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+            onClick={editExercise.reset}
           >
             OK
           </button>
@@ -219,6 +249,7 @@ const Dashboard = () => {
                         {...category}
                         key={category.category}
                         handleRemoveExercise={e => () => setToBeRemoved(e)}
+                        handleEditExercise={e => () => setEditedExercise(e)}
                       />
                     ))
                   : filteredExercises?.map(exercise => (
@@ -227,6 +258,7 @@ const Dashboard = () => {
                         key={exercise.id}
                         showCategory
                         handleRemoveExercise={e => () => setToBeRemoved(e)}
+                        handleEditExercise={e => () => setEditedExercise(e)}
                       />
                     ))}
               </div>
@@ -273,6 +305,48 @@ const Dashboard = () => {
               </datalist>
             </Modal>
           )}
+
+          {showEditModal && (
+            <Modal
+              ref={newExerciseModalRef}
+              buttons={
+                <>
+                  <button
+                    onClick={() => editExercise.mutate(editedExercise)}
+                    className="rounded-md bg-blue-500 px-3 py-1 text-white shadow-md"
+                  >
+                    Salvar
+                  </button>
+                  <button
+                    className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                    onClick={() => setEditedExercise({ name: "", category: "", id: "" })}
+                  >
+                    Cancelar
+                  </button>
+                </>
+              }
+            >
+              <h1 className="self-center font-medium sm:self-auto">Editar exercício</h1>
+              <TextInput
+                label="Nome"
+                className="rounded-md bg-white"
+                value={editedExercise.name}
+                onChange={name => setEditedExercise({ ...editedExercise, name })}
+              />
+              <TextInput
+                label="Categoria"
+                list="categories"
+                className="rounded-md bg-white"
+                value={editedExercise.category}
+                onChange={category => setEditedExercise({ ...editedExercise, category })}
+              />
+              <datalist id="categories">
+                {groups.data?.map(group => (
+                  <option key={group.category} value={group.category} />
+                ))}
+              </datalist>
+            </Modal>
+          )}
         </div>
       </div>
       <Navbar />
@@ -286,12 +360,14 @@ const ExerciseCard = ({
   category,
   showCategory = false,
   handleRemoveExercise,
+  handleEditExercise,
 }: {
   id: string;
   name: string;
   category: string;
   showCategory?: boolean;
   handleRemoveExercise: (e: { id: string; name: string }) => () => void;
+  handleEditExercise: (e: { id: string; name: string; category: string }) => () => void;
 }) => {
   return (
     <div className="flex max-w-[calc(100vw_-_2rem)] flex-1 flex-row items-center justify-between rounded-md bg-blue-500">
@@ -299,7 +375,10 @@ const ExerciseCard = ({
         <div className="text-md truncate text-white">{name}</div>
         {showCategory && <div className="truncate text-sm text-slate-100">{category}</div>}
       </div>
-      <div className="flex items-center justify-center px-3">
+      <div className="flex items-center justify-center gap-1 px-3">
+        <button onClick={handleEditExercise({ id, name, category })}>
+          <PencilSquareIcon className="h-6 w-6 text-gold-500" />
+        </button>
         <button onClick={handleRemoveExercise({ id, name })}>
           <TrashIcon className="h-6 w-6 text-red-500" />
         </button>
@@ -312,10 +391,12 @@ const CategoryCard = ({
   category,
   exercises,
   handleRemoveExercise,
+  handleEditExercise,
 }: {
   category: string;
   exercises: Exercise[];
   handleRemoveExercise: (e: { id: string; name: string }) => () => void;
+  handleEditExercise: (e: { id: string; name: string; category: string }) => () => void;
 }) => {
   return (
     <div className="flex flex-1 flex-col" key={category}>
@@ -329,6 +410,7 @@ const CategoryCard = ({
             {...exercise}
             key={exercise.id}
             handleRemoveExercise={handleRemoveExercise}
+            handleEditExercise={handleEditExercise}
           />
         ))}
       </div>
