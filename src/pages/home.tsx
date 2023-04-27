@@ -57,13 +57,13 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
           <ArrowRightOnRectangleIcon className="h-6 w-6" />
         </button>
       </div>
-      <div className="grow overflow-y-scroll">
+      <div className="flex grow justify-center overflow-y-scroll">
         {workouts.isLoading ? (
           <div className="flex h-full items-center justify-center">
             <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
           </div>
         ) : (
-          <div className="mx-4 my-4 grid grid-cols-[auto_1fr]">
+          <div className="mx-4 my-4 grid w-full max-w-[32rem] grid-cols-[auto_1fr]">
             {weekDayWorkouts(workouts.data).map(
               ([day, workouts]) =>
                 workouts.length !== 0 && (

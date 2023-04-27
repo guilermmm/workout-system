@@ -61,7 +61,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 
 - [ ] ui das tela de profile
 - [ ] touch motions pra transitar entre /dashboard e /exercises no mobile
-- [ ] max-width em todas as listas verticais pra melhorar o visual no desktop
+- [x] max-width em todas as listas verticais pra melhorar o visual no desktop
 - [ ] embelezar histórico de treinos
 - [ ] embelezar páginas de medidas
 - [ ] tela de treino
@@ -70,5 +70,5 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
   - [ ] não mostrar método quando normal
   - [ ] sugerir finalizar o treino quando terminar todos os exercicios
 - [ ] criar exercise: mudar de modal pra página, usar modal pra confirmação
-- [ ] página de editar exercise
+- [x] página de editar exercise
 - [ ] transitar entre /home e /profile tocando pela foto no header

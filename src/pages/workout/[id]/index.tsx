@@ -39,7 +39,7 @@ const Workout = () => {
           </h1>
         </div>
       </div>
-      <div className="grow">
+      <div className="flex grow flex-col items-center">
         {workout.isLoading ? (
           <div className="flex h-full items-center justify-center overflow-y-scroll">
             <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
@@ -113,7 +113,7 @@ const ExerciseCard = ({ description, exercise, sets, method }: ExerciseCardProps
   const [showAlert, setShowAlert] = useState(false);
 
   return (
-    <div className="m-2 flex justify-between rounded-lg bg-white p-4 shadow-md">
+    <div className="m-2 flex w-full max-w-[32rem] justify-between rounded-lg bg-white p-4 shadow-md ">
       {showAlert && (
         <Alert
           icon={
@@ -155,7 +155,7 @@ const ExerciseCard = ({ description, exercise, sets, method }: ExerciseCardProps
               {sets.map((set, i) => (
                 <div key={i} className="flex items-center justify-between py-1">
                   <div>Série {i + 1}:</div>
-                  <div className="ml-2">{set.weight}kg</div>
+                  {set.weight > 0 && <div className="ml-2">{set.weight}kg</div>}
                   {"time" in set ? (
                     <div className="flex items-center">
                       <ClockIcon className="mx-[0.1rem] inline-block h-4 w-4" />{" "}
