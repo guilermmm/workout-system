@@ -72,4 +72,5 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [ ] criar exercise: mudar de modal pra página, usar modal pra confirmação
 - [x] página de editar exercise
 - [x] transitar entre /home e /profile tocando pela foto no header
+- [ ] botao de adicionar aluno no /dashboard
 - [ ] botar o carregamento nos botao q ta faltando

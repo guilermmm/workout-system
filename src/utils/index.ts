@@ -106,7 +106,7 @@ export function useEndOfScroll<T extends HTMLElement>(ref: RefObject<T>, callbac
 
     const { scrollTop, scrollHeight, clientHeight } = ref.current;
 
-    const isBottom = scrollHeight <= clientHeight || scrollHeight - scrollTop === clientHeight;
+    const isBottom = scrollTop + clientHeight >= scrollHeight;
 
     if (isBottom) {
       endOfScrollRef.current = true;
@@ -171,4 +171,9 @@ export const useFormValidation = <T>(
   );
 
   return props;
+};
+
+export const validateEmail = (email: string) => {
+  const regex = /\S+@\S+\.\S+/;
+  return regex.test(email);
 };
