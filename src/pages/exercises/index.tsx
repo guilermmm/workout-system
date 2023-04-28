@@ -7,18 +7,19 @@ import { z } from "zod";
 import Alert from "../../components/Alert";
 import FullPage from "../../components/FullPage";
 import Modal from "../../components/Modal";
+import QueryErrorAlert from "../../components/QueryErrorAlert";
 import Spinner from "../../components/Spinner";
 import TextInput from "../../components/TextInput";
 import Header from "../../components/admin/Header";
 import Navbar from "../../components/admin/Navbar";
 import MagnifyingGlassIcon from "../../components/icons/MagnifyingGlassIcon";
+import PencilSquareIcon from "../../components/icons/PencilSquareIcon";
 import TrashIcon from "../../components/icons/TrashIcon";
 import XMarkIcon from "../../components/icons/XMarkIcon";
 import { env } from "../../env/server.mjs";
 import { getServerAuthSession } from "../../server/auth";
 import { useClickOutside, useLocalStorage } from "../../utils";
 import { api } from "../../utils/api";
-import PencilSquareIcon from "../../components/icons/PencilSquareIcon";
 
 const organizeByParser = z.union([z.literal("name"), z.literal("category")]);
 
@@ -178,27 +179,7 @@ const Dashboard = () => {
           </button>
         </Alert>
       )}
-      {groups.isError && (
-        <Alert
-          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
-          title="Não conseguimos buscar estes dados"
-          text="Não foi possível buscar os dados necessários para acessar esta página, verifique sua conexão e tente novamente"
-          ref={errorAlertRef}
-        >
-          <button
-            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
-            onClick={() => void groups.refetch()}
-          >
-            Tentar novamente
-          </button>
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={router.back}
-          >
-            Voltar à página anterior
-          </button>
-        </Alert>
-      )}
+      {groups.isError && <QueryErrorAlert refetch={() => void groups.refetch()} />}
       <Header user={session?.user} />
       <div className="m-2 flex items-center gap-2">
         <div className="relative grow">

@@ -7,6 +7,7 @@ import Alert from "../../../components/Alert";
 import FullPage from "../../../components/FullPage";
 import MultiSelect from "../../../components/MultiSelect";
 import ProfilePic from "../../../components/ProfilePic";
+import QueryErrorAlert from "../../../components/QueryErrorAlert";
 import Sortable from "../../../components/SortableList";
 import Spinner from "../../../components/Spinner";
 import TextInput from "../../../components/TextInput";
@@ -83,8 +84,6 @@ const CreateWorkout = () => {
       void query.refetch();
     }
   }, [erroredQueries]);
-
-  const errorAlertRef = useClickOutside<HTMLDivElement>(refetch);
 
   const createWorkout = api.workout.create.useMutation();
 
@@ -216,27 +215,7 @@ const CreateWorkout = () => {
 
   return (
     <FullPage>
-      {erroredQueries.length > 0 && (
-        <Alert
-          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
-          title="Não conseguimos buscar estes dados"
-          text="Não foi possível buscar os dados necessários para acessar esta página, verifique sua conexão e tente novamente"
-          ref={errorAlertRef}
-        >
-          <button
-            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
-            onClick={refetch}
-          >
-            Tentar novamente
-          </button>
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={router.back}
-          >
-            Voltar à página anterior
-          </button>
-        </Alert>
-      )}
+      {erroredQueries.length > 0 && <QueryErrorAlert refetch={refetch} />}
       {createWorkout.error && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
