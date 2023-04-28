@@ -8,7 +8,6 @@ import FullPage from "../components/FullPage";
 import ProfilePic from "../components/ProfilePic";
 import Spinner from "../components/Spinner";
 import ArrowRightOnRectangleIcon from "../components/icons/ArrowRightOnRectangleIcon";
-import UserNavbar from "../components/user/Navbar";
 import { getServerAuthSession } from "../server/auth";
 import { capitalize, classList, join } from "../utils";
 import { api } from "../utils/api";
@@ -45,7 +44,9 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
     <FullPage>
       <div className="flex items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
-          <ProfilePic size="lg" user={user} />
+          <Link href="/profile" className="rounded-full border-4 border-blue-500">
+            <ProfilePic size="lg" user={user} />
+          </Link>
           <h1 className="ml-4 text-lg font-medium text-blue-700">
             Olá, <span className="font-bold">{user.name}</span>!
           </h1>
@@ -99,7 +100,6 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
           </div>
         )}
       </div>
-      <UserNavbar />
     </FullPage>
   );
 };

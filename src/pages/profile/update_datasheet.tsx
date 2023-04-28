@@ -1,9 +1,8 @@
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import ErrorPage from "../../components/ErrorPage";
 import CreateDatasheetPage from "../../components/pages/CreateDatasheetPage";
-import UserNavbar from "../../components/user/Navbar";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 import { dataSheetTranslation } from "../../utils/consts";
@@ -38,7 +37,7 @@ const UserUpdateDatasheet = () => {
       isLoading={createDataSheet.isLoading}
       setEditedDataSheet={setEditedDataSheet}
     >
-      <UserNavbar />
+      <Fragment />
     </CreateDatasheetPage>
   );
 };

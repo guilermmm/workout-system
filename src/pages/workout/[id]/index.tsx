@@ -39,7 +39,7 @@ const Workout = () => {
           </h1>
         </div>
       </div>
-      <div className="flex grow flex-col items-center">
+      <div className="mx-4 flex grow flex-col items-center">
         {workout.isLoading ? (
           <div className="flex h-full items-center justify-center overflow-y-scroll">
             <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
