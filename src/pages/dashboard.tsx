@@ -52,9 +52,7 @@ const Dashboard = () => {
     }
   });
 
-  const createProfile = api.user.createProfile.useMutation({
-    onSuccess: () => void profiles.refetch().then(() => setShowMutateAlert(false)),
-  });
+  const createProfile = api.user.createProfile.useMutation();
 
   if (profiles.error) {
     return <ErrorPage />;
@@ -100,7 +98,15 @@ const Dashboard = () => {
             <Fragment>
               <button
                 className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md"
-                onClick={() => createProfile.mutate({ email: searchInput })}
+                onClick={() =>
+                  createProfile.mutate(
+                    { email: searchInput },
+                    {
+                      onSuccess: () =>
+                        void profiles.refetch().then(() => setShowMutateAlert(false)),
+                    },
+                  )
+                }
               >
                 Sim
               </button>
