@@ -2,7 +2,7 @@ import { Method, Weekday } from "@prisma/client";
 import deepEqual from "deep-equal";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Alert from "../../../../components/Alert";
 import FullPage from "../../../../components/FullPage";
 import MultiSelect from "../../../../components/MultiSelect";
@@ -18,7 +18,6 @@ import Bars2Icon from "../../../../components/icons/Bars2Icon";
 import CheckCircleIcon from "../../../../components/icons/CheckCircleIcon";
 import ExclamationTriangleIcon from "../../../../components/icons/ExclamationTriangleIcon";
 import PlusIcon from "../../../../components/icons/PlusIcon";
-import XMarkIcon from "../../../../components/icons/XMarkIcon";
 import { env } from "../../../../env/server.mjs";
 import { getServerAuthSession } from "../../../../server/auth";
 import { useClickOutside } from "../../../../utils";
@@ -172,20 +171,6 @@ const EditWorkout = () => {
     [workout.exercises],
   );
 
-  const erroredQueries = useMemo(() => {
-    const queries = [profile, categories, originalWorkout];
-
-    return queries.filter(query => query.isError);
-  }, [profile, categories, originalWorkout]);
-
-  const refetch = useCallback(() => {
-    for (const query of erroredQueries) {
-      void query.refetch();
-    }
-  }, [erroredQueries]);
-
-  const errorAlertRef = useClickOutside<HTMLDivElement>(refetch);
-
   const [isConfirmationAlertOpen, setConfirmationAlertOpen] = useState(false);
 
   const confirmationAlertRef = useClickOutside<HTMLDivElement>(() => {
@@ -241,7 +226,7 @@ const EditWorkout = () => {
 
   return (
     <FullPage>
-      {erroredQueries.length > 0 && <QueryErrorAlert refetch={refetch} />}
+      <QueryErrorAlert queries={[profile, categories, originalWorkout]} />
       {isConfirmationAlertOpen && (
         <Alert
           icon={

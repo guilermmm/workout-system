@@ -1,7 +1,6 @@
 import type { Exercise } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/router";
 import { useMemo, useState } from "react";
 import { z } from "zod";
 import Alert from "../../components/Alert";
@@ -26,8 +25,6 @@ const organizeByParser = z.union([z.literal("name"), z.literal("category")]);
 const Dashboard = () => {
   const { data: session } = useSession();
 
-  const router = useRouter();
-
   const [searchInput, setSearchInput] = useState("");
 
   const [organizeBy, setOrganizeBy] = useLocalStorage(
@@ -36,9 +33,7 @@ const Dashboard = () => {
     "category",
   );
 
-  const groups = api.exercise.getGroups.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-  });
+  const groups = api.exercise.getGroups.useQuery(undefined, { refetchOnWindowFocus: false });
 
   const filteredGroups = useMemo(
     () =>
@@ -65,8 +60,6 @@ const Dashboard = () => {
     () => filteredGroups?.flatMap(g => g.exercises) ?? groups.data?.flatMap(g => g.exercises),
     [filteredGroups, groups],
   );
-
-  const errorAlertRef = useClickOutside<HTMLDivElement>(() => void groups.refetch());
 
   const [toBeRemoved, setToBeRemoved] = useState<{ id: string; name: string } | null>(null);
 
@@ -179,7 +172,7 @@ const Dashboard = () => {
           </button>
         </Alert>
       )}
-      {groups.isError && <QueryErrorAlert refetch={() => void groups.refetch()} />}
+      <QueryErrorAlert queries={[groups]} />
       <Header user={session?.user} />
       <div className="m-2 flex items-center gap-2">
         <div className="relative grow">

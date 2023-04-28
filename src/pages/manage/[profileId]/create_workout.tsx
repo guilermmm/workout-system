@@ -1,7 +1,7 @@
 import { Method, Weekday } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import Alert from "../../../components/Alert";
 import FullPage from "../../../components/FullPage";
@@ -66,24 +66,8 @@ const CreateWorkout = () => {
 
   const { profileId } = router.query as { profileId: string };
 
-  const profile = api.user.getProfileById.useQuery(profileId, {
-    refetchOnWindowFocus: false,
-  });
-
-  const categories = api.exercise.getGroups.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-  });
-
-  const erroredQueries = useMemo(
-    () => [profile, categories].filter(q => q.isError),
-    [profile, categories],
-  );
-
-  const refetch = useCallback(() => {
-    for (const query of erroredQueries) {
-      void query.refetch();
-    }
-  }, [erroredQueries]);
+  const profile = api.user.getProfileById.useQuery(profileId, { refetchOnWindowFocus: false });
+  const categories = api.exercise.getGroups.useQuery(undefined, { refetchOnWindowFocus: false });
 
   const createWorkout = api.workout.create.useMutation();
 
@@ -215,7 +199,7 @@ const CreateWorkout = () => {
 
   return (
     <FullPage>
-      {erroredQueries.length > 0 && <QueryErrorAlert refetch={refetch} />}
+      <QueryErrorAlert queries={[profile, categories]} />
       {createWorkout.error && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
