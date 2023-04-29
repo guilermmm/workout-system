@@ -59,11 +59,15 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] fazer validação de form
 - [ ] alerta para confirmar cada mutation
 
-- [ ] ui das tela de profile
 - [ ] touch motions pra transitar entre /dashboard e /exercises no mobile
 - [x] max-width em todas as listas verticais pra melhorar o visual no desktop
 - [x] embelezar histórico de treinos
-- [x] embelezar páginas de medidas
+- [ ] embelezar páginas de perfil
+  - [x] usuário
+  - [ ] admin
+- [ ] embelezar histórico de medidas pro usuário
+  - [ ]  usuário
+  - [ ]  admin
 - [x] tela de treino
   - [x] card collapse
   - [x] auto collapsar card quanto terminar todas as series
