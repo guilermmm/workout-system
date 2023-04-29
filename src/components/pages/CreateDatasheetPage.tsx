@@ -37,7 +37,7 @@ const CreateDatasheetPage = ({
           <span className="font-bold">Atualizar medidas</span>
         </h1>
       </div>
-      <div className="grow overflow-y-scroll">
+      <div className="grow overflow-y-auto">
         <div className="mx-4 mt-5 grid grid-cols-2 justify-center gap-2">
           {Object.keys(dataSheetTranslation).map((key, index) => {
             return (

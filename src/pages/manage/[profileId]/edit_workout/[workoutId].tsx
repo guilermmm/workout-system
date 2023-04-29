@@ -226,8 +226,8 @@ const EditWorkout = () => {
           icon={
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-700" />
           }
-          title="Você tem certeza?"
-          text={`Você tem certeza que deseja salvar as alterações feitas ao treino ${
+          title="Salvar alterações"
+          text={`Tem certeza que deseja salvar as alterações feitas ao treino ${
             originalWorkout.data!.name
           } de ${profile.data!.user?.name ?? profile.data!.email}?`}
           ref={confirmationAlertRef}
@@ -280,7 +280,7 @@ const EditWorkout = () => {
         </div>
       </div>
 
-      <div className="flex grow flex-col items-center overflow-y-scroll">
+      <div className="flex grow flex-col items-center overflow-y-auto">
         <div className="flex w-full flex-col gap-2 bg-white py-4 px-2 sm:flex-row">
           <TextInput
             label="Nome do treino"

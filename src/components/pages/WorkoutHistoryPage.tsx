@@ -31,7 +31,7 @@ const WorkoutHistoryPage = ({ workouts, finishedWorkouts, children }: PageProps)
           <span className="font-bold">Histórico de treinos</span>
         </h1>
       </div>
-      <div className="flex h-full w-full items-center justify-center overflow-y-scroll p-2">
+      <div className="flex h-full w-full items-center justify-center overflow-y-auto p-2">
         <Calendar workouts={workouts} finishedWorkouts={finishedWorkouts} />
       </div>
 

@@ -46,6 +46,8 @@ export const jsDateToWeekday = (date: Date): Weekday => {
   return dates[day];
 };
 
+type DatasheetKey = keyof Omit<Datasheet, "id" | "profileId" | "createdAt">;
+
 export const dataSheetTranslation = {
   weight: "Peso",
   height: "Altura",
@@ -60,6 +62,15 @@ export const dataSheetTranslation = {
   rightCalf: "Panturrilha Dir.",
   leftCalf: "Panturrilha Esq.",
 } as const satisfies Record<keyof Omit<Datasheet, "id" | "profileId" | "createdAt">, string>;
+
+export const datasheetLayout = [
+  ["weight", "height"],
+  ["thorax", "waist"],
+  ["abdomen", "hips"],
+  ["leftArm", "rightArm"],
+  ["leftThigh", "rightThigh"],
+  ["leftCalf", "rightCalf"],
+] satisfies [DatasheetKey, DatasheetKey][];
 
 export const methodTranslation = {
   Standard: "Normal",

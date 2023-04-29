@@ -208,7 +208,7 @@ const Dashboard = () => {
           Adicionar novo exercício
         </button>
       </div>
-      <div className="relative grow overflow-y-scroll">
+      <div className="relative grow overflow-y-auto">
         <div className="mx-4 flex h-full flex-1 grow flex-col items-center gap-4">
           {groups.isLoading ? (
             <div className="flex flex-1 items-center justify-center">

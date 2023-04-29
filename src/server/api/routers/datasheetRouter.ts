@@ -11,11 +11,13 @@ export const datasheetRouter = createTRPCRouter({
       });
     }),
 
-  getLatestBySession: userProcedure.query(({ ctx }) => {
-    return ctx.prisma.datasheet.findFirstOrThrow({
+  getLatestBySession: userProcedure.query(async ({ ctx }) => {
+    const latest = await ctx.prisma.datasheet.findFirst({
       where: { profile: { userId: ctx.session.user.id } },
       orderBy: { createdAt: "desc" },
     });
+
+    return { latest };
   }),
 
   getMany: adminProcedure

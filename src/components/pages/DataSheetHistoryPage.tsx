@@ -31,7 +31,7 @@ const DataSheetHistoryPage = ({ dataSheetHistory, children, isLoading }: Props) 
         </h1>
       </div>
 
-      <div className="grow overflow-y-scroll">
+      <div className="grow overflow-y-auto">
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
             <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />

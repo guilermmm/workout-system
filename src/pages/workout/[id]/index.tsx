@@ -36,7 +36,6 @@ const exerciseParser = z.object({
         weight: z.number(),
         completed: z.boolean(),
       }),
-
       z.object({
         time: z.number(),
         weight: z.number(),
@@ -52,7 +51,6 @@ const workoutParser = z.object({
   days: z.array(z.nativeEnum(Weekday)),
   exercises: z.array(exerciseParser),
   biSets: z.array(z.tuple([z.string(), z.string()])),
-  timer: z.object({ startedAt: z.string(), finishedAt: z.string() }).optional(),
 });
 
 const storageParser = z.record(workoutParser);
@@ -181,10 +179,10 @@ const Workout = () => {
           ))}
         </div>
       </div>
-      <div className="flex grow flex-col items-center overflow-y-scroll">
+      <div className="flex grow flex-col items-center overflow-y-auto">
         <div className="w-full max-w-[48rem]">
           {!workout && workoutQuery.isLoading ? (
-            <div className="flex h-full items-center justify-center overflow-y-scroll">
+            <div className="flex h-full items-center justify-center overflow-y-auto">
               <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
             </div>
           ) : (
@@ -247,8 +245,6 @@ const Workout = () => {
       </div>
       <Footer
         workoutId={id}
-        timer={workout?.timer}
-        setTimer={timer => setWorkout({ timer })}
         resetStorage={() => resetWorkoutStorage()}
         verifiedStorage={verifiedStorage}
       />
@@ -485,16 +481,26 @@ const ExerciseLabel = ({ children }: { children: string }) => {
   );
 };
 
+const timerParser = z.object({ startedAt: z.string(), finishedAt: z.string() });
+
+const timerStorageParser = z.record(timerParser);
+
 type FooterProps = {
   workoutId: string;
-  timer?: { startedAt: string; finishedAt: string };
-  setTimer: (timer: { startedAt: string; finishedAt: string }) => void;
   resetStorage: () => void;
   verifiedStorage: boolean;
 };
 
-const Footer = ({ workoutId, timer, setTimer, resetStorage, verifiedStorage }: FooterProps) => {
+const Footer = ({ workoutId, resetStorage, verifiedStorage }: FooterProps) => {
   const [state, setState] = useState<"not-started" | "started" | "finished">("not-started");
+
+  const [timerStorage, setTimerStorage] = useLocalStorage("workout-timer", timerStorageParser, {});
+
+  const timer = timerStorage[workoutId];
+
+  const setTimer = (timer: { startedAt: string; finishedAt: string }) => {
+    setTimerStorage({ [workoutId]: timer });
+  };
 
   const [showAlert, setShowAlert] = useState(false);
 
@@ -503,7 +509,7 @@ const Footer = ({ workoutId, timer, setTimer, resetStorage, verifiedStorage }: F
       setState("finished");
       pause();
       setTimer({
-        startedAt: timer?.startedAt || new Date().toISOString(),
+        startedAt: timer?.startedAt ?? new Date().toISOString(),
         finishedAt: new Date().toISOString(),
       });
       setShowAlert(false);
@@ -558,10 +564,7 @@ const Footer = ({ workoutId, timer, setTimer, resetStorage, verifiedStorage }: F
               onClick={() => {
                 setState("started");
                 reset(undefined, true);
-                setTimer({
-                  startedAt: new Date().toISOString(),
-                  finishedAt: "",
-                });
+                setTimer({ startedAt: new Date().toISOString(), finishedAt: "" });
               }}
             >
               Iniciar treino

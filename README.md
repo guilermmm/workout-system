@@ -62,8 +62,8 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [ ] ui das tela de profile
 - [ ] touch motions pra transitar entre /dashboard e /exercises no mobile
 - [x] max-width em todas as listas verticais pra melhorar o visual no desktop
-- [ ] embelezar histórico de treinos
-- [ ] embelezar páginas de medidas
+- [x] embelezar histórico de treinos
+- [x] embelezar páginas de medidas
 - [x] tela de treino
   - [x] card collapse
   - [x] auto collapsar card quanto terminar todas as series

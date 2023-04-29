@@ -133,7 +133,7 @@ const Dashboard = () => {
           <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
         </div>
       </div>
-      <div className="grow overflow-y-scroll" ref={ref}>
+      <div className="grow overflow-y-auto" ref={ref}>
         <div className="mx-4 flex h-full flex-1 grow flex-col items-center gap-4">
           {!profiles.data && profiles.isLoading ? (
             <div className="flex flex-1 items-center justify-center">
