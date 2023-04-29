@@ -33,6 +33,7 @@ export const useLocalStorage = <T extends JSONValue>(
   initialValue: T,
 ) => {
   const [storedValue, setStoredValue] = useState(initialValue);
+  const [verified, setVerified] = useState(false);
 
   const setValue = useCallback(
     (value: T | ((value: T) => T)) => {
@@ -55,9 +56,11 @@ export const useLocalStorage = <T extends JSONValue>(
       const json = window.localStorage.getItem(key);
       const value = json ? parser.parse(JSON.parse(json)) : initialValue;
       setValue(value);
+      setVerified(true);
     } catch (error) {
       console.log(error);
       setValue(initialValue);
+      setVerified(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -67,7 +70,7 @@ export const useLocalStorage = <T extends JSONValue>(
     setStoredValue(initialValue);
   }, [key, initialValue]);
 
-  return [storedValue, setValue, resetValue] as const;
+  return [storedValue, setValue, resetValue, verified] as const;
 };
 
 export async function sleep(ms: number) {

@@ -64,11 +64,10 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] max-width em todas as listas verticais pra melhorar o visual no desktop
 - [ ] embelezar histórico de treinos
 - [ ] embelezar páginas de medidas
-- [ ] tela de treino
-  - [ ] card collapse
-  - [ ] auto collapsar card quanto terminar todas as series
-  - [ ] não mostrar método quando normal
-  - [ ] sugerir finalizar o treino quando terminar todos os exercicios
+- [x] tela de treino
+  - [x] card collapse
+  - [x] auto collapsar card quanto terminar todas as series
+  - [x] não mostrar método quando normal
 - [ ] criar exercise: mudar de modal pra página, usar modal pra confirmação
 - [x] página de editar exercise
 - [x] transitar entre /home e /profile tocando pela foto no header

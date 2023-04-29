@@ -68,7 +68,7 @@ const BiSetCard = <Exercise extends ExerciseBase>({
       </button>
       <div
         className={classList("h-12 transition-all duration-200", {
-          "max-h-[3rem]": !!isCollapsed,
+          "max-h-[3rem]": isCollapsed,
           "max-h-0 overflow-y-hidden": !isCollapsed,
         })}
       >
@@ -86,7 +86,7 @@ const BiSetCard = <Exercise extends ExerciseBase>({
       <div
         className={classList("flex flex-col transition-all duration-200", {
           "max-h-[100rem]": !isCollapsed,
-          "max-h-0 overflow-y-hidden": !!isCollapsed,
+          "max-h-0 overflow-y-hidden": isCollapsed,
         })}
       >
         <div className="mr-2 h-10 items-center justify-end pr-24 pl-16 pb-2">

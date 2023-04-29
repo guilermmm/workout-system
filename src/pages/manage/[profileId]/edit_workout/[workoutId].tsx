@@ -99,17 +99,11 @@ const EditWorkout = () => {
 
   const { profileId, workoutId } = router.query as { profileId: string; workoutId: string };
 
-  const profile = api.user.getProfileById.useQuery(profileId, {
-    refetchOnWindowFocus: false,
-  });
+  const profile = api.user.getProfileById.useQuery(profileId, { refetchOnWindowFocus: false });
 
-  const categories = api.exercise.getGroups.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-  });
+  const categories = api.exercise.getGroups.useQuery(undefined, { refetchOnWindowFocus: false });
 
-  const originalWorkout = api.workout.getById.useQuery(workoutId, {
-    refetchOnWindowFocus: false,
-  });
+  const originalWorkout = api.workout.getById.useQuery(workoutId, { refetchOnWindowFocus: false });
 
   const originalWorkoutData = useMemo(
     () => originalWorkout.data && stateToApi(apiToState(originalWorkout.data), workoutId),
@@ -325,7 +319,7 @@ const EditWorkout = () => {
               onChange={handleChangeGroups}
             >
               {(group, animating) => (
-                <Sortable.Item className="" id={group.id}>
+                <Sortable.Item id={group.id}>
                   {(() => {
                     if ("exercises" in group) {
                       const [a, b] = group.exercises;

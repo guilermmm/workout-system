@@ -17,7 +17,7 @@ export const workoutRouter = createTRPCRouter({
         categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
       }));
 
-      return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
+      return mappedWorkouts as unknown as ParseJsonValues<typeof mappedWorkouts>;
     }),
 
   getById: adminProcedure.input(z.string()).query(async ({ ctx, input }) => {
@@ -26,7 +26,7 @@ export const workoutRouter = createTRPCRouter({
       include: { exercises: { include: { exercise: true } }, profile: { include: { user: true } } },
     });
 
-    return workout as ParseJsonValues<typeof workout>;
+    return workout as unknown as ParseJsonValues<typeof workout>;
   }),
 
   getManyBySession: userProcedure.query(async ({ ctx }) => {
@@ -39,7 +39,7 @@ export const workoutRouter = createTRPCRouter({
       categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
     }));
 
-    return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
+    return mappedWorkouts as unknown as ParseJsonValues<typeof mappedWorkouts>;
   }),
 
   getByIdBySession: userProcedure.input(z.string()).query(async ({ ctx, input }) => {
@@ -55,7 +55,7 @@ export const workoutRouter = createTRPCRouter({
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
 
-    return workout as ParseJsonValues<typeof workout>;
+    return workout as unknown as ParseJsonValues<typeof workout>;
   }),
 
   create: adminProcedure

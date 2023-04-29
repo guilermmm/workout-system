@@ -106,7 +106,7 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
         className={classList(
           "flex h-10 flex-row items-center justify-between transition-all duration-200",
           {
-            "max-h-[2.5rem]": !!isCollapsed,
+            "max-h-[2.5rem]": isCollapsed,
             "max-h-0 overflow-y-hidden": !isCollapsed,
           },
         )}
@@ -126,7 +126,7 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
       <div
         className={classList("flex flex-col justify-between gap-2 transition-all duration-200", {
           "max-h-[100rem]": !isCollapsed,
-          "max-h-0 overflow-y-hidden": !!isCollapsed,
+          "max-h-0 overflow-y-hidden": isCollapsed,
         })}
       >
         <div className="flex flex-1 flex-col gap-2">
