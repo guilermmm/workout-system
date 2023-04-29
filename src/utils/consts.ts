@@ -21,13 +21,13 @@ export const weekdaysTranslation = {
 } as const satisfies Record<Weekday, string>;
 
 export const weekdaysAbbrv = {
+  Sunday: "DOM",
   Monday: "SEG",
   Tuesday: "TER",
   Wednesday: "QUA",
   Thursday: "QUI",
   Friday: "SEX",
   Saturday: "SAB",
-  Sunday: "DOM",
 } as const satisfies Record<Weekday, string>;
 
 export const jsDateToWeekday = (date: Date): Weekday => {

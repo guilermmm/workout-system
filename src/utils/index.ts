@@ -134,15 +134,33 @@ export function useEndOfScroll<T extends HTMLElement>(ref: RefObject<T>, callbac
   }, [ref, handleScroll]);
 }
 
-export const getDateArrayFromDate = (startDate: Date) => {
-  const currentDate = new Date();
-  const timeDiff = Math.abs(currentDate.getTime() - startDate.getTime());
-  const numDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+export const getDateArrayFromDate = (date: Date) => {
+  const firstOfTheMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+  const lastOfTheMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+  const firstDay = firstOfTheMonth.getDay();
+  const daysFromLastMonth = firstDay === 0 ? 0 : firstDay;
+
+  const lastDay = lastOfTheMonth.getDay();
+  const daysFromNextMonth = lastDay === 6 ? 0 : 6 - lastDay;
+
   const daysArray = [];
 
-  for (let i = 0; i <= numDays; i++) {
-    const currentDate = new Date(startDate);
-    currentDate.setDate(startDate.getDate() + i);
+  for (let i = 0; i < daysFromLastMonth; i++) {
+    const currentDate = new Date(firstOfTheMonth);
+    currentDate.setDate(firstOfTheMonth.getDate() - (daysFromLastMonth - i));
+    daysArray.push({ day: currentDate.getDate(), month: currentDate.getMonth() });
+  }
+
+  for (let i = 0; i < lastOfTheMonth.getDate(); i++) {
+    const currentDate = new Date(firstOfTheMonth);
+    currentDate.setDate(firstOfTheMonth.getDate() + i);
+    daysArray.push({ day: currentDate.getDate(), month: currentDate.getMonth() });
+  }
+
+  for (let i = 0; i < daysFromNextMonth; i++) {
+    const currentDate = new Date(lastOfTheMonth);
+    currentDate.setDate(lastOfTheMonth.getDate() + i + 1);
     daysArray.push({ day: currentDate.getDate(), month: currentDate.getMonth() });
   }
 

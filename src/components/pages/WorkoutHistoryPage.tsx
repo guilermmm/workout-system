@@ -1,6 +1,6 @@
 import type { FinishedWorkout, Workout } from "@prisma/client";
 import { useRouter } from "next/router";
-import { getDateArrayFromDate } from "../../utils";
+import { classList, getDateArrayFromDate } from "../../utils";
 import { weekdaysAbbrv } from "../../utils/consts";
 import FullPage from "../FullPage";
 import Spinner from "../Spinner";
@@ -31,7 +31,7 @@ const WorkoutHistoryPage = ({ workouts, finishedWorkouts, children }: PageProps)
           <span className="font-bold">Histórico de treinos</span>
         </h1>
       </div>
-      <div className="grow overflow-y-scroll">
+      <div className="flex h-full w-full items-center justify-center overflow-y-scroll p-2">
         <Calendar workouts={workouts} finishedWorkouts={finishedWorkouts} />
       </div>
 
@@ -49,7 +49,7 @@ const Calendar = ({ workouts, finishedWorkouts }: Props) => {
     );
   }
 
-  const handledFinishedWorkouts = finishedWorkouts.map(finishedWorkout => {
+  const workoutDates = finishedWorkouts.map(finishedWorkout => {
     const date = new Date(finishedWorkout.date);
     return {
       day: date.getDate(),
@@ -58,36 +58,58 @@ const Calendar = ({ workouts, finishedWorkouts }: Props) => {
     };
   });
 
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  const dateArray = getDateArrayFromDate(oneMonthAgo);
-  const blankDays = Array.from({ length: new Date(oneMonthAgo).getDay() - 1 }, (_, index) => index);
+  const today = new Date();
+
+  const dateArray = getDateArrayFromDate(today);
   return (
-    <div className="grid grid-cols-7 items-center justify-center p-4">
+    <div className="grid min-w-[50%] max-w-[40rem] grow grid-cols-7 items-center justify-center rounded-2xl border-1 bg-slate-50 p-0.5 shadow-md">
       {Object.values(weekdaysAbbrv).map(weekday => (
-        <div key={weekday} className="mx-2 inline-block h-10 w-10 text-center">
+        <div
+          key={weekday}
+          className={classList(
+            "mb-2 flex h-[10vh] grow items-center justify-center bg-blue-600 font-medium text-white ring-2 ring-blue-600",
+            {
+              "rounded-tl-lg": weekday === "DOM",
+              "rounded-tr-lg": weekday === "SAB",
+            },
+          )}
+        >
           {weekday}
         </div>
       ))}
-      {blankDays.map((_, index) => (
-        <div key={index} />
-      ))}
-      {dateArray.map(date => (
-        <div
-          key={`${date.day}-${date.month}`}
-          className="mx-2 my-4 flex h-10 w-10 flex-col text-center"
-        >
-          <div>{date.day}</div>
-          <div>
-            {
-              handledFinishedWorkouts?.find(
-                finishedWorkout =>
-                  finishedWorkout.day === date.day && finishedWorkout.month === date.month,
-              )?.workout?.name
-            }
+      {dateArray.map(date => {
+        const isToday = date.day === today.getDate() && date.month === today.getMonth();
+        const isFinished = workoutDates.find(w => w.day === date.day && w.month === date.month);
+
+        return (
+          <div key={`${date.day}-${date.month}`} className="h-[10vh] p-0.5">
+            <div
+              className={classList("flex h-full flex-col rounded-md border-1 text-center", {
+                "border-slate-200 bg-slate-50 shadow-sm": date.month === today.getMonth(),
+                "border-slate-100 bg-slate-200": date.month !== today.getMonth(),
+                "ring-4 ring-gold-100": isToday,
+              })}
+            >
+              <div
+                className={classList("flex h-2/5 items-center justify-center font-medium", {
+                  "bg-blue-100 text-blue-600": date.month === today.getMonth(),
+                  "text-slate-800/50": date.month !== today.getMonth(),
+                  "bg-blue-100": !!isFinished,
+                })}
+              >
+                {date.day}
+              </div>
+              <div className="flex h-3/5 items-center justify-center">
+                {isFinished ? (
+                  <div className="font-medium">{isFinished.workout?.name}</div>
+                ) : (
+                  <div className="text-slate-800/50">-</div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
