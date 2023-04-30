@@ -15,7 +15,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
     <SessionProvider session={session}>
       <ModalProvider>
         <Head>
-          <title>Workout Tracker</title>
+          <title>IDM Fit</title>
         </Head>
         <Component {...pageProps} />
       </ModalProvider>

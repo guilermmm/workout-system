@@ -40,3 +40,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# service worker
+/public/*.js
+/public/*.js.map
