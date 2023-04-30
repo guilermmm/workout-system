@@ -72,7 +72,7 @@ const BiSetCard = <Exercise extends ExerciseBase>({
           "max-h-0 overflow-y-hidden": !isCollapsed,
         })}
       >
-        <div className="mx-2 flex h-full w-full items-center justify-center pl-16 pr-28 pb-2">
+        <div className="mx-2 flex h-full items-center justify-center pl-16 pr-28 pb-2">
           <div className="flex w-full flex-col items-center justify-center gap-1 text-sm">
             <ExerciseLabel>
               {categories.flatMap(g => g.exercises).find(e => e.id === first.exerciseId)?.name}
