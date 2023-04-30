@@ -77,3 +77,4 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] transitar entre /home e /profile tocando pela foto no header
 - [x] botao de adicionar aluno no /dashboard
 - [ ] botar o carregamento nos botao q ta faltando
+- [ ] trocar os input number por txt
