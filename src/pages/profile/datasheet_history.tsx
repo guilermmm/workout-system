@@ -2,16 +2,11 @@ import type { GetServerSidePropsContext } from "next";
 import DataSheetHistoryPage from "../../components/pages/DataSheetHistoryPage";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
-import { Fragment } from "react";
 
 const DataSheetHistory = () => {
   const { data, isLoading } = api.datasheet.getManyBySession.useQuery();
 
-  return (
-    <DataSheetHistoryPage dataSheetHistory={data} isLoading={isLoading}>
-      <Fragment />
-    </DataSheetHistoryPage>
-  );
+  return <DataSheetHistoryPage dataSheetHistory={data} isLoading={isLoading} />;
 };
 
 export default DataSheetHistory;

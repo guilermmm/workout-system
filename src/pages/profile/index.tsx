@@ -1,19 +1,20 @@
 import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { signOut } from "next-auth/react";
-import FullPage from "../../components/FullPage";
-import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
-import { getServerAuthSession } from "../../server/auth";
-import { api } from "../../utils/api";
-import { dataSheetTranslation, datasheetLayout } from "../../utils/consts";
-import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
 import Link from "next/link";
+import { useState } from "react";
+import Alert from "../../components/Alert";
+import FullPage from "../../components/FullPage";
+import MeasurementCard from "../../components/MeasurementCard";
+import ProfilePic from "../../components/ProfilePic";
 import QueryErrorAlert from "../../components/QueryErrorAlert";
 import Spinner from "../../components/Spinner";
-import ProfilePic from "../../components/ProfilePic";
-import { useState } from "react";
-import { useClickOutside } from "../../utils";
-import Alert from "../../components/Alert";
+import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectangleIcon";
+import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
 import ExclamationTriangleIcon from "../../components/icons/ExclamationTriangleIcon";
+import { getServerAuthSession } from "../../server/auth";
+import { useClickOutside } from "../../utils";
+import { api } from "../../utils/api";
+import { dataSheetTranslation, datasheetLayout } from "../../utils/consts";
 
 const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const latestDataSheet = api.datasheet.getLatestBySession.useQuery();
@@ -104,14 +105,12 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
                   {datasheetLayout.map(([left, right], i) => (
                     <div key={i} className="flex flex-row gap-2">
                       <MeasurementCard
-                        key={i}
                         title={dataSheetTranslation[left as keyof typeof dataSheetTranslation]}
                         value={`${
                           latestDataSheet.data.latest![left as keyof typeof dataSheetTranslation]
                         } ${left !== "weight" ? " cm" : " kg"}`}
                       />
                       <MeasurementCard
-                        key={i}
                         title={dataSheetTranslation[right as keyof typeof dataSheetTranslation]}
                         value={`${
                           latestDataSheet.data.latest![right as keyof typeof dataSheetTranslation]
@@ -144,13 +143,6 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
     </FullPage>
   );
 };
-
-const MeasurementCard = ({ title, value }: { title: string; value: string }) => (
-  <div className="w-full rounded-md border-1 bg-slate-50 p-2 shadow-md">
-    <div className="text-sm text-blue-600">{title}</div>
-    <div className="h-full w-full text-sm text-gray-900">{value}</div>
-  </div>
-);
 
 export default Profile;
 

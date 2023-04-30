@@ -65,9 +65,9 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [ ] embelezar páginas de perfil
   - [x] usuário
   - [ ] admin
-- [ ] embelezar histórico de medidas pro usuário
-  - [ ] usuário
-  - [ ] admin
+- [x] embelezar histórico de medidas
+  - [x] usuário
+  - [x] admin
 - [x] tela de treino
   - [x] card collapse
   - [x] auto collapsar card quanto terminar todas as series

@@ -2,19 +2,20 @@ import type { Datasheet } from "@prisma/client";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { classList } from "../../utils";
-import { dataSheetTranslation } from "../../utils/consts";
+import { dataSheetTranslation, datasheetLayout } from "../../utils/consts";
 import FullPage from "../FullPage";
+import MeasurementCard from "../MeasurementCard";
 import Spinner from "../Spinner";
 import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
-import UpwardArrowIcon from "../icons/UpwardArrowIcon";
+import ChevronDownIcon from "../icons/ChevronDownIcon";
 
 interface Props {
   dataSheetHistory: Datasheet[] | undefined;
-  children: React.ReactNode;
   isLoading: boolean;
+  children?: React.ReactNode;
 }
 
-const DataSheetHistoryPage = ({ dataSheetHistory, children, isLoading }: Props) => {
+const DataSheetHistoryPage = ({ dataSheetHistory, isLoading, children }: Props) => {
   const router = useRouter();
 
   return (
@@ -26,7 +27,7 @@ const DataSheetHistoryPage = ({ dataSheetHistory, children, isLoading }: Props) 
         >
           <ArrowUturnLeftIcon className="h-6 w-6" />
         </button>
-        <h1 className="text-lg font-medium text-blue-700">
+        <h1 className="ml-4 text-lg font-medium text-blue-700">
           <span className="font-bold">Histórico de medidas</span>
         </h1>
       </div>
@@ -38,7 +39,9 @@ const DataSheetHistoryPage = ({ dataSheetHistory, children, isLoading }: Props) 
           </div>
         ) : (
           dataSheetHistory &&
-          dataSheetHistory.map(measure => <DataSheetCard measure={measure} key={measure.id} />)
+          dataSheetHistory.map(datasheet => (
+            <DataSheetCard datasheet={datasheet} key={datasheet.id} />
+          ))
         )}
       </div>
 
@@ -47,42 +50,46 @@ const DataSheetHistoryPage = ({ dataSheetHistory, children, isLoading }: Props) 
   );
 };
 
-const DataSheetCard = ({ measure }: { measure: Datasheet }) => {
-  // transition-all duration-300 ease-in-out
+const DataSheetCard = ({ datasheet: datasheet }: { datasheet: Datasheet }) => {
   const [opened, setOpened] = useState(false);
   return (
-    <div className="m-2 rounded-lg bg-white shadow-md  hover:shadow-lg">
+    <div className="m-2 rounded-lg bg-white shadow-md hover:shadow-lg">
       <button
         className="flex w-full justify-between p-4"
         onClick={() => {
           setOpened(!opened);
         }}
       >
-        {measure.createdAt.toLocaleDateString("pt-BR")}
+        {datasheet.createdAt.toLocaleDateString("pt-BR")}
 
-        <UpwardArrowIcon
-          className={classList(
-            "h-5 w-5 transition-transform duration-300",
-            opened ? "rotate-180  ease-in-out" : "",
-          )}
+        <ChevronDownIcon
+          className={classList("h-6 w-6 transition-transform duration-200", {
+            "rotate-180": opened,
+          })}
         />
       </button>
-
       <div
-        className={classList(
-          "box-border max-h-0 overflow-hidden border-t-4 p-4 pt-3",
-          opened ? "max-h-fit" : "hidden",
-        )}
+        className={classList("px-4 transition-all duration-200", {
+          "max-h-0 overflow-y-hidden": !opened,
+          "border-t-4 py-4": opened,
+        })}
       >
-        {Object.keys(dataSheetTranslation).map(key => (
-          <div key={key} className="flex justify-between border-b-2">
-            <span>{dataSheetTranslation[key as keyof typeof dataSheetTranslation]}:</span>
-            <span className="font-bold">
-              {measure[key as keyof typeof dataSheetTranslation] || "-"}
-              {key !== "weight" ? " cm" : " kg"}
-            </span>
-          </div>
-        ))}
+        <div className="flex h-full w-full flex-col gap-2">
+          {datasheetLayout.map(([left, right], i) => (
+            <div key={i} className="flex flex-row gap-2">
+              <MeasurementCard
+                title={dataSheetTranslation[left as keyof typeof dataSheetTranslation]}
+                value={`${datasheet[left as keyof typeof dataSheetTranslation]} ${
+                  left !== "weight" ? " cm" : " kg"
+                }`}
+              />
+              <MeasurementCard
+                title={dataSheetTranslation[right as keyof typeof dataSheetTranslation]}
+                value={`${datasheet[right as keyof typeof dataSheetTranslation]} cm`}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
