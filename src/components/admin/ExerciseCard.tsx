@@ -51,7 +51,6 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
   const exerciseIdProps = useFormValidation(
     exercise.exerciseId,
     v => v === "" && "Selecione um exercício",
-    true,
   );
 
   const updateSets = (newSets: typeof exercise.sets) => {
@@ -266,85 +265,13 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
             <div className="flex flex-col items-center rounded-md px-2 py-1">
               <span className="mb-2 font-medium text-slate-700">Séries</span>
               {exercise.sets.map((set, index) => (
-                <div
-                  className="m-0.5 flex w-full items-center justify-between rounded border-1 bg-white p-1.5 shadow-md"
+                <SetCard
                   key={index}
-                >
-                  <div className="flex grow flex-row items-center gap-1">
-                    {exercise.type === "reps" ? (
-                      <NumberInput
-                        label="Repetições"
-                        className="grow bg-white"
-                        value={set.reps}
-                        onChange={n => {
-                          const newSets = [...exercise.sets];
-                          newSets[index]!.reps = n;
-                          updateSets(newSets);
-                        }}
-                        min={0}
-                        disabled={disabled}
-                      />
-                    ) : (
-                      <>
-                        <NumberInput
-                          label="Minutos"
-                          className="grow bg-white"
-                          value={set.time.minutes}
-                          onChange={n => {
-                            const newSets = [...exercise.sets];
-                            newSets[index]!.time.minutes = n;
-                            updateSets(newSets);
-                          }}
-                          min={0}
-                          max={1000}
-                          disabled={disabled}
-                        />
-                        <NumberInput
-                          label="Segundos"
-                          className="grow bg-white"
-                          value={set.time.seconds}
-                          onChange={n => {
-                            const newSets = [...exercise.sets];
-                            newSets[index]!.time.seconds = n;
-                            updateSets(newSets);
-                          }}
-                          min={0}
-                          max={59}
-                          disabled={disabled}
-                        />
-                      </>
-                    )}
-                    <NumberInput
-                      label="Peso (kg)"
-                      className="grow bg-white"
-                      value={set.weightKg}
-                      onChange={n => {
-                        const newSets = [...exercise.sets];
-                        newSets[index]!.weightKg = n;
-                        updateSets(newSets);
-                      }}
-                      min={0}
-                      step={0.01}
-                      max={1000}
-                      disabled={disabled}
-                    />
-                  </div>
-                  {exercise.sets.length !== 1 && (
-                    <div className="ml-1 flex items-center">
-                      <button
-                        className="rounded-full border-1 border-gray-300 p-1 text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-                        onClick={() => {
-                          const newSets = [...exercise.sets];
-                          newSets.splice(index, 1);
-                          updateSets(newSets);
-                        }}
-                        disabled={disabled}
-                      >
-                        <XMarkIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  exercise={exercise}
+                  index={index}
+                  updateSets={updateSets}
+                  disabled={disabled}
+                />
               ))}
               <div className="m-0.5 w-full">
                 <button
@@ -373,6 +300,128 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+type SetProps<E extends ExerciseBase> = {
+  exercise: E;
+  index: number;
+  updateSets: (sets: E["sets"]) => void;
+  disabled?: boolean;
+};
+
+const SetCard = <E extends ExerciseBase>({
+  exercise,
+  index,
+  updateSets,
+  disabled,
+}: SetProps<E>) => {
+  const set = exercise.sets[index]!;
+
+  const repsProps = useFormValidation(set.reps, n => {
+    if (n < 1) return "Número de repetições deve ser maior que 0";
+    if (n % 1 !== 0) return "Número de repetições deve ser inteiro";
+  });
+
+  const weightProps = useFormValidation(set.weightKg, n => {
+    if (n < 0) return "Peso deve ser maior ou igual a 0";
+    if (n % 0.25 !== 0) return "Peso deve ser múltiplo de 0.25";
+  });
+
+  const minutesProps = useFormValidation(set.time.minutes, n => {
+    if (n < 0) return "Minutos deve ser maior ou igual a 0";
+    if (n % 1 !== 0) return "Minutos deve ser inteiro";
+  });
+
+  const secondsProps = useFormValidation(set.time.seconds, n => {
+    if (n < 0) return "Segundos deve ser maior ou igual a 0";
+    if (n % 1 !== 0) return "Segundos deve ser inteiro";
+  });
+
+  return (
+    <div
+      className="m-0.5 flex w-full items-center justify-between rounded border-1 bg-white p-1.5 shadow-md"
+      key={index}
+    >
+      <div className="flex grow flex-row items-center gap-1">
+        {exercise.type === "reps" ? (
+          <NumberInput
+            label="Repetições"
+            className="grow bg-white"
+            value={set.reps}
+            onChange={n => {
+              const newSets = [...exercise.sets];
+              newSets[index]!.reps = n;
+              updateSets(newSets);
+            }}
+            min={0}
+            disabled={disabled}
+            {...repsProps}
+          />
+        ) : (
+          <>
+            <NumberInput
+              label="Minutos"
+              className="grow bg-white"
+              value={set.time.minutes}
+              onChange={n => {
+                const newSets = [...exercise.sets];
+                newSets[index]!.time.minutes = n;
+                updateSets(newSets);
+              }}
+              min={0}
+              max={1000}
+              disabled={disabled}
+              {...minutesProps}
+            />
+            <NumberInput
+              label="Segundos"
+              className="grow bg-white"
+              value={set.time.seconds}
+              onChange={n => {
+                const newSets = [...exercise.sets];
+                newSets[index]!.time.seconds = n;
+                updateSets(newSets);
+              }}
+              min={0}
+              max={59}
+              disabled={disabled}
+              {...secondsProps}
+            />
+          </>
+        )}
+        <NumberInput
+          label="Peso (kg)"
+          className="grow bg-white"
+          value={set.weightKg}
+          onChange={n => {
+            const newSets = [...exercise.sets];
+            newSets[index]!.weightKg = n;
+            updateSets(newSets);
+          }}
+          min={0}
+          step={0.25}
+          max={1000}
+          disabled={disabled}
+          {...weightProps}
+        />
+      </div>
+      {exercise.sets.length !== 1 && (
+        <div className="ml-1 flex items-center">
+          <button
+            className="rounded-full border-1 border-gray-300 p-1 text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => {
+              const newSets = [...exercise.sets];
+              newSets.splice(index, 1);
+              updateSets(newSets);
+            }}
+            disabled={disabled}
+          >
+            <XMarkIcon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

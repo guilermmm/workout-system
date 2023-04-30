@@ -170,7 +170,7 @@ export const getDateArrayFromDate = (date: Date) => {
 export const useFormValidation = <T>(
   value: T,
   validate: (value: T) => string | undefined | false,
-  validateOnFirstRender = false,
+  validateOnFirstRender = true,
 ) => {
   const [error, setError] = useState<string | undefined>(() =>
     validateOnFirstRender ? validate?.(value) || undefined : undefined,
