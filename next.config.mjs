@@ -6,7 +6,7 @@
 import withPWA from "next-pwa";
 
 /** @type {import("next").NextConfig} */
-const config = {
+const nextConfig = {
   reactStrictMode: true,
   /* If trying out the experimental appDir, comment the i18n config out
    * @see https://github.com/vercel/next.js/issues/41980 */
@@ -14,10 +14,15 @@ const config = {
     locales: ["pt-BR"],
     defaultLocale: "pt-BR",
   },
-
   images: {
     domains: ["lh3.googleusercontent.com"],
   },
 };
 
-export default withPWA({ dest: "public" })(config);
+/** @type {import("next-pwa").PWAConfig}  */
+const pwaConfig = {
+  dest: "public",
+  disable: process.env.NODE_ENV === "development",
+};
+
+export default withPWA(pwaConfig)(nextConfig);
