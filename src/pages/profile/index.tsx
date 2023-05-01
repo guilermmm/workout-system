@@ -57,11 +57,11 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
         >
           <ArrowUturnLeftIcon className="h-6 w-6" />
         </Link>
-        <div className="flex w-full flex-col items-center justify-center pt-4">
+        <div className="flex w-full flex-col items-center justify-center truncate pt-4">
           <div className="z-10 rounded-full bg-slate-100 p-2">
             <ProfilePic size="xl" user={user} />
           </div>
-          <h1 className="mt-2 truncate text-lg font-medium text-slate-900">
+          <h1 className="mt-2 w-full self-start truncate text-lg font-medium text-slate-900">
             <span className="font-bold">{user.name}</span>
           </h1>
         </div>
