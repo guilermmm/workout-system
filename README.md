@@ -79,4 +79,4 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] alerta para confirmar cada mutation
 - [ ] botar o carregamento nos botao q ta faltando
 - [x] modal por cima de modal pra confirmar mutation em form de modal
-- [ ] modal pra cadastrar usuario
+- [x] modal pra cadastrar usuario
