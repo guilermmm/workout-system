@@ -330,7 +330,7 @@ const ExerciseCard = ({
               <div className="ml-4 text-sm text-slate-600">{exercise.category}</div>
             </div>
             {method !== "Standard" && (
-              <div className="text-sm">
+              <div className="mr-10 text-sm">
                 <button className="flex items-center gap-1" onClick={() => setShowAlert(true)}>
                   {methodTranslation[method as keyof typeof methodTranslation]}
                   <InformationIcon className="h-6 w-6" />
