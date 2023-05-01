@@ -1,4 +1,4 @@
-import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import type { GetServerSidePropsContext } from "next";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
@@ -15,14 +15,16 @@ import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 import { dataSheetTranslation, dataSheetUnit, datasheetLayout } from "../../utils/consts";
 
-const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+const Profile = () => {
+  const profile = api.user.getProfileBySession.useQuery();
+
   const latestDataSheet = api.datasheet.getLatestBySession.useQuery();
 
   const [showAlert, setShowAlert] = useState(false);
 
   return (
     <FullPage>
-      <QueryErrorAlert queries={[latestDataSheet]} />
+      <QueryErrorAlert queries={[profile, latestDataSheet]} />
       {showAlert && (
         <Alert
           icon={
@@ -56,11 +58,17 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
         </Link>
         <div className="flex w-full flex-col items-center justify-center truncate pt-4">
           <div className="z-10 rounded-full bg-slate-100 p-2">
-            <ProfilePic size="xl" user={user} />
+            {profile.data ? (
+              <ProfilePic size="xl" user={profile.data?.user} />
+            ) : (
+              <Spinner className="h-24 w-24 fill-blue-600 text-gray-200" />
+            )}
           </div>
-          <h1 className="mt-2 w-full self-start truncate text-center text-lg font-medium text-slate-900">
-            <span className="font-bold">{user.name}</span>
-          </h1>
+          {profile.data && (
+            <h1 className="mt-2 w-full self-start truncate text-center text-lg font-medium text-slate-900">
+              <span className="font-bold">{profile.data.user?.name ?? profile.data.email}</span>
+            </h1>
+          )}
         </div>
         <button
           className="z-10 rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
@@ -146,5 +154,5 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
     return { redirect: { destination: "/", permanent: false } };
   }
 
-  return { props: { user: session.user } };
+  return { props: {} };
 }

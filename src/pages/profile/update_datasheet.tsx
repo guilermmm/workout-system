@@ -88,5 +88,5 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
     return { redirect: { destination: "/", permanent: false } };
   }
 
-  return { props: { user: session.user } };
+  return { props: {} };
 }

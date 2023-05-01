@@ -1,8 +1,8 @@
 import type { GetServerSidePropsContext } from "next";
+import { Fragment } from "react";
 import WorkoutHistoryPage from "../../components/pages/WorkoutHistoryPage";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
-import { Fragment } from "react";
 const WorkoutHistory = () => {
   const workouts = api.workout.getManyBySession.useQuery();
   const finishedWorkouts = api.user.getFinishedWorkoutsBySession.useQuery();
@@ -23,5 +23,5 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
     return { redirect: { destination: "/", permanent: false } };
   }
 
-  return { props: { user: session.user } };
+  return { props: {} };
 }

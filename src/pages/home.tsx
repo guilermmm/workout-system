@@ -1,18 +1,20 @@
 import { Weekday } from "@prisma/client";
-import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
 import { Fragment, useMemo } from "react";
 import FullPage from "../components/FullPage";
 import ProfilePic from "../components/ProfilePic";
+import QueryErrorAlert from "../components/QueryErrorAlert";
 import Spinner from "../components/Spinner";
 import { getServerAuthSession } from "../server/auth";
 import { capitalize, classList, join } from "../utils";
 import { api } from "../utils/api";
 import { jsDateToWeekday, weekdaysAbbrv } from "../utils/consts";
-import QueryErrorAlert from "../components/QueryErrorAlert";
 
-const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+const Home = () => {
   const workouts = api.workout.getManyBySession.useQuery();
+
+  const profile = api.user.getProfileBySession.useQuery();
 
   const weekDayWorkouts = useMemo(
     () =>
@@ -33,14 +35,22 @@ const Home = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) 
 
   return (
     <FullPage>
-      <QueryErrorAlert queries={[workouts]} />
+      <QueryErrorAlert queries={[profile, workouts]} />
       <div className="flex items-center justify-between bg-gold-500 p-2">
-        <h1 className="ml-4 text-lg font-medium text-blue-700">
-          Olá, <span className="font-bold">{user.name}</span>!
-        </h1>
-        <Link href="/profile">
-          <ProfilePic size="lg" user={user} />
-        </Link>
+        {profile.data && (
+          <h1 className="ml-4 text-lg font-medium text-blue-700">
+            Olá, <span className="font-bold">{profile.data.user?.name}</span>!
+          </h1>
+        )}
+        {profile.isLoading ? (
+          <Spinner className="h-16 w-16 fill-blue-600 text-gray-200" />
+        ) : (
+          profile.data && (
+            <Link href="/profile">
+              <ProfilePic size="lg" user={profile.data.user} />
+            </Link>
+          )
+        )}
       </div>
       <div className="grow overflow-y-auto">
         <div className="flex h-full grow flex-col items-center">
@@ -120,5 +130,5 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
     return { redirect: { destination: "/", permanent: false } };
   }
 
-  return { props: { user: session.user } };
+  return { props: {} };
 }
