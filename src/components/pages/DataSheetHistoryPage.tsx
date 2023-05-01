@@ -8,14 +8,16 @@ import MeasurementCard from "../MeasurementCard";
 import Spinner from "../Spinner";
 import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
 import ChevronDownIcon from "../icons/ChevronDownIcon";
+import UserProfileButton from "../UserProfileButton";
 
 interface Props {
   dataSheetHistory: Datasheet[] | undefined;
   isLoading: boolean;
   children?: React.ReactNode;
+  profileId?: string;
 }
 
-const DataSheetHistoryPage = ({ dataSheetHistory, isLoading, children }: Props) => {
+const DataSheetHistoryPage = ({ dataSheetHistory, isLoading, children, profileId }: Props) => {
   const router = useRouter();
 
   return (
@@ -33,6 +35,14 @@ const DataSheetHistoryPage = ({ dataSheetHistory, isLoading, children }: Props) 
       </div>
 
       <div className="grow overflow-y-auto">
+        {profileId && (
+          <div className="mt-2 flex items-center">
+            <UserProfileButton
+              title="Atualizar medidas"
+              href={`/manage/${profileId}/update_datasheet`}
+            />
+          </div>
+        )}
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
             <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />

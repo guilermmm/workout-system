@@ -17,7 +17,7 @@ const AdminDatasheetHistory = () => {
   if (isError) return <ErrorPage />;
 
   return (
-    <DataSheetHistoryPage dataSheetHistory={data} isLoading={isLoading}>
+    <DataSheetHistoryPage dataSheetHistory={data} isLoading={isLoading} profileId={profileId}>
       <AdminNavbar />
     </DataSheetHistoryPage>
   );

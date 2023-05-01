@@ -37,76 +37,64 @@ const Manage = () => {
 
   return (
     <FullPage>
-      <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
-        <button
-          className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
-          onClick={() => router.back()}
+      <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
+        <div className="absolute left-0 top-0 right-0 h-20 bg-gold-500" />
+        <Link
+          href="/home"
+          className="z-10 rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
         >
           <ArrowUturnLeftIcon className="h-6 w-6" />
-        </button>
-        <div className="flex items-center">
-          <div className="flex max-w-[calc(100vw_-_144px)] flex-row items-center justify-between text-right">
-            <div className="ml-4 flex flex-col truncate">
-              {profile.data && (
-                <>
-                  <h1 className="truncate text-xl font-bold text-blue-700">
-                    {profile.data.user?.name}
-                  </h1>
-                  <p className="truncate font-medium text-slate-700">{profile.data.email}</p>
-                </>
-              )}
-            </div>
+        </Link>
+        <div className="flex w-full flex-col items-center justify-center truncate pt-4">
+          <div className="z-10 rounded-full bg-slate-100 p-2">
+            <ProfilePic size="xl" user={profile.data?.user} />
           </div>
-          <div className="ml-4">
-            {profile.isLoading ? (
-              <Spinner className="h-12 w-12 fill-blue-600 text-gray-50" />
-            ) : (
-              <ProfilePic size="md" user={profile.data.user} />
-            )}
-          </div>
+          <h1 className="mt-2 w-full self-start truncate text-center text-lg font-medium text-slate-900">
+            {profile.data?.user && <span className="font-bold">{profile.data?.user.name}</span>}
+          </h1>
         </div>
+        <div className="h-6 w-6 p-5" />
       </div>
       <div className="mt-4">
-        <div className="flex items-center justify-end px-4">
-          <div className="text-xl text-blue-700">Status: </div>
-          <button
-            onClick={() =>
-              profile.data &&
-              changeStatus.mutate(
-                { profileId: profile.data.id },
-                { onSuccess: () => void profile.refetch() },
-              )
-            }
-            className={classList(
-              "ml-2 rounded-full px-2 py-1 font-bold text-white",
-              profile.data?.isActive ? "bg-green-500" : "bg-red-500",
-            )}
-          >
-            {profile.data?.isActive ? "Ativo" : "Inativo"}
-          </button>
+        <div className="flex flex-col items-center justify-end px-4">
+          <div className="flex pb-4">
+            <div className="text-xl text-blue-700">Status: </div>
+            <button
+              onClick={() =>
+                profile.data &&
+                changeStatus.mutate(
+                  { profileId: profile.data.id },
+                  { onSuccess: () => void profile.refetch() },
+                )
+              }
+              className={classList(
+                "ml-2 rounded-full px-2 py-1 font-bold text-white",
+                profile.data?.isActive ? "bg-green-500" : "bg-red-500",
+              )}
+            >
+              {profile.data?.isActive ? "Ativo" : "Inativo"}
+            </button>
+          </div>
+
+          <UserProfileButton
+            title="Histórico de treinos"
+            href={`/manage/${profileId}/workout_history`}
+          />
+          <UserProfileButton
+            href={`/manage/${profileId}/datasheet_history`}
+            title="Histórico de medidas"
+          />
         </div>
-        <UserProfileButton
-          title="Histórico de treinos"
-          href={`/manage/${profileId}/workout_history`}
-        />
-        <UserProfileButton
-          title="Histórico de medidas"
-          href={`/manage/${profileId}/datasheet_history`}
-        />
-        <UserProfileButton
-          title="Atualizar medidas"
-          href={`/manage/${profileId}/update_datasheet`}
-        />
       </div>
       {workouts.isLoading ? (
         <div className="flex flex-1 items-center justify-center">
           <Spinner className="h-64 w-64 fill-blue-600 text-gray-200" />
         </div>
       ) : (
-        <div className="mt-8 flex flex-col flex-wrap items-stretch sm:flex-row">
+        <div className="mt-8 flex w-full flex-col items-center px-4">
           {workouts.data.map(workout => (
             <div
-              className="m-2 flex min-w-fit flex-1 justify-between rounded-md bg-blue-500 p-6 text-white shadow-lg transition-colors hover:bg-blue-600"
+              className="m-2 flex w-full max-w-[32rem] flex-1 justify-between rounded-md bg-blue-500 p-6 text-white shadow-lg transition-colors hover:bg-blue-600"
               key={workout.id}
             >
               <div className="ml-5">
@@ -137,7 +125,7 @@ const Manage = () => {
       )}
       <div className="fixed bottom-0 right-0 p-4">
         <Link href={`/manage/${profileId}/create_workout`}>
-          <button className="flex w-full justify-center rounded-full bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600">
+          <button className="flex w-full justify-center rounded-full border-2 border-white bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600">
             <PlusIcon className="h-10 w-10" />
           </button>
         </Link>
