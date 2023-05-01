@@ -6,7 +6,7 @@ const Unauthorized = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-evenly bg-gold-400 px-4">
-      <ExclamationCircleIcon className="h-64 w-64 fill-blue-500" />
+      <ExclamationCircleIcon className="h-64 w-64 fill-blue-500 text-gold-500" />
       <p className="text-center text-2xl font-medium text-blue-500">
         Você não tem um cadastro ativo, entre em contato com a recepção para regularizar sua
         situação.

@@ -1,57 +1,21 @@
-import { useState } from "react";
-import Alert from "../components/Alert";
-import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
-import XMarkIcon from "../components/icons/XMarkIcon";
+import { useRouter } from "next/router";
+import ExclamationCircleIcon from "../components/icons/ExclamationCircleIcon";
 
-export default function Test() {
-  const [showAlert, setShowAlert] = useState(false);
-
-  const [search, setSearch] = useState("");
+const ErrorPage = () => {
+  const router = useRouter();
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 bg-slate-100">
-      <div className="relative">
-        <input
-          type="text"
-          className="block h-12 w-full appearance-none rounded-full border-1 pl-4 pr-12 shadow-md outline-none ring-0 focus:outline-none focus:ring-0"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
-      </div>
-
+    <div className="flex min-h-screen flex-col items-center justify-evenly bg-red-500 px-4">
+      <ExclamationCircleIcon className="h-64 w-64 fill-gray-50 text-red-500" />
+      <p className="text-2xl font-medium text-gray-50">Ocorreu um erro ao carregar a página</p>
       <button
-        type="button"
-        className="rounded-md bg-slate-50 p-2 shadow-md"
-        onClick={() => setShowAlert(true)}
+        className="rounded-full bg-gray-50 px-6 py-3 text-lg font-medium text-red-500"
+        onClick={router.reload}
       >
-        Abrir
+        Recarregar
       </button>
-
-      {showAlert && (
-        <Alert
-          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-200 p-2 text-red-500" />}
-          title="Deletar"
-          text="Tem certeza que deseja deletar?"
-          onClickOutside={() => setShowAlert(false)}
-        >
-          <button
-            className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md"
-            onClick={() => {
-              console.log("a");
-              setShowAlert(false);
-            }}
-          >
-            Confirmar
-          </button>
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={() => setShowAlert(false)}
-          >
-            Cancelar
-          </button>
-        </Alert>
-      )}
     </div>
   );
-}
+};
+
+export default ErrorPage;
