@@ -76,7 +76,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] botao de adicionar aluno no /dashboard
 - [x] ajeitar os input number
 
-- [ ] alerta para confirmar cada mutation
+- [x] alerta para confirmar cada mutation
 - [ ] botar o carregamento nos botao q ta faltando
-- [ ] modal por cima de modal pra confirmar mutation em form de modal
+- [x] modal por cima de modal pra confirmar mutation em form de modal
 - [ ] modal pra cadastrar usuario

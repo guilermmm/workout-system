@@ -3,6 +3,7 @@ import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
 import type { Session } from "next-auth";
 import superjson from "superjson";
 import { env } from "../../env/server.mjs";
+import { sleep } from "../../utils";
 import { getServerAuthSession } from "../auth";
 import { prisma } from "../db";
 
@@ -91,7 +92,7 @@ export const baseProcedure = t.procedure.use(
   t.middleware(async ({ ctx, next }) => {
     // return Promise.reject();
 
-    // await sleep(2000);
+    await sleep(2000);
 
     return next({ ctx });
   }),

@@ -361,7 +361,7 @@ const CreateWorkout = () => {
         {categories.data && (
           <div className="flex flex-row items-center justify-center">
             <button
-              className="mt-2 flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
+              className="mt-2 flex items-center gap-3 rounded-full bg-blue-500 px-6 py-2 font-medium text-white shadow-md hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500"
               onClick={handleAddExercise}
             >
               Adicionar exercício
@@ -373,11 +373,11 @@ const CreateWorkout = () => {
       {profile.data && categories.data && (
         <div className="fixed bottom-0 right-0 p-4">
           <button
-            className="flex items-center gap-3 rounded-full border-2 border-green-200 bg-green-500 px-6 py-2 font-medium text-white hover:border-green-600 hover:bg-green-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
+            className="flex items-center gap-3 rounded-full bg-green-500 px-6 py-2 font-medium text-white shadow-sm hover:bg-green-600 disabled:bg-gray-300 disabled:text-gray-500"
             onClick={() => setConfirmationAlertOpen(true)}
             disabled={!canSubmit || saving}
           >
-            {saving ? "Salvando..." : "Salvar"}
+            {saving ? "Salvando..." : "Salvar treino"}
             {saving ? (
               <Spinner className="h-8 w-8 fill-blue-600 text-gray-200" />
             ) : (

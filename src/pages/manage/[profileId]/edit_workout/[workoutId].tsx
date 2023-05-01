@@ -20,7 +20,6 @@ import ExclamationTriangleIcon from "../../../../components/icons/ExclamationTri
 import PlusIcon from "../../../../components/icons/PlusIcon";
 import { env } from "../../../../env/server.mjs";
 import { getServerAuthSession } from "../../../../server/auth";
-import { useClickOutside } from "../../../../utils";
 import { api, type RouterOutputs } from "../../../../utils/api";
 import { weekdaysOrder, weekdaysTranslation } from "../../../../utils/consts";
 
@@ -167,10 +166,6 @@ const EditWorkout = () => {
 
   const [isConfirmationAlertOpen, setConfirmationAlertOpen] = useState(false);
 
-  const confirmationAlertRef = useClickOutside<HTMLDivElement>(() => {
-    setConfirmationAlertOpen(false);
-  });
-
   const setExercises = (exercises: Exercise[] | ((exercises: Exercise[]) => Exercise[])) => {
     if (typeof exercises === "function") {
       setWorkout(prev => ({ ...prev, exercises: exercises(prev.exercises) }));
@@ -230,7 +225,7 @@ const EditWorkout = () => {
           text={`Tem certeza que deseja salvar as alterações feitas ao treino ${
             originalWorkout.data!.name
           } de ${profile.data!.user?.name ?? profile.data!.email}?`}
-          ref={confirmationAlertRef}
+          onClickOutside={() => setConfirmationAlertOpen(false)}
         >
           <button
             className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"

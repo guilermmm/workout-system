@@ -2,14 +2,11 @@ import { useState } from "react";
 import Alert from "../components/Alert";
 import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
 import XMarkIcon from "../components/icons/XMarkIcon";
-import { useClickOutside } from "../utils";
 
 export default function Test() {
   const [showAlert, setShowAlert] = useState(false);
 
   const [search, setSearch] = useState("");
-
-  const cancelRef = useClickOutside<HTMLDivElement>(() => setShowAlert(false));
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 bg-slate-100">
@@ -36,7 +33,7 @@ export default function Test() {
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-200 p-2 text-red-500" />}
           title="Deletar"
           text="Tem certeza que deseja deletar?"
-          ref={cancelRef}
+          onClickOutside={() => setShowAlert(false)}
         >
           <button
             className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md"

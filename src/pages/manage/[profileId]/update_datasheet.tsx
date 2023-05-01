@@ -1,32 +1,52 @@
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useState } from "react";
-import ErrorPage from "../../../components/ErrorPage";
+import { useEffect, useState } from "react";
+import Alert from "../../../components/Alert";
 import AdminNavbar from "../../../components/admin/Navbar";
+import XMarkIcon from "../../../components/icons/XMarkIcon";
 import CreateDatasheetPage from "../../../components/pages/CreateDatasheetPage";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { api } from "../../../utils/api";
-import { dataSheetTranslation } from "../../../utils/consts";
-import type { ParsedDatasheet } from "../../../utils/types";
 
 const AdminUpdateDatasheet = () => {
   const router = useRouter();
 
   const { profileId } = router.query as { profileId: string };
 
-  const [editedDataSheet, setEditedDataSheet] = useState<ParsedDatasheet>(
-    Object.keys(dataSheetTranslation).reduce((acc, key) => {
-      acc[key as keyof typeof dataSheetTranslation] = 0;
-      return acc;
-    }, {} as ParsedDatasheet),
+  const profile = api.user.getProfileById.useQuery(profileId);
+
+  const latest = api.datasheet.getLatest.useQuery(
+    { profileId },
+    {
+      onSuccess: data => {
+        if (data.latest) {
+          setDatasheet(data.latest);
+        }
+      },
+      enabled: false,
+    },
   );
 
-  if (editedDataSheet.profileId === undefined)
-    setEditedDataSheet({
-      ...editedDataSheet,
-      profileId: profileId,
-    });
+  useEffect(() => {
+    void latest.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [datasheet, setDatasheet] = useState({
+    weight: 0,
+    height: 0,
+    thorax: 0,
+    waist: 0,
+    abdomen: 0,
+    hips: 0,
+    rightThigh: 0,
+    leftThigh: 0,
+    rightArm: 0,
+    leftArm: 0,
+    rightCalf: 0,
+    leftCalf: 0,
+  });
 
   const createDataSheet = api.datasheet.create.useMutation({
     onSuccess: () => {
@@ -35,20 +55,36 @@ const AdminUpdateDatasheet = () => {
   });
 
   const handleCreateDataSheet = () => {
-    createDataSheet.mutate(editedDataSheet);
+    createDataSheet.mutate({ profileId, datasheet });
   };
 
-  if (createDataSheet.isError) return <ErrorPage />;
-
   return (
-    <CreateDatasheetPage
-      createDataSheet={handleCreateDataSheet}
-      editedDataSheet={editedDataSheet}
-      isLoading={createDataSheet.isLoading}
-      setEditedDataSheet={setEditedDataSheet}
-    >
-      <AdminNavbar />
-    </CreateDatasheetPage>
+    <>
+      {createDataSheet.isError && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
+          title="Erro ao criar ficha"
+          text="Ocorreu um erro ao criar a ficha de dados. Verifique se os dados estão corretos e tente novamente."
+          onClickOutside={() => void createDataSheet.reset()}
+        >
+          <button
+            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
+            onClick={() => void createDataSheet.reset()}
+          >
+            Entendi
+          </button>
+        </Alert>
+      )}
+      <CreateDatasheetPage
+        isLoading={createDataSheet.isLoading}
+        mutate={handleCreateDataSheet}
+        datasheet={datasheet}
+        setDatasheet={setDatasheet}
+        profileQuery={profile}
+      >
+        <AdminNavbar />
+      </CreateDatasheetPage>
+    </>
   );
 };
 

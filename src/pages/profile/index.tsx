@@ -12,7 +12,6 @@ import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectan
 import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
 import ExclamationTriangleIcon from "../../components/icons/ExclamationTriangleIcon";
 import { getServerAuthSession } from "../../server/auth";
-import { useClickOutside } from "../../utils";
 import { api } from "../../utils/api";
 import { dataSheetTranslation, dataSheetUnit, datasheetLayout } from "../../utils/consts";
 
@@ -20,8 +19,6 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
   const latestDataSheet = api.datasheet.getLatestBySession.useQuery();
 
   const [showAlert, setShowAlert] = useState(false);
-
-  const alertRef = useClickOutside<HTMLDivElement>(() => setShowAlert(false));
 
   return (
     <FullPage>
@@ -33,7 +30,7 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
           }
           title="Sair"
           text="Tem certeza que deseja sair?"
-          ref={alertRef}
+          onClickOutside={() => setShowAlert(false)}
         >
           <button
             className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md"

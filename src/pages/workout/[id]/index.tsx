@@ -17,7 +17,7 @@ import ClockIcon from "../../../components/icons/ClockIcon";
 import ExclamationTriangleIcon from "../../../components/icons/ExclamationTriangleIcon";
 import InformationIcon from "../../../components/icons/InformationIcon";
 import { getServerAuthSession } from "../../../server/auth";
-import { classList, useClickOutside, useLocalStorage } from "../../../utils";
+import { classList, useLocalStorage } from "../../../utils";
 import { api } from "../../../utils/api";
 import { methodExplanation, methodTranslation, weekdaysTranslation } from "../../../utils/consts";
 
@@ -269,8 +269,6 @@ const ExerciseCard = ({
 }: ExerciseCardProps) => {
   const [showAlert, setShowAlert] = useState(false);
 
-  const alertRef = useClickOutside<HTMLDivElement>(() => setShowAlert(false));
-
   const isCollapsed = collapsed && !uncollapsable;
 
   return (
@@ -282,7 +280,7 @@ const ExerciseCard = ({
           }
           title={methodTranslation[method]}
           text={methodExplanation[method]}
-          ref={alertRef}
+          onClickOutside={() => setShowAlert(false)}
         >
           <button
             className="rounded-md bg-gold-400 py-2 px-4 font-medium shadow-md"
