@@ -21,7 +21,7 @@ import PlusIcon from "../../../components/icons/PlusIcon";
 import XMarkIcon from "../../../components/icons/XMarkIcon";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
-import { useClickOutside, useLocalStorage } from "../../../utils";
+import { useLocalStorage } from "../../../utils";
 import { api } from "../../../utils/api";
 import { weekdaysOrder, weekdaysTranslation } from "../../../utils/consts";
 
@@ -71,13 +71,7 @@ const CreateWorkout = () => {
 
   const createWorkout = api.workout.create.useMutation();
 
-  const mutationErrorRef = useClickOutside<HTMLDivElement>(() => createWorkout.reset());
-
   const [isConfirmationAlertOpen, setConfirmationAlertOpen] = useState(false);
-
-  const confirmationAlertRef = useClickOutside<HTMLDivElement>(() => {
-    setConfirmationAlertOpen(false);
-  });
 
   const [workout, setWorkout, resetWorkout] = useLocalStorage("create-workout", workoutParser, {
     name: "",
@@ -205,7 +199,7 @@ const CreateWorkout = () => {
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Não foi possível criar o treino"
           text="Não foi possível buscar os dados necessários para acessar esta página, verifique sua conexão e tente novamente"
-          ref={mutationErrorRef}
+          onClickOutside={() => createWorkout.reset()}
         >
           <button
             className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
@@ -224,13 +218,14 @@ const CreateWorkout = () => {
           text={`Tem certeza que deseja salvar o treino ${workout.name} criado para ${
             profile.data!.user?.name ?? profile.data!.email
           }?`}
-          ref={confirmationAlertRef}
+          onClickOutside={() => setConfirmationAlertOpen(false)}
         >
           <button
-            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
+            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             onClick={handleSave}
+            disabled={!canSubmit || saving}
           >
-            Salvar alterações
+            {saving ? <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" /> : "Salvar treino"}
           </button>
           <button
             className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"

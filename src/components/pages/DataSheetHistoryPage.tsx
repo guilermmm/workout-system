@@ -1,4 +1,5 @@
 import type { Datasheet } from "@prisma/client";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { classList } from "../../utils";
@@ -6,7 +7,6 @@ import { dataSheetTranslation, dataSheetUnit, datasheetLayout } from "../../util
 import FullPage from "../FullPage";
 import MeasurementCard from "../MeasurementCard";
 import Spinner from "../Spinner";
-import UserProfileButton from "../UserProfileButton";
 import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
 import ChevronDownIcon from "../icons/ChevronDownIcon";
 
@@ -34,25 +34,29 @@ const DataSheetHistoryPage = ({ dataSheetHistory, isLoading, children, profileId
         </h1>
       </div>
 
-      <div className="grow overflow-y-auto">
-        {profileId && (
-          <div className="mt-2 flex items-center">
-            <UserProfileButton
-              title="Atualizar medidas"
-              href={`/manage/${profileId}/update_datasheet`}
-            />
-          </div>
-        )}
-        {isLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
-          </div>
-        ) : (
-          dataSheetHistory &&
-          dataSheetHistory.map(datasheet => (
-            <DataSheetCard datasheet={datasheet} key={datasheet.id} />
-          ))
-        )}
+      <div className="flex grow flex-col items-center overflow-y-auto">
+        <div className="flex w-full max-w-[40rem] grow flex-col gap-2 p-2">
+          {profileId && (
+            <div className="self-end">
+              <Link
+                className="flex flex-col justify-center rounded-md bg-blue-500 py-3 px-6 text-center text-white shadow-md transition-colors hover:bg-blue-600"
+                href={`/manage/${profileId}/update_datasheet`}
+              >
+                <div className="text-md">Atualizar medidas</div>
+              </Link>
+            </div>
+          )}
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center">
+              <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
+            </div>
+          ) : (
+            dataSheetHistory &&
+            dataSheetHistory.map(datasheet => (
+              <DataSheetCard datasheet={datasheet} key={datasheet.id} />
+            ))
+          )}
+        </div>
       </div>
 
       {children}
@@ -63,7 +67,7 @@ const DataSheetHistoryPage = ({ dataSheetHistory, isLoading, children, profileId
 const DataSheetCard = ({ datasheet: datasheet }: { datasheet: Datasheet }) => {
   const [opened, setOpened] = useState(false);
   return (
-    <div className="m-2 rounded-lg bg-white shadow-md hover:shadow-lg">
+    <div className="rounded-lg bg-white shadow-md hover:shadow-lg">
       <button
         className="flex w-full justify-between p-4"
         onClick={() => {

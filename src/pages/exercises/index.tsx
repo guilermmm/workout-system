@@ -1,7 +1,7 @@
 import type { Exercise } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useSession } from "next-auth/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import Alert from "../../components/Alert";
 import FullPage from "../../components/FullPage";
@@ -11,13 +11,15 @@ import Spinner from "../../components/Spinner";
 import TextInput from "../../components/TextInput";
 import Header from "../../components/admin/Header";
 import Navbar from "../../components/admin/Navbar";
+import ArrowDownTrayIcon from "../../components/icons/ArrowDownTrayIcon";
+import ExclamationTriangleIcon from "../../components/icons/ExclamationTriangleIcon";
 import MagnifyingGlassIcon from "../../components/icons/MagnifyingGlassIcon";
 import PencilSquareIcon from "../../components/icons/PencilSquareIcon";
 import TrashIcon from "../../components/icons/TrashIcon";
 import XMarkIcon from "../../components/icons/XMarkIcon";
 import { env } from "../../env/server.mjs";
 import { getServerAuthSession } from "../../server/auth";
-import { useClickOutside, useLocalStorage } from "../../utils";
+import { useFormValidation, useLocalStorage } from "../../utils";
 import { api } from "../../utils/api";
 
 const organizeByParser = z.union([z.literal("name"), z.literal("category")]);
@@ -61,27 +63,54 @@ const Dashboard = () => {
     [filteredGroups, groups],
   );
 
-  const [toBeRemoved, setToBeRemoved] = useState<{ id: string; name: string } | null>(null);
-
-  const removeAlertRef = useClickOutside<HTMLDivElement>(() => setToBeRemoved(null));
-
   const [newExercise, setNewExercise] = useState({ name: "", category: "" });
 
-  const [editedExercise, setEditedExercise] = useState({ name: "", category: "", id: "" });
+  const newExerciseNameProps = useFormValidation(
+    newExercise.name,
+    v => v.length < 1 && "Nome vazio",
+    false,
+  );
+
+  const newExerciseCategoryProps = useFormValidation(
+    newExercise.category,
+    v => v.length < 1 && "Categoria vazia",
+    false,
+  );
 
   const [showExerciseModal, setShowExerciseModal] = useState(false);
 
-  const newExerciseModalRef = useClickOutside<HTMLDivElement>(() => setShowExerciseModal(false));
+  const [showAddConfirmation, setShowAddConfirmation] = useState(false);
 
   const addExercise = api.exercise.create.useMutation({
     onSuccess: () => {
       void groups.refetch();
-      setNewExercise({ name: "", category: "" });
       setShowExerciseModal(false);
+      setShowAddConfirmation(false);
+      setNewExercise({ name: "", category: "" });
     },
   });
 
-  const addMutationErrorRef = useClickOutside<HTMLDivElement>(() => addExercise.reset());
+  const [editedExercise, setEditedExercise] = useState({ name: "", category: "", id: "" });
+
+  useEffect(() => {
+    console.log("editedExercise", editedExercise);
+  }, [editedExercise]);
+
+  const editedExerciseNameProps = useFormValidation(
+    editedExercise.name,
+    v => v.length < 1 && "Nome vazio",
+    false,
+  );
+
+  const editedExerciseCategoryProps = useFormValidation(
+    editedExercise.category,
+    v => v.length < 1 && "Categoria vazia",
+    false,
+  );
+
+  const showEditModal = editedExercise.id !== "";
+
+  const [showEditConfirmation, setShowEditConfirmation] = useState(false);
 
   const editExercise = api.exercise.update.useMutation({
     onSuccess: () => {
@@ -91,9 +120,7 @@ const Dashboard = () => {
     },
   });
 
-  const showEditModal = editedExercise.id !== "";
-
-  const editMutationErrorRef = useClickOutside<HTMLDivElement>(() => editExercise.reset());
+  const [toBeRemoved, setToBeRemoved] = useState<{ id: string; name: string } | null>(null);
 
   const removeExercise = api.exercise.delete.useMutation({
     onSuccess: () => {
@@ -102,29 +129,80 @@ const Dashboard = () => {
     },
   });
 
-  const removeMutationErrorRef = useClickOutside<HTMLDivElement>(() => removeExercise.reset());
-
   return (
     <FullPage>
-      {toBeRemoved && (
+      {showExerciseModal && (
+        <Modal
+          onClickOutside={() => setShowExerciseModal(false)}
+          buttons={
+            <>
+              <button
+                onClick={() => setShowAddConfirmation(true)}
+                className="rounded-md bg-blue-500 px-3 py-1 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={newExercise.name === "" || newExercise.category === ""}
+              >
+                Adicionar
+              </button>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => setShowExerciseModal(false)}
+              >
+                Cancelar
+              </button>
+            </>
+          }
+        >
+          <h1 className="self-center font-medium">Adicionar exercício</h1>
+          <TextInput
+            label="Nome"
+            className="rounded-md bg-white"
+            value={newExercise.name}
+            onChange={name => setNewExercise({ ...newExercise, name })}
+            {...newExerciseNameProps}
+          />
+          <TextInput
+            label="Categoria"
+            list="categories"
+            className="rounded-md bg-white"
+            value={newExercise.category}
+            onChange={category => setNewExercise({ ...newExercise, category })}
+            {...newExerciseCategoryProps}
+          />
+          <datalist id="categories">
+            {groups.data?.map(group => (
+              <option key={group.category} value={group.category} />
+            ))}
+          </datalist>
+        </Modal>
+      )}
+      {showAddConfirmation && (
         <Alert
-          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
-          title={`Tem certeza que deseja remover ${toBeRemoved.name}?`}
-          text={`Todos os treinos que contém ${toBeRemoved.name} serão afetados, e não será possível desfazer esta ação`}
-          ref={removeAlertRef}
+          icon={
+            <ArrowDownTrayIcon className="h-10 w-10 rounded-full bg-green-200 p-2 text-green-600" />
+          }
+          title="Adicionar exercício"
+          text={`Tem certeza que deseja adicionar ${newExercise.name} como exercício na categoria ${newExercise.category}?`}
+          onClickOutside={() => setShowAddConfirmation(false)}
         >
           <button
-            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
-            onClick={() => removeExercise.mutate({ id: toBeRemoved.id })}
+            className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => addExercise.mutate(newExercise)}
+            disabled={addExercise.isLoading}
           >
-            Salvar alterações
+            {addExercise.isLoading ? (
+              <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+            ) : (
+              "Confirmar"
+            )}
           </button>
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={() => setToBeRemoved(null)}
-          >
-            Cancelar
-          </button>
+          {!addExercise.isLoading && (
+            <button
+              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+              onClick={() => setShowAddConfirmation(false)}
+            >
+              Cancelar
+            </button>
+          )}
         </Alert>
       )}
       {addExercise.error && (
@@ -132,7 +210,7 @@ const Dashboard = () => {
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Não foi possível criar o exercício"
           text="Não foi possível criar o exercício, tente novamente mais tarde"
-          ref={addMutationErrorRef}
+          onClickOutside={() => addExercise.reset()}
         >
           <button
             className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
@@ -142,19 +220,79 @@ const Dashboard = () => {
           </button>
         </Alert>
       )}
-      {removeExercise.error && (
+
+      {showEditModal && (
+        <Modal
+          onClickOutside={() => setEditedExercise({ name: "", category: "", id: "" })}
+          buttons={
+            <>
+              <button
+                onClick={() => setShowEditConfirmation(true)}
+                className="rounded-md bg-blue-500 px-3 py-1 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={editedExercise.name === "" || editedExercise.category === ""}
+              >
+                Salvar
+              </button>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => setEditedExercise({ name: "", category: "", id: "" })}
+              >
+                Cancelar
+              </button>
+            </>
+          }
+        >
+          <h1 className="self-center font-medium">Editar exercício</h1>
+          <TextInput
+            label="Nome"
+            className="rounded-md bg-white"
+            value={editedExercise.name}
+            onChange={name => setEditedExercise({ ...editedExercise, name })}
+            {...editedExerciseNameProps}
+          />
+          <TextInput
+            label="Categoria"
+            list="categories"
+            className="rounded-md bg-white"
+            value={editedExercise.category}
+            onChange={category => setEditedExercise({ ...editedExercise, category })}
+            {...editedExerciseCategoryProps}
+          />
+          <datalist id="categories">
+            {groups.data?.map(group => (
+              <option key={group.category} value={group.category} />
+            ))}
+          </datalist>
+        </Modal>
+      )}
+      {showEditConfirmation && (
         <Alert
-          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
-          title="Não foi possível remover o exercício"
-          text="Não foi possível remover o exercício, tente novamente mais tarde"
-          ref={removeMutationErrorRef}
+          icon={
+            <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-700" />
+          }
+          title="Alterar exercício"
+          text={`Tem certeza que deseja alterar ${editedExercise.name} como exercício na categoria ${editedExercise.category}?`}
+          onClickOutside={() => setShowEditConfirmation(false)}
         >
           <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={removeExercise.reset}
+            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => editExercise.mutate(editedExercise)}
+            disabled={editExercise.isLoading}
           >
-            OK
+            {editExercise.isLoading ? (
+              <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+            ) : (
+              "Confirmar"
+            )}
           </button>
+          {!editExercise.isLoading && (
+            <button
+              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+              onClick={() => setShowEditConfirmation(false)}
+            >
+              Cancelar
+            </button>
+          )}
         </Alert>
       )}
       {editExercise.error && (
@@ -162,7 +300,7 @@ const Dashboard = () => {
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Não foi possível editar o exercício"
           text="Não foi possível editar o exercício, tente novamente mais tarde"
-          ref={editMutationErrorRef}
+          onClickOutside={() => editExercise.reset()}
         >
           <button
             className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
@@ -172,6 +310,51 @@ const Dashboard = () => {
           </button>
         </Alert>
       )}
+
+      {toBeRemoved && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
+          title={`Tem certeza que deseja remover ${toBeRemoved.name}?`}
+          text={`Todos os treinos que contém ${toBeRemoved.name} serão afetados, e não será possível desfazer esta ação`}
+          onClickOutside={() => setToBeRemoved(null)}
+        >
+          <button
+            className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => removeExercise.mutate({ id: toBeRemoved.id })}
+            disabled={removeExercise.isLoading}
+          >
+            {removeExercise.isLoading ? (
+              <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+            ) : (
+              "Confirmar"
+            )}
+          </button>
+          {!removeExercise.isLoading && (
+            <button
+              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+              onClick={() => setToBeRemoved(null)}
+            >
+              Cancelar
+            </button>
+          )}
+        </Alert>
+      )}
+      {removeExercise.error && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
+          title="Não foi possível remover o exercício"
+          text="Não foi possível remover o exercício, tente novamente mais tarde"
+          onClickOutside={() => removeExercise.reset()}
+        >
+          <button
+            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+            onClick={removeExercise.reset}
+          >
+            OK
+          </button>
+        </Alert>
+      )}
+
       <QueryErrorAlert queries={[groups]} />
       <Header user={session?.user} />
       <div className="m-2 flex items-center gap-2">
@@ -237,89 +420,6 @@ const Dashboard = () => {
                     ))}
               </div>
             )
-          )}
-          {showExerciseModal && (
-            <Modal
-              ref={newExerciseModalRef}
-              buttons={
-                <>
-                  <button
-                    onClick={() => addExercise.mutate(newExercise)}
-                    className="rounded-md bg-blue-500 px-3 py-1 text-white shadow-md"
-                  >
-                    Adicionar
-                  </button>
-                  <button
-                    className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-                    onClick={() => setShowExerciseModal(false)}
-                  >
-                    Cancelar
-                  </button>
-                </>
-              }
-            >
-              <h1 className="self-center font-medium sm:self-auto">Adicionar exercício</h1>
-              <TextInput
-                label="Nome"
-                className="rounded-md bg-white"
-                value={newExercise.name}
-                onChange={name => setNewExercise({ ...newExercise, name })}
-              />
-              <TextInput
-                label="Categoria"
-                list="categories"
-                className="rounded-md bg-white"
-                value={newExercise.category}
-                onChange={category => setNewExercise({ ...newExercise, category })}
-              />
-              <datalist id="categories">
-                {groups.data?.map(group => (
-                  <option key={group.category} value={group.category} />
-                ))}
-              </datalist>
-            </Modal>
-          )}
-
-          {showEditModal && (
-            <Modal
-              ref={newExerciseModalRef}
-              buttons={
-                <>
-                  <button
-                    onClick={() => editExercise.mutate(editedExercise)}
-                    className="rounded-md bg-blue-500 px-3 py-1 text-white shadow-md"
-                  >
-                    Salvar
-                  </button>
-                  <button
-                    className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-                    onClick={() => setEditedExercise({ name: "", category: "", id: "" })}
-                  >
-                    Cancelar
-                  </button>
-                </>
-              }
-            >
-              <h1 className="self-center font-medium sm:self-auto">Editar exercício</h1>
-              <TextInput
-                label="Nome"
-                className="rounded-md bg-white"
-                value={editedExercise.name}
-                onChange={name => setEditedExercise({ ...editedExercise, name })}
-              />
-              <TextInput
-                label="Categoria"
-                list="categories"
-                className="rounded-md bg-white"
-                value={editedExercise.category}
-                onChange={category => setEditedExercise({ ...editedExercise, category })}
-              />
-              <datalist id="categories">
-                {groups.data?.map(group => (
-                  <option key={group.category} value={group.category} />
-                ))}
-              </datalist>
-            </Modal>
           )}
         </div>
       </div>

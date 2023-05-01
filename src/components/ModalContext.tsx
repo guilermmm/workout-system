@@ -1,14 +1,20 @@
-import React, { createContext, useContext, useMemo, useRef, useState } from "react";
+import React, { createContext, useContext, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { classList } from "../utils";
 
-type ModalContext = React.FC<{ className?: string; children: React.ReactNode }>;
+type ModalComponent = React.FC<{
+  className?: string;
+  onClickOutside?: React.MouseEventHandler;
+  children: React.ReactNode;
+}>;
 
-const modalContext = createContext<ModalContext>([false, {}] as unknown as ModalContext);
+type ModalContext = [ModalComponent, ModalComponent];
 
-const createShowModal: (ref: HTMLDivElement) => ModalContext =
+const modalContext = createContext<ModalContext>(null as unknown as ModalContext);
+
+const createShowModal: (ref: HTMLDivElement) => ModalComponent =
   ref =>
-  ({ className = "", children }) => {
+  ({ className = "", onClickOutside, children }) => {
     return ref
       ? createPortal(
           <div
@@ -16,6 +22,13 @@ const createShowModal: (ref: HTMLDivElement) => ModalContext =
               "absolute inset-0 flex flex-col items-center justify-center",
               className,
             )}
+            onClick={e => {
+              if (e.target === e.currentTarget) {
+                onClickOutside?.(e);
+              }
+
+              e.stopPropagation();
+            }}
           >
             {children}
           </div>,
@@ -25,24 +38,25 @@ const createShowModal: (ref: HTMLDivElement) => ModalContext =
   };
 
 export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
-  const [mounted, setMounted] = useState(false);
-  const modalContainerRef = useRef<HTMLDivElement | null>(null);
+  const [primary, setPrimary] = useState<HTMLDivElement | null>(null);
+  const [secondary, setSecondary] = useState<HTMLDivElement | null>(null);
 
-  const ShowModal = useMemo(
-    () => (modalContainerRef.current ? createShowModal(modalContainerRef.current) : () => null),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mounted],
+  const ShowPrimaryModal = useMemo(
+    () => (primary ? createShowModal(primary) : () => null),
+    [primary],
+  );
+
+  const ShowSecondaryModal = useMemo(
+    () => (secondary ? createShowModal(secondary) : () => null),
+    [secondary],
   );
 
   return (
-    <modalContext.Provider value={ShowModal}>
+    <modalContext.Provider value={[ShowPrimaryModal, ShowSecondaryModal]}>
       {children}
-      <div
-        ref={ref => {
-          modalContainerRef.current = ref;
-          setMounted(true);
-        }}
-      />
+      <div ref={setSecondary}>
+        <div ref={setPrimary} />
+      </div>
     </modalContext.Provider>
   );
 };

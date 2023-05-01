@@ -2,7 +2,7 @@ import type { Profile, User } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { Fragment, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useDebounce } from "use-debounce";
 import Alert from "../components/Alert";
 import ErrorPage from "../components/ErrorPage";
@@ -17,7 +17,7 @@ import PlusIcon from "../components/icons/PlusIcon";
 import XMarkIcon from "../components/icons/XMarkIcon";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
-import { classList, useClickOutside, useEndOfScroll, validateEmail } from "../utils";
+import { classList, useEndOfScroll, validateEmail } from "../utils";
 import { api } from "../utils/api";
 
 const Dashboard = () => {
@@ -42,10 +42,6 @@ const Dashboard = () => {
 
   const ref = useRef<HTMLDivElement>(null);
 
-  const errorRef = useClickOutside<HTMLDivElement>(() => setShowErrorAlert(false));
-
-  const mutationRef = useClickOutside<HTMLDivElement>(() => setShowMutateAlert(false));
-
   useEndOfScroll(ref, () => {
     if (profiles.hasNextPage && !profiles.isFetching) {
       void profiles.fetchNextPage();
@@ -65,7 +61,7 @@ const Dashboard = () => {
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="E-mail inválido"
           text="Digite um e-mail válido para cadastrar um novo usuário."
-          ref={errorRef}
+          onClickOutside={() => setShowErrorAlert(false)}
         >
           <button
             className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
@@ -80,7 +76,7 @@ const Dashboard = () => {
           icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
           title="Confirmar cadastro"
           text={`Tem certeza que deseja cadastrar o novo usuário ${searchInput}?`}
-          ref={mutationRef}
+          onClickOutside={() => setShowMutateAlert(false)}
         >
           {createProfile.isLoading ? (
             <div className="flex h-full items-center justify-center overflow-y-hidden">
@@ -95,7 +91,7 @@ const Dashboard = () => {
               <XMarkIcon className="h-24 w-24 rounded-full bg-red-200 p-2 text-red-600" />
             </div>
           ) : (
-            <Fragment>
+            <>
               <button
                 className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md"
                 onClick={() =>
@@ -116,7 +112,7 @@ const Dashboard = () => {
               >
                 Não
               </button>
-            </Fragment>
+            </>
           )}
         </Alert>
       )}
