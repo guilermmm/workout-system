@@ -71,7 +71,7 @@ const Calendar = ({ workouts, finishedWorkouts }: Props) => {
         </h2>
         <div className="h-1 w-full bg-gold-500" />
       </div>
-      <div className="grid w-[90%] max-w-[40rem] grid-cols-7 items-center justify-center rounded-2xl border-1 bg-slate-50 p-0.5 shadow-md">
+      <div className="grid w-full max-w-[40rem] grid-cols-7 items-center justify-center rounded-2xl border-1 bg-slate-50 p-0.5 shadow-md">
         {Object.values(weekdaysAbbrv).map(weekday => (
           <div
             key={weekday}

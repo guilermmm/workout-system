@@ -57,7 +57,6 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 
 - [x] página de editar treino
 - [x] fazer validação de form
-- [ ] alerta para confirmar cada mutation
 
 - [x] max-width em todas as listas verticais pra melhorar o visual no desktop
 - [x] embelezar histórico de treinos
@@ -75,6 +74,9 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] página de editar exercise
 - [x] transitar entre /home e /profile tocando pela foto no header
 - [x] botao de adicionar aluno no /dashboard
-- [ ] botar o carregamento nos botao q ta faltando
 - [x] ajeitar os input number
+
+- [ ] alerta para confirmar cada mutation
+- [ ] botar o carregamento nos botao q ta faltando
 - [ ] modal por cima de modal pra confirmar mutation em form de modal
+- [ ] modal pra cadastrar usuario
