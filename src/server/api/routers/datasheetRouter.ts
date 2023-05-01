@@ -3,36 +3,36 @@ import { z } from "zod";
 import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
 
 const datasheetInputModel = z.object({
-  weight: z.number().multipleOf(0.1),
-  height: z.number().multipleOf(0.1),
-  thorax: z.number().multipleOf(0.1),
-  waist: z.number().multipleOf(0.1),
-  abdomen: z.number().multipleOf(0.1),
-  hips: z.number().multipleOf(0.1),
-  rightThigh: z.number().multipleOf(0.1),
-  leftThigh: z.number().multipleOf(0.1),
-  rightArm: z.number().multipleOf(0.1),
-  leftArm: z.number().multipleOf(0.1),
-  rightCalf: z.number().multipleOf(0.1),
-  leftCalf: z.number().multipleOf(0.1),
+  weight: z.number().min(0),
+  height: z.number().min(0),
+  thorax: z.number().min(0),
+  waist: z.number().min(0),
+  abdomen: z.number().min(0),
+  hips: z.number().min(0),
+  rightThigh: z.number().min(0),
+  leftThigh: z.number().min(0),
+  rightArm: z.number().min(0),
+  leftArm: z.number().min(0),
+  rightCalf: z.number().min(0),
+  leftCalf: z.number().min(0),
 });
 
 const parseRequest = (
   datasheet: z.infer<typeof datasheetInputModel>,
 ): z.infer<typeof datasheetInputModel> => {
   return {
-    weight: Math.floor(datasheet.weight * 10),
-    height: Math.floor(datasheet.height * 10),
-    thorax: Math.floor(datasheet.thorax * 10),
-    waist: Math.floor(datasheet.waist * 10),
-    abdomen: Math.floor(datasheet.abdomen * 10),
-    hips: Math.floor(datasheet.hips * 10),
-    leftArm: Math.floor(datasheet.leftArm * 10),
-    rightArm: Math.floor(datasheet.rightArm * 10),
-    leftThigh: Math.floor(datasheet.leftThigh * 10),
-    rightThigh: Math.floor(datasheet.rightThigh * 10),
-    leftCalf: Math.floor(datasheet.leftCalf * 10),
-    rightCalf: Math.floor(datasheet.rightCalf * 10),
+    weight: Math.round(datasheet.weight * 100) * 10,
+    height: Math.round(datasheet.height * 10),
+    thorax: Math.round(datasheet.thorax * 10),
+    waist: Math.round(datasheet.waist * 10),
+    abdomen: Math.round(datasheet.abdomen * 10),
+    hips: Math.round(datasheet.hips * 10),
+    leftArm: Math.round(datasheet.leftArm * 10),
+    rightArm: Math.round(datasheet.rightArm * 10),
+    leftThigh: Math.round(datasheet.leftThigh * 10),
+    rightThigh: Math.round(datasheet.rightThigh * 10),
+    leftCalf: Math.round(datasheet.leftCalf * 10),
+    rightCalf: Math.round(datasheet.rightCalf * 10),
   };
 };
 
@@ -42,7 +42,7 @@ const parseResponse = (datasheet: Datasheet): Datasheet => {
   return {
     id: datasheet.id,
     profileId: datasheet.profileId,
-    weight: datasheet.weight / 10,
+    weight: datasheet.weight / 1000,
     height: datasheet.height / 10,
     thorax: datasheet.thorax / 10,
     waist: datasheet.waist / 10,

@@ -46,7 +46,7 @@ export const jsDateToWeekday = (date: Date): Weekday => {
   return dates[day];
 };
 
-type DatasheetKey = keyof Omit<Datasheet, "id" | "profileId" | "createdAt">;
+export type DatasheetMeasurement = keyof Omit<Datasheet, "id" | "profileId" | "createdAt">;
 
 export const dataSheetTranslation = {
   weight: "Peso",
@@ -61,7 +61,7 @@ export const dataSheetTranslation = {
   leftArm: "Braço Esq.",
   rightCalf: "Panturrilha Dir.",
   leftCalf: "Panturrilha Esq.",
-} as const satisfies Record<keyof Omit<Datasheet, "id" | "profileId" | "createdAt">, string>;
+} as const satisfies Record<DatasheetMeasurement, string>;
 
 export const dataSheetUnit = {
   weight: "kg",
@@ -76,7 +76,22 @@ export const dataSheetUnit = {
   leftArm: "cm",
   rightCalf: "cm",
   leftCalf: "cm",
-} as const satisfies Record<keyof Omit<Datasheet, "id" | "profileId" | "createdAt">, string>;
+} as const satisfies Record<DatasheetMeasurement, string>;
+
+export const dataSheetStep = {
+  weight: 0.01,
+  height: 0.1,
+  thorax: 0.1,
+  waist: 0.1,
+  abdomen: 0.1,
+  hips: 0.1,
+  rightThigh: 0.1,
+  leftThigh: 0.1,
+  rightArm: 0.1,
+  leftArm: 0.1,
+  rightCalf: 0.1,
+  leftCalf: 0.1,
+} as const satisfies Record<DatasheetMeasurement, number>;
 
 export const datasheetLayout = [
   ["weight", "height"],
@@ -85,7 +100,7 @@ export const datasheetLayout = [
   ["leftArm", "rightArm"],
   ["leftThigh", "rightThigh"],
   ["leftCalf", "rightCalf"],
-] satisfies [DatasheetKey, DatasheetKey][];
+] satisfies [DatasheetMeasurement, DatasheetMeasurement][];
 
 export const methodTranslation = {
   Standard: "Normal",

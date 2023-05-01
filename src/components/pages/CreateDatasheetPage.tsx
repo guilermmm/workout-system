@@ -2,7 +2,12 @@ import type { UseTRPCQueryResult } from "@trpc/react-query/shared";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import type { RouterOutputs } from "../../utils/api";
-import { dataSheetTranslation, dataSheetUnit, datasheetLayout } from "../../utils/consts";
+import {
+  dataSheetStep,
+  dataSheetTranslation,
+  dataSheetUnit,
+  datasheetLayout,
+} from "../../utils/consts";
 import Alert from "../Alert";
 import FullPage from "../FullPage";
 import NumberInput from "../NumberInput";
@@ -107,7 +112,7 @@ const CreateDatasheetPage = ({
                     value={datasheet[left]}
                     onChange={value => setDatasheet({ ...datasheet, [left]: value })}
                     min={0}
-                    step={0.1}
+                    step={dataSheetStep[left]}
                   />
                   <NumberInput
                     className="h-10 w-full bg-white"
@@ -115,7 +120,7 @@ const CreateDatasheetPage = ({
                     value={datasheet[right]}
                     onChange={value => setDatasheet({ ...datasheet, [right]: value })}
                     min={0}
-                    step={0.1}
+                    step={dataSheetStep[right]}
                   />
                 </div>
               ))}

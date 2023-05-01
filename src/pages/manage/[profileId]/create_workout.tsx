@@ -34,7 +34,7 @@ const exerciseParser = z.object({
   type: z.union([z.literal("reps"), z.literal("time")]),
   sets: z.array(
     z.object({
-      reps: z.number().min(1),
+      reps: z.number().min(0),
       weightKg: z.number().min(0),
       time: z.object({
         minutes: z.number().min(0),
@@ -134,7 +134,7 @@ const CreateWorkout = () => {
         method: Method.Standard,
         type: "reps",
         hidden: false,
-        sets: [{ reps: 1, weightKg: 0, time: { minutes: 0, seconds: 0 } }],
+        sets: [{ reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } }],
         biSet: null,
       },
     ]);

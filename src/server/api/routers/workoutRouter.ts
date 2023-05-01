@@ -69,7 +69,7 @@ export const workoutRouter = createTRPCRouter({
             z.object({
               exerciseId: z.string(),
               sets: z.union([
-                z.array(z.object({ reps: z.number().min(1), weight: z.number().min(0) })).min(1),
+                z.array(z.object({ reps: z.number().min(0), weight: z.number().min(0) })).min(1),
                 z.array(z.object({ time: z.number().min(0), weight: z.number().min(0) })).min(1),
               ]),
               description: z.string().nullish(),
@@ -115,7 +115,7 @@ export const workoutRouter = createTRPCRouter({
               id: z.string().optional(),
               exerciseId: z.string(),
               sets: z.union([
-                z.array(z.object({ reps: z.number().min(1), weight: z.number().min(0) })).min(1),
+                z.array(z.object({ reps: z.number().min(0), weight: z.number().min(0) })).min(1),
                 z.array(z.object({ time: z.number().min(0), weight: z.number().min(0) })).min(1),
               ]),
               description: z.string().nullish(),
