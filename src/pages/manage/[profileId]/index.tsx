@@ -79,7 +79,9 @@ const Manage = () => {
             disabled={changeStatus.isLoading}
           >
             {changeStatus.isLoading ? (
-              <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              <div className="flex h-full w-full items-center justify-center">
+                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              </div>
             ) : (
               "Confirmar"
             )}

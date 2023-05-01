@@ -138,7 +138,7 @@ const Dashboard = () => {
             <>
               <button
                 onClick={() => setShowAddConfirmation(true)}
-                className="rounded-md bg-blue-500 px-3 py-1 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={newExercise.name === "" || newExercise.category === ""}
               >
                 Adicionar
@@ -190,7 +190,9 @@ const Dashboard = () => {
             disabled={addExercise.isLoading}
           >
             {addExercise.isLoading ? (
-              <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              <div className="flex h-full w-full items-center justify-center">
+                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              </div>
             ) : (
               "Confirmar"
             )}
@@ -280,7 +282,9 @@ const Dashboard = () => {
             disabled={editExercise.isLoading}
           >
             {editExercise.isLoading ? (
-              <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              <div className="flex h-full w-full items-center justify-center">
+                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              </div>
             ) : (
               "Confirmar"
             )}
@@ -324,7 +328,9 @@ const Dashboard = () => {
             disabled={removeExercise.isLoading}
           >
             {removeExercise.isLoading ? (
-              <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              <div className="flex h-full w-full items-center justify-center">
+                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              </div>
             ) : (
               "Confirmar"
             )}

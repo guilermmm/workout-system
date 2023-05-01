@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { JSONValue } from "superjson/dist/types";
 import type { ZodType } from "zod";
 
@@ -101,7 +101,9 @@ export const useClickOutside = <T extends HTMLElement>(callback: (e: MouseEvent)
   return ref;
 };
 
-export function useEndOfScroll<T extends HTMLElement>(ref: RefObject<T>, callback: () => void) {
+export function useEndOfScroll<T extends HTMLElement>(callback: () => void) {
+  const ref = useRef<T | null>(null);
+
   const endOfScrollRef = useRef(false);
 
   const handleScroll = useCallback(() => {
@@ -132,6 +134,8 @@ export function useEndOfScroll<T extends HTMLElement>(ref: RefObject<T>, callbac
       el?.removeEventListener("touchmove", handleScroll);
     };
   }, [ref, handleScroll]);
+
+  return ref;
 }
 
 export const getDateArrayFromDate = (date: Date) => {

@@ -2,22 +2,23 @@ import type { Profile, User } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useDebounce } from "use-debounce";
 import Alert from "../components/Alert";
-import ErrorPage from "../components/ErrorPage";
 import FullPage from "../components/FullPage";
+import Modal from "../components/Modal";
 import ProfilePic from "../components/ProfilePic";
+import QueryErrorAlert from "../components/QueryErrorAlert";
 import Spinner from "../components/Spinner";
+import TextInput from "../components/TextInput";
 import Header from "../components/admin/Header";
 import AdminNavbar from "../components/admin/Navbar";
 import CheckIcon from "../components/icons/CheckIcon";
 import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
-import PlusIcon from "../components/icons/PlusIcon";
 import XMarkIcon from "../components/icons/XMarkIcon";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
-import { classList, useEndOfScroll, validateEmail } from "../utils";
+import { classList, useEndOfScroll, useFormValidation, validateEmail } from "../utils";
 import { api } from "../utils/api";
 
 const Dashboard = () => {
@@ -34,28 +35,39 @@ const Dashboard = () => {
     { search: debouncedInput },
     {
       getNextPageParam: lastPage => lastPage.nextCursor,
-      onSuccess: () => void createProfile.reset(),
     },
   );
 
-  const showAddButton = !profiles.isLoading && !profiles.data?.pages[0]?.items[0];
-
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEndOfScroll(ref, () => {
+  const ref = useEndOfScroll<HTMLDivElement>(() => {
     if (profiles.hasNextPage && !profiles.isFetching) {
       void profiles.fetchNextPage();
     }
   });
 
-  const createProfile = api.user.createProfile.useMutation();
+  const createProfile = api.user.createProfile.useMutation({
+    onSuccess: () => {
+      void profiles.refetch();
+      setShowMutateAlert(false);
+    },
+  });
 
-  if (profiles.error) {
-    return <ErrorPage />;
-  }
+  const [showModal, setShowModal] = useState(false);
+
+  const [email, setEmail] = useState("");
+
+  const emailProps = useFormValidation(
+    email,
+    v => {
+      if (!validateEmail(v)) {
+        return "E-mail inválido";
+      }
+    },
+    false,
+  );
 
   return (
     <FullPage>
+      <QueryErrorAlert queries={[profiles]} />
       {showErrorAlert && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
@@ -71,55 +83,73 @@ const Dashboard = () => {
           </button>
         </Alert>
       )}
+      {showModal && (
+        <Modal
+          onClickOutside={() => setShowModal(false)}
+          buttons={
+            <>
+              <button
+                onClick={() => setShowMutateAlert(true)}
+                className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!validateEmail(email)}
+              >
+                Cadastrar
+              </button>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => setShowModal(false)}
+              >
+                Cancelar
+              </button>
+            </>
+          }
+        >
+          <h1 className="self-center font-medium">Adicionar usuário</h1>
+          <TextInput
+            label="Email"
+            className="rounded-md bg-white"
+            value={email}
+            onChange={setEmail}
+            {...emailProps}
+          />
+        </Modal>
+      )}
       {showMutateAlert && (
         <Alert
           icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
           title="Confirmar cadastro"
-          text={`Tem certeza que deseja cadastrar o novo usuário ${searchInput}?`}
+          text={`Tem certeza que deseja cadastrar o novo usuário ${email}?`}
           onClickOutside={() => setShowMutateAlert(false)}
         >
-          {createProfile.isLoading ? (
-            <div className="flex h-full items-center justify-center overflow-y-hidden">
-              <Spinner className="h-24 w-24 fill-blue-600 text-gray-200" />
-            </div>
-          ) : createProfile.isSuccess ? (
-            <div className="flex h-full items-center justify-center overflow-y-hidden">
-              <CheckIcon className="h-24 w-24 rounded-full bg-green-300 p-2 text-green-600" />
-            </div>
-          ) : createProfile.isError ? (
-            <div className="flex h-full items-center justify-center overflow-y-hidden">
-              <XMarkIcon className="h-24 w-24 rounded-full bg-red-200 p-2 text-red-600" />
-            </div>
-          ) : (
-            <>
-              <button
-                className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md"
-                onClick={() =>
-                  createProfile.mutate(
-                    { email: searchInput },
-                    {
-                      onSuccess: () =>
-                        void profiles.refetch().then(() => setShowMutateAlert(false)),
-                    },
-                  )
-                }
-              >
-                Sim
-              </button>
-              <button
-                className="rounded-md border-1 bg-red-500 py-2 px-4 text-white shadow-md"
-                onClick={() => setShowMutateAlert(false)}
-              >
-                Não
-              </button>
-            </>
+          <button
+            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => {
+              createProfile.mutate({ email });
+              setEmail("");
+              setShowModal(false);
+            }}
+          >
+            {createProfile.isLoading ? (
+              <div className="flex h-full w-full items-center justify-center">
+                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              </div>
+            ) : (
+              "Confirmar"
+            )}
+          </button>
+          {!createProfile.isLoading && (
+            <button
+              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+              onClick={() => setShowMutateAlert(false)}
+            >
+              Cancelar
+            </button>
           )}
         </Alert>
       )}
-
       <Header user={session?.user} />
-      <div className="m-2">
-        <div className="relative">
+      <div className="m-2 flex items-center gap-2">
+        <div className="relative grow">
           <input
             type="text"
             className="block h-12 w-full appearance-none rounded-full pl-4 pr-12 shadow-md outline-none ring-0 focus:outline-none focus:ring-0"
@@ -128,6 +158,12 @@ const Dashboard = () => {
           />
           <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
         </div>
+        <button
+          className="h-full rounded-md bg-blue-500 px-4 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+          onClick={() => setShowModal(true)}
+        >
+          Adicionar usuário
+        </button>
       </div>
       <div className="grow overflow-y-auto" ref={ref}>
         <div className="mx-4 flex h-full flex-1 grow flex-col items-center gap-4">
@@ -136,24 +172,13 @@ const Dashboard = () => {
               <Spinner className="fill-blue-600 text-gray-200" />
             </div>
           ) : (
-            <div className="flex w-full max-w-[32rem] flex-col gap-1 pb-4">
-              {profiles.data.pages.flatMap(({ items }) =>
-                items.map(profile => <UserCard key={profile.id} profile={profile} />),
-              )}
-            </div>
-          )}
-          {showAddButton && (
-            <div className="flex flex-row items-center justify-center">
-              <button
-                className="mt-2 flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
-                onClick={() =>
-                  validateEmail(searchInput) ? setShowMutateAlert(true) : setShowErrorAlert(true)
-                }
-              >
-                Adicionar novo usuário
-                <PlusIcon className="h-8 w-8" />
-              </button>
-            </div>
+            profiles.data && (
+              <div className="flex w-full max-w-[32rem] flex-col gap-1 pb-4">
+                {profiles.data.pages.flatMap(({ items }) =>
+                  items.map(profile => <UserCard key={profile.id} profile={profile} />),
+                )}
+              </div>
+            )
           )}
         </div>
       </div>
