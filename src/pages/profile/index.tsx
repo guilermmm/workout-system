@@ -61,7 +61,7 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
           <div className="z-10 rounded-full bg-slate-100 p-2">
             <ProfilePic size="xl" user={user} />
           </div>
-          <h1 className="mt-2 w-full self-start truncate text-lg font-medium text-slate-900">
+          <h1 className="mt-2 w-full self-start truncate text-center text-lg font-medium text-slate-900">
             <span className="font-bold">{user.name}</span>
           </h1>
         </div>
