@@ -2,13 +2,13 @@ import type { Datasheet } from "@prisma/client";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { classList } from "../../utils";
-import { dataSheetTranslation, datasheetLayout } from "../../utils/consts";
+import { dataSheetTranslation, dataSheetUnit, datasheetLayout } from "../../utils/consts";
 import FullPage from "../FullPage";
 import MeasurementCard from "../MeasurementCard";
 import Spinner from "../Spinner";
+import UserProfileButton from "../UserProfileButton";
 import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
 import ChevronDownIcon from "../icons/ChevronDownIcon";
-import UserProfileButton from "../UserProfileButton";
 
 interface Props {
   dataSheetHistory: Datasheet[] | undefined;
@@ -88,14 +88,12 @@ const DataSheetCard = ({ datasheet: datasheet }: { datasheet: Datasheet }) => {
           {datasheetLayout.map(([left, right], i) => (
             <div key={i} className="flex flex-row gap-2">
               <MeasurementCard
-                title={dataSheetTranslation[left as keyof typeof dataSheetTranslation]}
-                value={`${datasheet[left as keyof typeof dataSheetTranslation]} ${
-                  left !== "weight" ? " cm" : " kg"
-                }`}
+                title={dataSheetTranslation[left]}
+                value={`${datasheet[left]} ${dataSheetUnit[left]}`}
               />
               <MeasurementCard
-                title={dataSheetTranslation[right as keyof typeof dataSheetTranslation]}
-                value={`${datasheet[right as keyof typeof dataSheetTranslation]} cm`}
+                title={dataSheetTranslation[right]}
+                value={`${datasheet[right]} ${dataSheetUnit[right]}`}
               />
             </div>
           ))}

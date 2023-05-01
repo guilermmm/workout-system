@@ -1,17 +1,28 @@
 import { useState } from "react";
 import Alert from "../components/Alert";
+import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
 import XMarkIcon from "../components/icons/XMarkIcon";
 import { useClickOutside } from "../utils";
 
 export default function Test() {
-  const [showAlert, setShowAlert] = useState(true);
+  const [showAlert, setShowAlert] = useState(false);
 
-  const [color, setColor] = useState([0, 0, 0] as [number, number, number]);
+  const [search, setSearch] = useState("");
 
   const cancelRef = useClickOutside<HTMLDivElement>(() => setShowAlert(false));
 
   return (
-    <div className="flex h-full flex-col items-center justify-center bg-slate-100">
+    <div className="flex h-full flex-col items-center justify-center gap-4 bg-slate-100">
+      <div className="relative">
+        <input
+          type="text"
+          className="block h-12 w-full appearance-none rounded-full border-1 pl-4 pr-12 shadow-md outline-none ring-0 focus:outline-none focus:ring-0"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
+      </div>
+
       <button
         type="button"
         className="rounded-md bg-slate-50 p-2 shadow-md"
@@ -19,21 +30,7 @@ export default function Test() {
       >
         Abrir
       </button>
-      <button
-        className="self-end rounded-md bg-slate-50 p-2 shadow-md"
-        style={{
-          backgroundColor: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
-          color: `rgb(${255 - color[0]}, ${255 - color[1]}, ${255 - color[2]})`,
-        }}
-        onClick={() => {
-          const red = Math.floor(Math.random() * 255);
-          const green = Math.floor(Math.random() * 255);
-          const blue = Math.floor(Math.random() * 255);
-          setColor([red, green, blue]);
-        }}
-      >
-        Change
-      </button>
+
       {showAlert && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-200 p-2 text-red-500" />}

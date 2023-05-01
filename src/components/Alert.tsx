@@ -12,7 +12,7 @@ function Alert({ icon, title, text, children }: Props, ref: ForwardedRef<HTMLDiv
   const ShowModal = useModal();
 
   return (
-    <ShowModal className="bg-black bg-opacity-25">
+    <ShowModal className="z-20 bg-black bg-opacity-25">
       <div
         className="m-2 flex max-w-lg flex-col gap-4 rounded-md bg-slate-50 p-6 shadow-md"
         ref={ref}

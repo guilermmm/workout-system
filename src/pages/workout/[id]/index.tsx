@@ -1,25 +1,25 @@
+import { Method, Weekday } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
 import { z } from "zod";
+import Alert from "../../../components/Alert";
+import FullPage from "../../../components/FullPage";
+import QueryErrorAlert from "../../../components/QueryErrorAlert";
 import Spinner from "../../../components/Spinner";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
 import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
 import CheckIcon from "../../../components/icons/CheckIcon";
+import ChevronDownIcon from "../../../components/icons/ChevronDownIcon";
+import ChevronUpIcon from "../../../components/icons/ChevronUpIcon";
 import ClockIcon from "../../../components/icons/ClockIcon";
+import ExclamationTriangleIcon from "../../../components/icons/ExclamationTriangleIcon";
+import InformationIcon from "../../../components/icons/InformationIcon";
 import { getServerAuthSession } from "../../../server/auth";
 import { classList, useClickOutside, useLocalStorage } from "../../../utils";
 import { api } from "../../../utils/api";
 import { methodExplanation, methodTranslation, weekdaysTranslation } from "../../../utils/consts";
-import InformationIcon from "../../../components/icons/InformationIcon";
-import Alert from "../../../components/Alert";
-import FullPage from "../../../components/FullPage";
-import QueryErrorAlert from "../../../components/QueryErrorAlert";
-import ChevronDownIcon from "../../../components/icons/ChevronDownIcon";
-import ChevronUpIcon from "../../../components/icons/ChevronUpIcon";
-import { Method, Weekday } from "@prisma/client";
-import ExclamationTriangleIcon from "../../../components/icons/ExclamationTriangleIcon";
 
 const exerciseParser = z.object({
   id: z.string(),
@@ -180,9 +180,9 @@ const Workout = () => {
         </div>
       </div>
       <div className="flex grow flex-col items-center overflow-y-auto">
-        <div className="w-full max-w-[48rem]">
+        <div className="min-h-full w-full max-w-[48rem]">
           {!workout && workoutQuery.isLoading ? (
-            <div className="flex h-full items-center justify-center overflow-y-auto">
+            <div className="flex h-full items-center justify-center">
               <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
             </div>
           ) : (

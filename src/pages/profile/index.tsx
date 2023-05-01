@@ -14,7 +14,7 @@ import ExclamationTriangleIcon from "../../components/icons/ExclamationTriangleI
 import { getServerAuthSession } from "../../server/auth";
 import { useClickOutside } from "../../utils";
 import { api } from "../../utils/api";
-import { dataSheetTranslation, datasheetLayout } from "../../utils/consts";
+import { dataSheetTranslation, dataSheetUnit, datasheetLayout } from "../../utils/consts";
 
 const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const latestDataSheet = api.datasheet.getLatestBySession.useQuery();
@@ -72,8 +72,8 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
           <ArrowRightOnRectangleIcon className="h-6 w-6" />
         </button>
       </div>
-      <div className="flex h-full grow flex-col items-center pb-4">
-        <div className="flex h-full w-full max-w-[40rem] grow flex-col items-center overflow-y-auto">
+      <div className="flex grow flex-col items-center pb-4">
+        <div className="flex w-full max-w-[40rem] grow flex-col items-center overflow-y-auto">
           <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2 p-2">
             <Link
               href="/profile/workout_history"
@@ -105,16 +105,12 @@ const Profile = ({ user }: InferGetServerSidePropsType<typeof getServerSideProps
                   {datasheetLayout.map(([left, right], i) => (
                     <div key={i} className="flex flex-row gap-2">
                       <MeasurementCard
-                        title={dataSheetTranslation[left as keyof typeof dataSheetTranslation]}
-                        value={`${
-                          latestDataSheet.data.latest![left as keyof typeof dataSheetTranslation]
-                        } ${left !== "weight" ? " cm" : " kg"}`}
+                        title={dataSheetTranslation[left]}
+                        value={`${latestDataSheet.data.latest![left]} ${dataSheetUnit[left]}`}
                       />
                       <MeasurementCard
-                        title={dataSheetTranslation[right as keyof typeof dataSheetTranslation]}
-                        value={`${
-                          latestDataSheet.data.latest![right as keyof typeof dataSheetTranslation]
-                        } cm`}
+                        title={dataSheetTranslation[right]}
+                        value={`${latestDataSheet.data.latest![right]} ${dataSheetUnit[right]}`}
                       />
                     </div>
                   ))}

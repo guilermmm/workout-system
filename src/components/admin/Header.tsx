@@ -24,7 +24,7 @@ const Header: React.FC<Props> = ({ user }) => {
         )}
       </div>
       <button
-        className="rounded-full p-2 text-blue-700 transition-colors hover:bg-white"
+        className="rounded-full p-4 text-blue-700 transition-colors hover:bg-white"
         onClick={() => void signOut()}
       >
         <ArrowRightOnRectangleIcon className="h-6 w-6" />

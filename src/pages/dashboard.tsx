@@ -4,21 +4,21 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Fragment, useRef, useState } from "react";
 import { useDebounce } from "use-debounce";
+import Alert from "../components/Alert";
 import ErrorPage from "../components/ErrorPage";
 import FullPage from "../components/FullPage";
 import ProfilePic from "../components/ProfilePic";
 import Spinner from "../components/Spinner";
 import Header from "../components/admin/Header";
 import AdminNavbar from "../components/admin/Navbar";
+import CheckIcon from "../components/icons/CheckIcon";
 import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
+import PlusIcon from "../components/icons/PlusIcon";
+import XMarkIcon from "../components/icons/XMarkIcon";
 import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
 import { classList, useClickOutside, useEndOfScroll, validateEmail } from "../utils";
 import { api } from "../utils/api";
-import PlusIcon from "../components/icons/PlusIcon";
-import Alert from "../components/Alert";
-import XMarkIcon from "../components/icons/XMarkIcon";
-import CheckIcon from "../components/icons/CheckIcon";
 
 const Dashboard = () => {
   const { data: session } = useSession();
@@ -126,7 +126,7 @@ const Dashboard = () => {
         <div className="relative">
           <input
             type="text"
-            className="h-12 w-full rounded-full border-2 pl-4 pr-12"
+            className="block h-12 w-full appearance-none rounded-full pl-4 pr-12 shadow-md outline-none ring-0 focus:outline-none focus:ring-0"
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
           />

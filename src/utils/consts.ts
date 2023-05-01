@@ -63,6 +63,21 @@ export const dataSheetTranslation = {
   leftCalf: "Panturrilha Esq.",
 } as const satisfies Record<keyof Omit<Datasheet, "id" | "profileId" | "createdAt">, string>;
 
+export const dataSheetUnit = {
+  weight: "kg",
+  height: "cm",
+  thorax: "cm",
+  waist: "cm",
+  abdomen: "cm",
+  hips: "cm",
+  rightThigh: "cm",
+  leftThigh: "cm",
+  rightArm: "cm",
+  leftArm: "cm",
+  rightCalf: "cm",
+  leftCalf: "cm",
+} as const satisfies Record<keyof Omit<Datasheet, "id" | "profileId" | "createdAt">, string>;
+
 export const datasheetLayout = [
   ["weight", "height"],
   ["thorax", "waist"],

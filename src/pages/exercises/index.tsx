@@ -178,7 +178,7 @@ const Dashboard = () => {
         <div className="relative grow">
           <input
             type="text"
-            className="h-12 w-full rounded-full border-2 pl-4 pr-12"
+            className="block h-12 w-full appearance-none rounded-full pl-4 pr-12 shadow-md outline-none ring-0 focus:outline-none focus:ring-0"
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
           />
