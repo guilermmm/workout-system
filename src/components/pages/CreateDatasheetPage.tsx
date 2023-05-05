@@ -40,7 +40,7 @@ const CreateDatasheetPage = ({
 }: Props) => {
   const router = useRouter();
 
-  const valid = Object.values(datasheet).every(value => value !== 0);
+  const valid = Object.values(datasheet).some(value => value !== 0);
 
   const [showAlert, setShowAlert] = useState(false);
 
