@@ -4,6 +4,38 @@ import { z } from "zod";
 import type { ParseJsonValues } from "../../../utils/types";
 import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
 
+const validateIndexes = (workout: { exercises: { index: number }[] }) => {
+  const indexes = workout.exercises.map(exercise => exercise.index);
+  return indexes.length === new Set(indexes).size;
+};
+
+const validateBiSets = (workout: {
+  biSets: [number, number][];
+  exercises: { index: number }[];
+}) => {
+  const biSets = workout.biSets.flat();
+  const indexes = workout.exercises.map(exercise => exercise.index);
+  const isUnique = biSets.length === new Set(biSets).size;
+  const isValid = biSets.every(index => indexes.includes(index));
+  return isUnique && isValid;
+};
+
+const validateBiSetsSets = (workout: {
+  biSets: [number, number][];
+  exercises: { index: number; sets: unknown[] }[];
+}) => {
+  const biSets = workout.biSets.map(
+    ([index1, index2]) =>
+      [
+        workout.exercises.find(exercise => exercise.index === index1)!,
+        workout.exercises.find(exercise => exercise.index === index2)!,
+      ] as const,
+  );
+  return biSets.every(
+    ([exercise1, exercise2]) => exercise1?.sets.length === exercise2?.sets.length,
+  );
+};
+
 export const workoutRouter = createTRPCRouter({
   getMany: adminProcedure
     .input(z.object({ profileId: z.string() }))
@@ -60,26 +92,30 @@ export const workoutRouter = createTRPCRouter({
 
   create: adminProcedure
     .input(
-      z.object({
-        profileId: z.string(),
-        name: z.string().min(1),
-        days: z.array(z.nativeEnum(Weekday)).min(1),
-        exercises: z
-          .array(
-            z.object({
-              exerciseId: z.string(),
-              sets: z.union([
-                z.array(z.object({ reps: z.number().min(0), weight: z.number().min(0) })).min(1),
-                z.array(z.object({ time: z.number().min(0), weight: z.number().min(0) })).min(1),
-              ]),
-              description: z.string().nullish(),
-              method: z.nativeEnum(Method),
-              index: z.number().min(0),
-            }),
-          )
-          .min(1),
-        biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
-      }),
+      z
+        .object({
+          profileId: z.string(),
+          name: z.string().min(1),
+          days: z.array(z.nativeEnum(Weekday)).min(1),
+          exercises: z
+            .array(
+              z.object({
+                exerciseId: z.string(),
+                sets: z.union([
+                  z.array(z.object({ reps: z.number().min(0), weight: z.number().min(0) })).min(1),
+                  z.array(z.object({ time: z.number().min(0), weight: z.number().min(0) })).min(1),
+                ]),
+                description: z.string().nullish(),
+                method: z.nativeEnum(Method),
+                index: z.number().min(0),
+              }),
+            )
+            .min(1),
+          biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
+        })
+        .refine(validateIndexes, "Exercise indexes must be unique")
+        .refine(validateBiSets, "BiSets must be unique and refer to valid exercises")
+        .refine(validateBiSetsSets, "BiSets must refer to exercises with the same number of sets"),
     )
     .mutation(async ({ ctx, input: { profileId, name, days, exercises, biSets } }) => {
       await ctx.prisma.$transaction(async tx => {
@@ -105,27 +141,31 @@ export const workoutRouter = createTRPCRouter({
 
   update: adminProcedure
     .input(
-      z.object({
-        id: z.string(),
-        name: z.string().min(1),
-        days: z.array(z.nativeEnum(Weekday)).min(1),
-        exercises: z
-          .array(
-            z.object({
-              id: z.string().optional(),
-              exerciseId: z.string(),
-              sets: z.union([
-                z.array(z.object({ reps: z.number().min(0), weight: z.number().min(0) })).min(1),
-                z.array(z.object({ time: z.number().min(0), weight: z.number().min(0) })).min(1),
-              ]),
-              description: z.string().nullish(),
-              method: z.nativeEnum(Method),
-              index: z.number().min(0),
-            }),
-          )
-          .min(1),
-        biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
-      }),
+      z
+        .object({
+          id: z.string(),
+          name: z.string().min(1),
+          days: z.array(z.nativeEnum(Weekday)).min(1),
+          exercises: z
+            .array(
+              z.object({
+                id: z.string().optional(),
+                exerciseId: z.string(),
+                sets: z.union([
+                  z.array(z.object({ reps: z.number().min(0), weight: z.number().min(0) })).min(1),
+                  z.array(z.object({ time: z.number().min(0), weight: z.number().min(0) })).min(1),
+                ]),
+                description: z.string().nullish(),
+                method: z.nativeEnum(Method),
+                index: z.number().min(0),
+              }),
+            )
+            .min(1),
+          biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
+        })
+        .refine(validateIndexes, "Exercise indexes must be unique")
+        .refine(validateBiSets, "BiSets must be unique and refer to valid exercises")
+        .refine(validateBiSetsSets, "BiSets must refer to exercises with the same number of sets"),
     )
     .mutation(async ({ ctx, input: { id: workoutId, name, days, exercises, biSets } }) => {
       await ctx.prisma.$transaction(async tx => {
