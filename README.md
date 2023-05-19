@@ -53,8 +53,6 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] arrumar as categorias dos treinos
 - [x] usuario contar as series
 
-- [x] pensar em opção para quem nao usa celular (isso aq ja foi resolvido pq ela disse q o fato do professor acessar ja serve)
-
 - [x] página de editar treino
 - [x] fazer validação de form
 
@@ -80,3 +78,11 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [ ] botar o carregamento nos botao q ta faltando
 - [x] modal por cima de modal pra confirmar mutation em form de modal
 - [x] modal pra cadastrar usuario
+
+- [x] poder salvar as medidas sem preencher tudo
+- [ ] marcar os dois exercicios do bi-set ao msm tempo ou colocar só um check pros dois exercicios
+- [ ] poder clicar no exercicio no calendario p saber quais foram completos e quais nao foram
+- [ ] aluno colocar o peso no exercicio
+- [ ] poder adicionar mais emails como adm, manter o email superuser no .env, pq só ele que vai poder adicionar e remover novos adm
+
+- [ ] pensar em opção para quem nao usa celular (conferir com ela a questao do pdf dps q fazer tudo)
