@@ -82,7 +82,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] poder salvar as medidas sem preencher tudo
 - [x] marcar os dois exercicios do bi-set ao msm tempo ou colocar só um check pros dois exercicios
 - [ ] poder clicar no exercicio no calendario p saber quais foram completos e quais nao foram
-- [ ] aluno colocar o peso no exercicio
+- [x] aluno colocar o peso no exercicio
 - [ ] poder colocar uma imagem no cadastro do exercicio
 - [x] poder adicionar mais emails como adm, manter o email superuser no .env, pq só ele que vai poder adicionar e remover novos adm
 
