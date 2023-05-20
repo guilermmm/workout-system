@@ -31,10 +31,15 @@ declare module "next-auth" {
  **/
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session({ session, user }) {
+    async session({ session, user }) {
+      const adminProfiles = await prisma.adminProfile.findMany();
       if (session.user) {
         session.user.id = user.id;
-        session.user.role = env.ADMIN_EMAIL === user.email ? "admin" : "user";
+        session.user.role =
+          env.ADMIN_EMAIL === user.email ||
+          adminProfiles.some(profile => profile.email === user.email)
+            ? "admin"
+            : "user";
       }
       return session;
     },
@@ -44,14 +49,17 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
 
-      if (user.email === env.ADMIN_EMAIL) {
+      const adminProfiles = await prisma.adminProfile.findMany();
+
+      if (
+        user.email === env.ADMIN_EMAIL ||
+        adminProfiles.some(profile => profile.email === user.email)
+      )
         return true;
-      }
 
       const profile = await prisma.profile.findUnique({ where: { email: user.email } });
 
       if (!profile || !profile.isActive) {
-        // TODO: redirect to a page telling the user he doesn't have access
         return "/unauthorized";
       }
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
+import { adminProcedure, createTRPCRouter, superAdminProcedure, userProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
   getProfileBySession: userProcedure.query(async ({ ctx }) => {
@@ -19,6 +19,40 @@ export const userRouter = createTRPCRouter({
     }
 
     return profile;
+  }),
+
+  getAdminProfileBySession: adminProcedure.query(async ({ ctx }) => {
+    const profile = await ctx.prisma.adminProfile.findUniqueOrThrow({
+      where: { email: ctx.session.user.email! },
+      include: { user: true },
+    });
+
+    if (profile.userId == null) {
+      await ctx.prisma.adminProfile.update({
+        where: { email: profile.email },
+        data: { userId: ctx.session.user.id, name: ctx.session.user.name! },
+        include: { user: true },
+      });
+    }
+  }),
+
+  getAdminProfiles: adminProcedure
+    .input(
+      z.object({
+        search: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input: { search } }) => {
+      return ctx.prisma.adminProfile.findMany({
+        where: {
+          OR: [{ user: { name: { contains: search } } }, { email: { contains: search } }],
+        },
+        include: { user: true },
+      });
+    }),
+
+  deleteAdminProfile: superAdminProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
+    await ctx.prisma.adminProfile.delete({ where: { id: input } });
   }),
 
   getProfileById: adminProcedure.input(z.string()).query(({ ctx, input }) => {
@@ -60,6 +94,18 @@ export const userRouter = createTRPCRouter({
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.prisma.profile.create({ data: { email: input.email } });
+    }),
+
+  createAdminProfile: superAdminProcedure
+    .input(z.object({ email: z.string().email() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.prisma.adminProfile.create({ data: { email: input.email } });
+    }),
+
+  deleteAdminProfileByEmail: superAdminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.prisma.adminProfile.delete({ where: { id: input.id } });
     }),
 
   deactivate: adminProcedure
