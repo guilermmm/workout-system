@@ -1,7 +1,7 @@
 import { Method, Weekday } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import type { ParseJsonValues } from "../../../utils/types";
+import type { ParseJsonValues, Sets } from "../../../utils/types";
 import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
 
 const validateIndexes = (workout: { exercises: { index: number }[] }) => {
@@ -58,6 +58,8 @@ export const workoutRouter = createTRPCRouter({
       include: { exercises: { include: { exercise: true } }, profile: { include: { user: true } } },
     });
 
+    workout.exercises.sort((a, b) => a.index - b.index);
+
     return workout as unknown as ParseJsonValues<typeof workout>;
   }),
 
@@ -75,17 +77,14 @@ export const workoutRouter = createTRPCRouter({
   }),
 
   getByIdBySession: userProcedure.input(z.string()).query(async ({ ctx, input }) => {
-    const workout = await ctx.prisma.workout.findUniqueOrThrow({
-      where: { id: input },
+    const workout = await ctx.prisma.workout.findFirstOrThrow({
+      where: { id: input, profile: { userId: ctx.session.user.id } },
       include: {
         exercises: { include: { exercise: true } },
-        profile: { include: { user: { select: { id: true } } } },
       },
     });
 
-    if (workout.profile.user?.id !== ctx.session.user.id) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
+    workout.exercises.sort((a, b) => a.index - b.index);
 
     return workout as unknown as ParseJsonValues<typeof workout>;
   }),
@@ -214,6 +213,60 @@ export const workoutRouter = createTRPCRouter({
 
         await tx.workout.update({ where: { id: workoutId }, data: { biSets: biSetsData } });
       });
+    }),
+
+  updateWeightsBySession: userProcedure
+    .input(
+      z.object({
+        workoutId: z.string(),
+        exercises: z.array(
+          z.object({
+            id: z.string(),
+            sets: z.array(z.number().min(0)),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input: { workoutId, exercises } }) => {
+      const unsafeWorkout = await ctx.prisma.workout.findFirstOrThrow({
+        where: { id: workoutId, profile: { userId: ctx.session.user.id } },
+        include: { exercises: true },
+      });
+      const workout = unsafeWorkout as unknown as ParseJsonValues<typeof unsafeWorkout>;
+
+      const isValid = exercises.every(({ id: exerciseId, sets }) =>
+        workout.exercises.some(
+          ({ id: workoutExerciseId, sets: workoutExerciseSets }) =>
+            exerciseId === workoutExerciseId && sets.length === workoutExerciseSets.length,
+        ),
+      );
+
+      if (!isValid) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Entrada inválida, verifique se os exercícios e séries estão corretos",
+        });
+      }
+
+      const updatedExercises = exercises.map(({ id, sets }) => {
+        const exercise = workout.exercises.find(exercise => exercise.id === id)!;
+
+        exercise.sets = exercise.sets.map((set, index) => {
+          set.weight = sets[index]!;
+          return set;
+        }) as Sets;
+
+        return exercise;
+      });
+
+      await ctx.prisma.$transaction(
+        updatedExercises.map(({ id, sets }) =>
+          ctx.prisma.exerciseInWorkout.updateMany({
+            where: { id },
+            data: { sets },
+          }),
+        ),
+      );
     }),
 
   delete: adminProcedure

@@ -326,7 +326,7 @@ const SetCard = <E extends ExerciseBase>({
 
   const weightProps = useFormValidation(set.weightKg, n => {
     if (n < 0) return "Peso deve ser maior ou igual a 0";
-    if (n % 0.25 !== 0) return "Peso deve ser múltiplo de 0.25";
+    if (n % 0.5 !== 0) return "Peso deve ser múltiplo de 0,5";
   });
 
   const minutesProps = useFormValidation(set.time.minutes, n => {
@@ -401,7 +401,7 @@ const SetCard = <E extends ExerciseBase>({
             updateSets(newSets);
           }}
           min={0}
-          step={0.25}
+          step={0.5}
           max={1000}
           disabled={disabled}
           {...weightProps}

@@ -1,11 +1,12 @@
 import { Method, Weekday } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
 import { z } from "zod";
 import Alert from "../../../components/Alert";
 import FullPage from "../../../components/FullPage";
+import NumberInput from "../../../components/NumberInput";
 import QueryErrorAlert from "../../../components/QueryErrorAlert";
 import Spinner from "../../../components/Spinner";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
@@ -17,7 +18,8 @@ import ClockIcon from "../../../components/icons/ClockIcon";
 import ExclamationTriangleIcon from "../../../components/icons/ExclamationTriangleIcon";
 import InformationIcon from "../../../components/icons/InformationIcon";
 import { getServerAuthSession } from "../../../server/auth";
-import { classList, useLocalStorage } from "../../../utils";
+import { classList, useFormValidation, useLocalStorage } from "../../../utils";
+import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
 import { methodExplanation, methodTranslation, weekdaysTranslation } from "../../../utils/consts";
 
@@ -55,13 +57,44 @@ const workoutParser = z.object({
 
 const storageParser = z.record(workoutParser);
 
+const timerParser = z.object({ startedAt: z.string(), finishedAt: z.string() });
+
+type Timer = z.infer<typeof timerParser>;
+
+const timerStorageParser = z.record(timerParser);
+
 type Exercise = z.infer<typeof exerciseParser>;
 type ExerciseGroup = { id: string; exercises: readonly [Exercise, Exercise] };
+
+const storageFromQuery = (workout: RouterOutputs["workout"]["getByIdBySession"]) => ({
+  name: workout.name,
+  days: workout.days,
+  exercises: workout.exercises.map(exercise => ({
+    id: exercise.id,
+    exercise: {
+      name: exercise.exercise.name,
+      category: exercise.exercise.category,
+    },
+    description: exercise.description,
+    method: exercise.method,
+    sets: exercise.sets.map(set =>
+      "reps" in set
+        ? { reps: set.reps, weight: set.weight, completed: false }
+        : { time: set.time, weight: set.weight, completed: false },
+    ),
+    collapsed: false,
+  })),
+  biSets: workout.biSets,
+});
 
 const Workout = () => {
   const router = useRouter();
 
   const { id } = router.query as { id: string };
+
+  const [timerStorage, setTimerStorage] = useLocalStorage("workout-timer", timerStorageParser, {});
+
+  const timerOn = Boolean(timerStorage[id] && !timerStorage[id]!.finishedAt);
 
   const [workoutStorage, setWorkoutStorage, resetWorkoutStorage, verifiedStorage] = useLocalStorage(
     "workout-training",
@@ -69,35 +102,46 @@ const Workout = () => {
     {},
   );
 
-  const workout = useMemo(() => workoutStorage[id], [id, workoutStorage]);
+  const workoutQuery = api.workout.getByIdBySession.useQuery(id, { enabled: false });
 
-  const workoutQuery = api.workout.getByIdBySession.useQuery(id, {
-    enabled: verifiedStorage && !workout,
-    onSuccess: data => {
-      setWorkoutStorage({
-        [id]: {
-          name: data.name,
-          days: data.days,
-          exercises: data.exercises.map(exercise => ({
-            id: exercise.id,
-            exercise: {
-              name: exercise.exercise.name,
-              category: exercise.exercise.category,
-            },
-            description: exercise.description,
-            method: exercise.method,
-            sets: exercise.sets.map(set =>
-              "reps" in set
-                ? { reps: set.reps, weight: set.weight, completed: false }
-                : { time: set.time, weight: set.weight, completed: false },
-            ),
-            collapsed: false,
-          })),
-          biSets: data.biSets,
-        },
-      });
-    },
-  });
+  useEffect(() => {
+    if (verifiedStorage && !workoutQuery.data) {
+      void workoutQuery.refetch();
+    }
+  }, [verifiedStorage, workoutQuery]);
+
+  const workout = useMemo(
+    () =>
+      workoutStorage[id] ?? (workoutQuery.data ? storageFromQuery(workoutQuery.data) : undefined),
+    [id, workoutQuery.data, workoutStorage],
+  );
+
+  const originalWeights = useMemo(
+    () =>
+      workoutQuery.data?.exercises.map(exercise => ({
+        id: exercise.id,
+        sets: exercise.sets.map(set => set.weight),
+      })) ?? [],
+    [workoutQuery.data],
+  );
+
+  const weightChanges = useMemo(
+    () =>
+      workout?.exercises
+        .filter(exercise =>
+          exercise.sets.some(
+            (set, i) =>
+              set.weight !== originalWeights.find(({ id }) => id === exercise.id)?.sets[i],
+          ),
+        )
+        .map(exercise => ({
+          id: exercise.id,
+          sets: exercise.sets.map(set => set.weight),
+        })) ?? [],
+    [workout, originalWeights],
+  );
+
+  const updateWeights = api.workout.updateWeightsBySession.useMutation({});
 
   const setWorkout = useCallback(
     (
@@ -111,14 +155,24 @@ const Workout = () => {
       const updatedWorkout = { ...workout, ...partialWorkout };
 
       const completedIndex =
-        partialWorkout.exercises?.findIndex(
-          (exercise, index) =>
-            exercise.sets.every(set => set.completed) &&
-            workout?.exercises[index]!.sets.some(set => !set.completed),
-        ) ?? -1;
+        partialWorkout.exercises?.findIndex((exercise, index) => {
+          const isCompleted = exercise.sets.every(set => set.completed);
+          const wasntCompleted = workout?.exercises[index]!.sets.some(set => !set.completed);
+          return isCompleted && wasntCompleted;
+        }) ?? -1;
 
       if (completedIndex !== -1) {
-        updatedWorkout.exercises[completedIndex]!.collapsed = true;
+        const biSet = updatedWorkout.biSets.find(biSet =>
+          biSet.includes(updatedWorkout.exercises[completedIndex]!.id),
+        );
+
+        if (biSet) {
+          const [a, b] = biSet;
+          updatedWorkout.exercises.find(e => e.id === a)!.collapsed = true;
+          updatedWorkout.exercises.find(e => e.id === b)!.collapsed = true;
+        } else {
+          updatedWorkout.exercises[completedIndex]!.collapsed = true;
+        }
 
         const nextIndex = updatedWorkout.exercises.findIndex(
           (e, i) => i > completedIndex && e.sets.some(set => !set.completed),
@@ -128,7 +182,7 @@ const Workout = () => {
         }
       }
 
-      setWorkoutStorage({ [id]: updatedWorkout });
+      setWorkoutStorage(s => ({ ...s, [id]: updatedWorkout }));
     },
     [id, workout, setWorkoutStorage],
   );
@@ -226,7 +280,9 @@ const Workout = () => {
                     key={group.id}
                     first={first}
                     second={second}
-                    setExercises={setExercises([first.id, second.id])}
+                    originalWeights={originalWeights}
+                    timerOn={timerOn}
+                    setExercises={setExercises}
                     collapsed={first.collapsed && second.collapsed}
                   />
                 );
@@ -237,10 +293,17 @@ const Workout = () => {
                 <ExerciseCard
                   key={exercise.id}
                   exercise={exercise}
+                  originalWeights={originalWeights.find(({ id }) => id === exercise.id)?.sets}
                   setCollapsed={collapsed => setExercise(exercise.id)({ collapsed })}
-                  setCompletedSet={(setIndex, completed) => {
+                  timerOn={timerOn}
+                  setSetCompleted={setIndex => completed => {
                     setExercise(exercise.id)(e => ({
                       sets: e.sets.map((set, i) => (i === setIndex ? { ...set, completed } : set)),
+                    }));
+                  }}
+                  setSetWeight={setIndex => weight => {
+                    setExercise(exercise.id)(e => ({
+                      sets: e.sets.map((set, i) => (i === setIndex ? { ...set, weight } : set)),
                     }));
                   }}
                 />
@@ -249,18 +312,45 @@ const Workout = () => {
           )}
         </div>
       </div>
-      <Footer workoutId={id} resetStorage={resetWorkoutStorage} verifiedStorage={verifiedStorage} />
+      <Footer
+        workoutId={id}
+        timer={timerStorage[id]}
+        setTimer={timer => setTimerStorage({ [id]: timer })}
+        resetStorage={resetWorkoutStorage}
+        verifiedStorage={verifiedStorage}
+        updateChanges={
+          weightChanges.length > 0
+            ? () =>
+                new Promise(resolve => {
+                  updateWeights.mutate(
+                    { workoutId: id, exercises: weightChanges },
+                    { onSuccess: resolve },
+                  );
+                }).then(() => void workoutQuery.refetch())
+            : undefined
+        }
+      />
     </FullPage>
   );
 };
 
 type ExerciseCardProps = {
   exercise: Exercise;
+  originalWeights?: number[];
+  timerOn: boolean;
   setCollapsed?: (collapsed: boolean) => void;
-  setCompletedSet: (setIndex: number, completed: boolean) => void;
+  setSetCompleted: (setIndex: number) => (completed: boolean) => void;
+  setSetWeight: (setIndex: number) => (weight: number) => void;
 };
 
-const ExerciseCard = ({ exercise, setCollapsed, setCompletedSet }: ExerciseCardProps) => {
+const ExerciseCard = ({
+  exercise,
+  originalWeights,
+  timerOn,
+  setCollapsed,
+  setSetCompleted,
+  setSetWeight,
+}: ExerciseCardProps) => {
   const [showAlert, setShowAlert] = useState(false);
 
   const uncollapsable = setCollapsed === undefined;
@@ -294,7 +384,7 @@ const ExerciseCard = ({ exercise, setCollapsed, setCompletedSet }: ExerciseCardP
           className={classList(
             "absolute right-2 top-2 rounded-full bg-white p-2 text-gray-400 shadow-md hover:bg-gray-300 hover:text-white",
           )}
-          onClick={() => setCollapsed(isCollapsed)}
+          onClick={() => setCollapsed(!isCollapsed)}
         >
           {isCollapsed ? (
             <ChevronDownIcon className="h-6 w-6" />
@@ -340,41 +430,15 @@ const ExerciseCard = ({ exercise, setCollapsed, setCompletedSet }: ExerciseCardP
         )}
         <div className="mt-2 flex flex-col text-sm text-slate-800">
           {exercise.sets.map((set, i) => (
-            <div
+            <MemoedSet
               key={i}
-              className="mx-2 mb-2 flex items-center justify-between rounded-md border-1 p-1.5 pl-3 shadow-md"
-            >
-              <div className="font-medium">{i + 1}.</div>
-              <div>
-                <span>Peso: </span>
-                <span className="font-medium">{fixWeight(set.weight)}kg</span>
-              </div>
-              {"time" in set ? (
-                <div>
-                  <span>Tempo: </span>
-                  <span className="font-medium">
-                    {set.time > 60 && `${Math.floor(set.time / 60)}min`}
-                  </span>
-                  <span className="font-medium">{set.time % 60 > 0 && ` ${set.time % 60}s`}</span>
-                </div>
-              ) : (
-                <div>
-                  <span className="font-medium">{set.reps}</span>
-                  <span> {set.reps > 1 ? "repetições" : "repetição"}</span>
-                </div>
-              )}
-              <button
-                className={classList("h-8 w-8 border-2 text-green-600 transition-all", {
-                  "rounded-lg border-slate-400": !set.completed,
-                  "rounded-2xl border-green-600": set.completed,
-                })}
-                onClick={() => setCompletedSet(i, !set.completed)}
-              >
-                <div className="flex h-full w-full items-center justify-center">
-                  {set.completed && <CheckIcon className="h-full w-full p-1" />}
-                </div>
-              </button>
-            </div>
+              index={i}
+              set={set}
+              originalWeight={originalWeights?.[i]}
+              timerOn={timerOn}
+              setCompleted={setSetCompleted(i)}
+              setWeight={setSetWeight(i)}
+            />
           ))}
         </div>
       </div>
@@ -382,17 +446,115 @@ const ExerciseCard = ({ exercise, setCollapsed, setCompletedSet }: ExerciseCardP
   );
 };
 
+type SetProps = {
+  index: number;
+  set: Exercise["sets"][number];
+  originalWeight?: number;
+  timerOn: boolean;
+  setCompleted: (completed: boolean) => void;
+  setWeight: (weight: number) => void;
+};
+
+const Set = ({ index, set, originalWeight, timerOn, setCompleted, setWeight }: SetProps) => {
+  const weightKg = set.weight / 1000;
+
+  const setWeightKg = (n: number) => setWeight(n * 1000);
+
+  const weightProps = useFormValidation(weightKg, n => {
+    if (n < 0) return "Peso deve ser maior ou igual a 0";
+    if (n % 0.5 !== 0) return "Peso deve ser múltiplo de 0,5";
+  });
+
+  return (
+    <div className="mx-2 mb-2 flex items-center justify-between rounded-md border-1 p-1.5 pl-3 shadow-md">
+      <div className="font-medium">{index + 1}.</div>
+
+      <div className="flex items-center gap-1">
+        <span>Peso (kg): </span>
+        <NumberInput
+          label="Peso (kg)"
+          className={classList("inline-block h-8 w-20 bg-white text-center", {
+            "font-medium": originalWeight !== undefined && set.weight !== originalWeight,
+          })}
+          value={weightKg}
+          onChange={setWeightKg}
+          min={0}
+          step={0.5}
+          max={1000}
+          {...weightProps}
+        />
+        {originalWeight !== undefined && originalWeight !== set.weight ? (
+          <button className="rounded-full p-2" onClick={() => setWeight(originalWeight)}>
+            <ArrowUturnLeftIcon className="h-4 w-4" />
+          </button>
+        ) : (
+          <div className="h-8 w-8" />
+        )}
+      </div>
+
+      {"time" in set ? (
+        <div>
+          <span>Tempo: </span>
+          <span className="font-medium">{set.time > 60 && `${Math.floor(set.time / 60)}min`}</span>
+          <span className="font-medium">{set.time % 60 > 0 && ` ${set.time % 60}s`}</span>
+        </div>
+      ) : (
+        <div>
+          <span className="font-medium">{set.reps}</span>
+          <span> {set.reps > 1 ? "repetições" : "repetição"}</span>
+        </div>
+      )}
+      {timerOn ? (
+        <button
+          className={classList("h-8 w-8 border-2 text-green-600 transition-all", {
+            "rounded-lg border-slate-400": !set.completed,
+            "rounded-2xl border-green-600": set.completed,
+          })}
+          onClick={() => setCompleted(!set.completed)}
+        >
+          <div className="flex h-full w-full items-center justify-center">
+            {set.completed && <CheckIcon className="h-full w-full p-1" />}
+          </div>
+        </button>
+      ) : (
+        <div className="h-8 w-8 p-2" />
+      )}
+    </div>
+  );
+};
+
+const MemoedSet = memo(Set);
+
 type BiSetCardProps = {
   first: Exercise;
   second: Exercise;
-  setExercises: (exercise: Partial<Exercise> | ((exercise: Exercise) => Partial<Exercise>)) => void;
+  originalWeights: { id: string; sets: number[] }[];
+  timerOn: boolean;
+  setExercises: (
+    ids: string[],
+  ) => (exercise: Partial<Exercise> | ((exercise: Exercise) => Partial<Exercise>)) => void;
   collapsed: boolean;
 };
 
-const BiSetCard = ({ first, second, setExercises, collapsed }: BiSetCardProps) => {
-  const setCompletedSet = (setIndex: number, completed: boolean) => {
-    setExercises(e => ({
+const BiSetCard = ({
+  first,
+  second,
+  originalWeights,
+  timerOn,
+  setExercises,
+  collapsed,
+}: BiSetCardProps) => {
+  const both = [first.id, second.id];
+
+  const setSetCompleted = (setIndex: number) => (completed: boolean) => {
+    setExercises(both)(e => ({
       sets: e.sets.map((set, i) => (i === setIndex ? { ...set, completed } : set)),
+    }));
+  };
+
+  const setSetWeight = (id: string) => (setIndex: number) => (weight: number) => {
+    setExercises([id])(e => ({
+      sets: e.sets.map((set, i) => (i === setIndex ? { ...set, weight } : set)),
     }));
   };
 
@@ -403,7 +565,7 @@ const BiSetCard = ({ first, second, setExercises, collapsed }: BiSetCardProps) =
       </div>
       <button
         className="absolute right-2 top-2 rounded-full bg-white p-2 text-gray-400 shadow-md hover:bg-gray-300 hover:text-white"
-        onClick={() => setExercises({ collapsed: !collapsed })}
+        onClick={() => setExercises(both)({ collapsed: !collapsed })}
       >
         {collapsed ? (
           <ChevronDownIcon className="h-6 w-6" />
@@ -432,8 +594,20 @@ const BiSetCard = ({ first, second, setExercises, collapsed }: BiSetCardProps) =
       >
         <div className="h-10" />
         <div className="flex flex-col items-stretch">
-          <ExerciseCard exercise={first} setCompletedSet={setCompletedSet} />
-          <ExerciseCard exercise={second} setCompletedSet={setCompletedSet} />
+          <ExerciseCard
+            exercise={first}
+            originalWeights={originalWeights.find(({ id }) => id === first.id)?.sets}
+            timerOn={timerOn}
+            setSetCompleted={setSetCompleted}
+            setSetWeight={setSetWeight(first.id)}
+          />
+          <ExerciseCard
+            exercise={second}
+            originalWeights={originalWeights.find(({ id }) => id === second.id)?.sets}
+            timerOn={timerOn}
+            setSetCompleted={setSetCompleted}
+            setSetWeight={setSetWeight(second.id)}
+          />
         </div>
       </div>
     </div>
@@ -448,28 +622,27 @@ const ExerciseLabel = ({ children }: { children: string }) => {
   );
 };
 
-const timerParser = z.object({ startedAt: z.string(), finishedAt: z.string() });
-
-const timerStorageParser = z.record(timerParser);
-
 type FooterProps = {
   workoutId: string;
+  timer?: Timer;
+  setTimer: (timer: Timer) => void;
   resetStorage: () => void;
   verifiedStorage: boolean;
+  updateChanges?: () => Promise<void>;
 };
 
-const Footer = ({ workoutId, resetStorage, verifiedStorage }: FooterProps) => {
+const Footer = ({
+  workoutId,
+  timer,
+  setTimer,
+  resetStorage,
+  verifiedStorage,
+  updateChanges,
+}: FooterProps) => {
   const [state, setState] = useState<"not-started" | "started" | "finished">("not-started");
 
-  const [timerStorage, setTimerStorage] = useLocalStorage("workout-timer", timerStorageParser, {});
-
-  const timer = timerStorage[workoutId];
-
-  const setTimer = (timer: { startedAt: string; finishedAt: string }) => {
-    setTimerStorage({ [workoutId]: timer });
-  };
-
-  const [showAlert, setShowAlert] = useState(false);
+  const [showFinishAlert, setShowFinishAlert] = useState(false);
+  const [showUpdateAlert, setShowUpdateAlert] = useState(false);
 
   const finishWorkout = api.user.finishWorkout.useMutation({
     onSuccess: () => {
@@ -479,7 +652,7 @@ const Footer = ({ workoutId, resetStorage, verifiedStorage }: FooterProps) => {
         startedAt: timer?.startedAt ?? new Date().toISOString(),
         finishedAt: new Date().toISOString(),
       });
-      setShowAlert(false);
+      setShowFinishAlert(false);
       resetStorage();
     },
   });
@@ -525,59 +698,110 @@ const Footer = ({ workoutId, resetStorage, verifiedStorage }: FooterProps) => {
           >
             {fixTimer(hours)}h {fixTimer(minutes)}min {fixTimer(seconds)}s
           </div>
-          {state === "not-started" ? (
-            <button
-              className="flex items-center gap-3 rounded-full border-2 border-blue-600 bg-white px-6 py-2 font-medium text-blue-600"
-              onClick={() => {
-                setState("started");
-                reset(undefined, true);
-                setTimer({ startedAt: new Date().toISOString(), finishedAt: "" });
-              }}
-            >
-              Iniciar treino
-              <ClockIcon className="h-6 w-6" />
-            </button>
-          ) : state === "started" ? (
-            <button
-              className="flex items-center gap-3 rounded-full border-2 border-gold-500 bg-gold-500 px-6 py-2 font-medium text-slate-900"
-              onClick={() => {
-                setShowAlert(true);
-              }}
-            >
-              Concluir treino
-              <CheckCircleIcon className="h-6 w-6" />
-            </button>
-          ) : (
-            <div className="flex items-center border-2 border-transparent px-6 py-2 font-medium text-green-600">
-              Treino finalizado
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {updateChanges && (
+              <button
+                className="flex items-center gap-3 rounded-full border-2 border-blue-600 bg-blue-600 px-6 py-2 font-medium text-white"
+                onClick={() => setShowUpdateAlert(true)}
+              >
+                Salvar alterações <CheckCircleIcon className="h-6 w-6" />
+              </button>
+            )}
+            {state === "not-started" ? (
+              <button
+                className="flex items-center gap-3 rounded-full border-2 border-blue-600 bg-white px-6 py-2 font-medium text-blue-600"
+                onClick={() => {
+                  setState("started");
+                  reset(undefined, true);
+                  setTimer({ startedAt: new Date().toISOString(), finishedAt: "" });
+                }}
+              >
+                Iniciar treino
+                <ClockIcon className="h-6 w-6" />
+              </button>
+            ) : state === "started" ? (
+              <button
+                className="flex items-center gap-3 rounded-full border-2 border-green-600 bg-green-600 px-6 py-2 font-medium text-white"
+                onClick={() => setShowFinishAlert(true)}
+              >
+                Concluir treino
+                <CheckCircleIcon className="h-6 w-6" />
+              </button>
+            ) : (
+              <div className="flex items-center border-2 border-transparent px-6 py-2 font-medium text-green-600">
+                Treino finalizado
+              </div>
+            )}
+          </div>
         </>
       ) : (
         <div className="text-slate-900/500 font-medium">Buscando dados do treino...</div>
       )}
 
-      {showAlert && (
+      {showFinishAlert && (
         <Alert
           icon={
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-600" />
           }
           title="Finalizar treino"
-          text="Tem certeza que deseja finalizar o treino?"
+          text={`Tem certeza que deseja finalizar o treino?${
+            updateChanges ? " Há alterações nos pesos dos exercícios que não foram salvas." : ""
+          }`}
+        >
+          {updateChanges ? (
+            <>
+              <button
+                className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
+                onClick={() => {
+                  void updateChanges().then(() =>
+                    finishWorkout.mutate({ date: new Date(), workoutId }),
+                  );
+                }}
+              >
+                Salvar e finalizar
+              </button>
+              <button
+                className="rounded-md border-1 border-red-500 bg-red-500 py-2 px-4 text-white shadow-md"
+                onClick={() => finishWorkout.mutate({ date: new Date(), workoutId })}
+              >
+                Finalizar sem salvar
+              </button>
+            </>
+          ) : (
+            <button
+              className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
+              onClick={() => finishWorkout.mutate({ date: new Date(), workoutId })}
+            >
+              Confirmar
+            </button>
+          )}
+          <button
+            className="rounded-md border-1 py-2 px-4 shadow-md"
+            onClick={() => setShowFinishAlert(false)}
+          >
+            Cancelar
+          </button>
+        </Alert>
+      )}
+      {updateChanges && showUpdateAlert && (
+        <Alert
+          icon={
+            <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-600" />
+          }
+          title="Salvar alterações"
+          text="Tem certeza que deseja salvar as alterações nos pesos dos exercícios?"
         >
           <button
             className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
             onClick={() => {
-              finishWorkout.mutate({ date: new Date(), workoutId });
+              void updateChanges().then(() => setShowUpdateAlert(false));
             }}
           >
             Confirmar
           </button>
           <button
             className="rounded-md border-1 py-2 px-4 shadow-md"
-            onClick={() => {
-              setShowAlert(false);
-            }}
+            onClick={() => setShowUpdateAlert(false)}
           >
             Cancelar
           </button>
@@ -588,7 +812,6 @@ const Footer = ({ workoutId, resetStorage, verifiedStorage }: FooterProps) => {
 };
 
 const fixTimer = (num: number) => num.toString().padStart(2, "0");
-const fixWeight = (w: number) => (w % 1000 === 0 ? w / 1000 : (w / 1000).toFixed(2));
 
 export default Workout;
 

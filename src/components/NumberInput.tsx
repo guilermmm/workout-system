@@ -52,7 +52,7 @@ const NumberInput: React.FC<Props> = ({
         <input
           type="number"
           className={classList(
-            "peer block h-full w-full appearance-none border-gray-300 bg-transparent px-2 pb-1 pt-1.5 text-sm text-gray-900 outline-none ring-0 duration-300 invalid:border-red-500 invalid:text-red-500 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 [&:not(:invalid):focus]:border-blue-600",
+            "peer block h-full w-full appearance-none border-gray-300 bg-transparent px-2 pb-1 pt-1.5 text-sm text-gray-900 outline-none ring-0 transition-none duration-300 invalid:border-red-500 invalid:text-red-500 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 [&:not(:invalid):focus]:border-blue-600",
             {
               "rounded-lg border-1": model === "outline",
               "border-b-2": model === "floor",
@@ -69,7 +69,7 @@ const NumberInput: React.FC<Props> = ({
         />
         <label
           className={classList(
-            "pointer-events-none absolute top-2 left-1 origin-[0] -translate-y-4 scale-75 transform cursor-text bg-inherit px-2 text-sm duration-300 peer-invalid:text-red-500 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-[&:not(:invalid):focus]:text-blue-600",
+            "pointer-events-none absolute top-2 left-1 origin-[0] -translate-y-4 scale-75 transform cursor-text bg-inherit px-2 text-sm duration-300 peer-invalid:text-red-500 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-[&:not(:invalid):focus]:text-blue-600 transition-none",
             {
               "text-red-500": error !== undefined,
               "text-gray-500 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100":
