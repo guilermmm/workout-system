@@ -74,49 +74,56 @@ const Workout = () => {
   const workoutQuery = api.workout.getByIdBySession.useQuery(id, {
     enabled: verifiedStorage && !workout,
     onSuccess: data => {
-      setWorkout({
-        name: data.name,
-        days: data.days,
-        exercises: data.exercises.map(exercise => ({
-          id: exercise.id,
-          exercise: {
-            name: exercise.exercise.name,
-            category: exercise.exercise.category,
-          },
-          description: exercise.description,
-          method: exercise.method,
-          sets: exercise.sets.map(set =>
-            "reps" in set
-              ? { reps: set.reps, weight: set.weight, completed: false }
-              : { time: set.time, weight: set.weight, completed: false },
-          ),
-          collapsed: false,
-        })),
-        biSets: data.biSets,
+      setWorkoutStorage({
+        [id]: {
+          name: data.name,
+          days: data.days,
+          exercises: data.exercises.map(exercise => ({
+            id: exercise.id,
+            exercise: {
+              name: exercise.exercise.name,
+              category: exercise.exercise.category,
+            },
+            description: exercise.description,
+            method: exercise.method,
+            sets: exercise.sets.map(set =>
+              "reps" in set
+                ? { reps: set.reps, weight: set.weight, completed: false }
+                : { time: set.time, weight: set.weight, completed: false },
+            ),
+            collapsed: false,
+          })),
+          biSets: data.biSets,
+        },
       });
     },
   });
 
   const setWorkout = useCallback(
-    (newWorkout: Partial<NonNullable<typeof workout>>) => {
-      const updatedWorkout = { ...workout!, ...newWorkout };
+    (
+      newWorkout:
+        | Partial<NonNullable<typeof workout>>
+        | ((previousWorkout: NonNullable<typeof workout>) => Partial<NonNullable<typeof workout>>),
+    ) => {
+      if (!workout) return;
 
-      const index = newWorkout.exercises?.findIndex(
-        (exercise, index) =>
-          exercise.sets.every(set => set.completed) &&
-          workout?.exercises[index]!.sets.some(set => !set.completed),
-      );
+      const partialWorkout = typeof newWorkout === "function" ? newWorkout(workout) : newWorkout;
+      const updatedWorkout = { ...workout, ...partialWorkout };
 
-      if (index !== undefined && index !== -1) {
-        updatedWorkout.exercises[index]!.collapsed = true;
+      const completedIndex =
+        partialWorkout.exercises?.findIndex(
+          (exercise, index) =>
+            exercise.sets.every(set => set.completed) &&
+            workout?.exercises[index]!.sets.some(set => !set.completed),
+        ) ?? -1;
+
+      if (completedIndex !== -1) {
+        updatedWorkout.exercises[completedIndex]!.collapsed = true;
 
         const nextIndex = updatedWorkout.exercises.findIndex(
-          (e, i) => i > index && e.sets.some(set => !set.completed),
+          (e, i) => i > completedIndex && e.sets.some(set => !set.completed),
         );
         if (nextIndex !== -1) {
-          console.log(nextIndex);
-          console.log(updatedWorkout.exercises[nextIndex]);
-
           updatedWorkout.exercises[nextIndex]!.collapsed = false;
         }
       }
@@ -124,6 +131,31 @@ const Workout = () => {
       setWorkoutStorage({ [id]: updatedWorkout });
     },
     [id, workout, setWorkoutStorage],
+  );
+
+  const setExercises = useCallback(
+    (ids: string[]) =>
+      (newExercise: Partial<Exercise> | ((exercise: Exercise) => Partial<Exercise>)) => {
+        setWorkout(w => ({
+          exercises: w.exercises.map(exercise => {
+            if (ids.includes(exercise.id)) {
+              const partialExercise =
+                typeof newExercise === "function" ? newExercise(exercise) : newExercise;
+              return { ...exercise, ...partialExercise };
+            }
+            return exercise;
+          }),
+        }));
+      },
+    [setWorkout],
+  );
+
+  const setExercise = useCallback(
+    (id: string) =>
+      (newExercise: Partial<Exercise> | ((exercise: Exercise) => Partial<Exercise>)) => {
+        setExercises([id])(newExercise);
+      },
+    [setExercises],
   );
 
   const groups = useMemo(
@@ -188,35 +220,14 @@ const Workout = () => {
           ) : (
             groups?.map(group => {
               if ("exercises" in group) {
-                const [a, b] = group.exercises;
-
+                const [first, second] = group.exercises;
                 return (
                   <BiSetCard
                     key={group.id}
-                    first={a}
-                    setFirst={first => {
-                      setWorkout({
-                        exercises: workout!.exercises.map(e =>
-                          e.id === a.id ? { ...e, ...first } : e,
-                        ),
-                      });
-                    }}
-                    second={b}
-                    setSecond={second => {
-                      setWorkout({
-                        exercises: workout!.exercises.map(e =>
-                          e.id === b.id ? { ...e, ...second } : e,
-                        ),
-                      });
-                    }}
-                    collapsed={a.collapsed && b.collapsed}
-                    setCollapsed={collapsed => {
-                      setWorkout({
-                        exercises: workout!.exercises.map(e =>
-                          e.id === a.id || e.id === b.id ? { ...e, collapsed } : e,
-                        ),
-                      });
-                    }}
+                    first={first}
+                    second={second}
+                    setExercises={setExercises([first.id, second.id])}
+                    collapsed={first.collapsed && second.collapsed}
                   />
                 );
               }
@@ -225,17 +236,12 @@ const Workout = () => {
               return (
                 <ExerciseCard
                   key={exercise.id}
-                  description={exercise.description}
-                  exercise={exercise.exercise}
-                  sets={exercise.sets}
-                  method={exercise.method}
-                  collapsed={exercise.collapsed}
-                  setSelf={self => {
-                    setWorkout({
-                      exercises: workout!.exercises.map(e =>
-                        e.id === exercise.id ? { ...e, ...self } : e,
-                      ),
-                    });
+                  exercise={exercise}
+                  setCollapsed={collapsed => setExercise(exercise.id)({ collapsed })}
+                  setCompletedSet={(setIndex, completed) => {
+                    setExercise(exercise.id)(e => ({
+                      sets: e.sets.map((set, i) => (i === setIndex ? { ...set, completed } : set)),
+                    }));
                   }}
                 />
               );
@@ -243,33 +249,23 @@ const Workout = () => {
           )}
         </div>
       </div>
-      <Footer
-        workoutId={id}
-        resetStorage={() => resetWorkoutStorage()}
-        verifiedStorage={verifiedStorage}
-      />
+      <Footer workoutId={id} resetStorage={resetWorkoutStorage} verifiedStorage={verifiedStorage} />
     </FullPage>
   );
 };
 
-type ExerciseCardProps = Pick<Exercise, "description" | "exercise" | "sets" | "method"> & {
-  collapsed: boolean;
-  setSelf: (exercise: Partial<Exercise>) => void;
-  uncollapsable?: boolean;
+type ExerciseCardProps = {
+  exercise: Exercise;
+  setCollapsed?: (collapsed: boolean) => void;
+  setCompletedSet: (setIndex: number, completed: boolean) => void;
 };
 
-const ExerciseCard = ({
-  description,
-  exercise,
-  sets,
-  method,
-  collapsed,
-  setSelf,
-  uncollapsable = false,
-}: ExerciseCardProps) => {
+const ExerciseCard = ({ exercise, setCollapsed, setCompletedSet }: ExerciseCardProps) => {
   const [showAlert, setShowAlert] = useState(false);
 
-  const isCollapsed = collapsed && !uncollapsable;
+  const uncollapsable = setCollapsed === undefined;
+
+  const isCollapsed = exercise.collapsed && !uncollapsable;
 
   return (
     <div className="relative m-2 flex flex-col justify-between rounded-lg bg-white pt-2 shadow-md">
@@ -278,8 +274,8 @@ const ExerciseCard = ({
           icon={
             <InformationIcon className="h-10 w-10 rounded-full bg-blue-200 p-2 text-blue-600" />
           }
-          title={methodTranslation[method]}
-          text={methodExplanation[method]}
+          title={methodTranslation[exercise.method]}
+          text={methodExplanation[exercise.method]}
           onClickOutside={() => setShowAlert(false)}
         >
           <button
@@ -291,16 +287,16 @@ const ExerciseCard = ({
         </Alert>
       )}
       <div className="absolute left-4 top-4">
-        <span className="font-medium text-blue-600">{exercise.name}</span>
+        <span className="font-medium text-blue-600">{exercise.exercise.name}</span>
       </div>
       {!uncollapsable && (
         <button
           className={classList(
             "absolute right-2 top-2 rounded-full bg-white p-2 text-gray-400 shadow-md hover:bg-gray-300 hover:text-white",
           )}
-          onClick={() => setSelf({ collapsed: !collapsed })}
+          onClick={() => setCollapsed(isCollapsed)}
         >
-          {collapsed ? (
+          {isCollapsed ? (
             <ChevronDownIcon className="h-6 w-6" />
           ) : (
             <ChevronUpIcon className="h-6 w-6" />
@@ -324,47 +320,47 @@ const ExerciseCard = ({
         <div className="flex flex-col px-4">
           <div className=" flex h-10 flex-row items-center justify-between">
             <div className="flex flex-row flex-wrap items-center">
-              <div className="opacity-0">{exercise.name}</div>
-              <div className="ml-4 text-sm text-slate-600">{exercise.category}</div>
+              <div className="opacity-0">{exercise.exercise.name}</div>
+              <div className="ml-4 text-sm text-slate-600">{exercise.exercise.category}</div>
             </div>
-            {method !== "Standard" && (
+            {exercise.method !== "Standard" && (
               <div className="mr-10 text-sm">
                 <button className="flex items-center gap-1" onClick={() => setShowAlert(true)}>
-                  {methodTranslation[method as keyof typeof methodTranslation]}
+                  {methodTranslation[exercise.method as keyof typeof methodTranslation]}
                   <InformationIcon className="h-6 w-6" />
                 </button>
               </div>
             )}
           </div>
         </div>
-        {description && (
+        {exercise.description && (
           <div className="mx-2 mb-2 rounded-md border-1 p-2 text-sm text-slate-800 shadow-inner">
-            {description}
+            {exercise.description}
           </div>
         )}
-        <div className="mt-2 flex flex-col text-sm font-medium text-slate-800">
-          {sets.map((set, i) => (
+        <div className="mt-2 flex flex-col text-sm text-slate-800">
+          {exercise.sets.map((set, i) => (
             <div
               key={i}
               className="mx-2 mb-2 flex items-center justify-between rounded-md border-1 p-1.5 pl-3 shadow-md"
             >
-              <div>{i + 1}.</div>
+              <div className="font-medium">{i + 1}.</div>
               <div>
-                <span className="font-normal">Peso: </span>
-                <span>{fixWeight(set.weight)}kg</span>
+                <span>Peso: </span>
+                <span className="font-medium">{fixWeight(set.weight)}kg</span>
               </div>
               {"time" in set ? (
                 <div>
-                  {set.time < 60
-                    ? `${set.time} segundos`
-                    : set.time === 60
-                    ? "1 minuto"
-                    : `${set.time / 60} minutos ${set.time % 60} segundos`}
+                  <span>Tempo: </span>
+                  <span className="font-medium">
+                    {set.time > 60 && `${Math.floor(set.time / 60)}min`}
+                  </span>
+                  <span className="font-medium">{set.time % 60 > 0 && ` ${set.time % 60}s`}</span>
                 </div>
               ) : (
                 <div>
-                  <span>{set.reps}</span>
-                  <span className="font-normal"> {set.reps > 1 ? "repetições" : "repetição"}</span>
+                  <span className="font-medium">{set.reps}</span>
+                  <span> {set.reps > 1 ? "repetições" : "repetição"}</span>
                 </div>
               )}
               <button
@@ -372,13 +368,7 @@ const ExerciseCard = ({
                   "rounded-lg border-slate-400": !set.completed,
                   "rounded-2xl border-green-600": set.completed,
                 })}
-                onClick={() => {
-                  setSelf({
-                    sets: sets.map((set, j) =>
-                      j === i ? { ...set, completed: !set.completed } : set,
-                    ),
-                  });
-                }}
+                onClick={() => setCompletedSet(i, !set.completed)}
               >
                 <div className="flex h-full w-full items-center justify-center">
                   {set.completed && <CheckIcon className="h-full w-full p-1" />}
@@ -394,31 +384,26 @@ const ExerciseCard = ({
 
 type BiSetCardProps = {
   first: Exercise;
-  setFirst: (exercise: Exercise) => void;
   second: Exercise;
-  setSecond: (exercise: Exercise) => void;
+  setExercises: (exercise: Partial<Exercise> | ((exercise: Exercise) => Partial<Exercise>)) => void;
   collapsed: boolean;
-  setCollapsed: (collapsed: boolean) => void;
 };
 
-const BiSetCard = ({
-  first,
-  setFirst,
-  second,
-  setSecond,
-  collapsed,
-  setCollapsed,
-}: BiSetCardProps) => {
+const BiSetCard = ({ first, second, setExercises, collapsed }: BiSetCardProps) => {
+  const setCompletedSet = (setIndex: number, completed: boolean) => {
+    setExercises(e => ({
+      sets: e.sets.map((set, i) => (i === setIndex ? { ...set, completed } : set)),
+    }));
+  };
+
   return (
     <div className="relative m-2 flex flex-col rounded-xl bg-blue-500 pt-2">
       <div className="absolute left-4 top-4">
         <span className="font-medium text-gray-50">Bi-set</span>
       </div>
       <button
-        className={classList(
-          "absolute right-2 top-2 rounded-full bg-white p-2 text-gray-400 shadow-md hover:bg-gray-300 hover:text-white",
-        )}
-        onClick={() => setCollapsed(!collapsed)}
+        className="absolute right-2 top-2 rounded-full bg-white p-2 text-gray-400 shadow-md hover:bg-gray-300 hover:text-white"
+        onClick={() => setExercises({ collapsed: !collapsed })}
       >
         {collapsed ? (
           <ChevronDownIcon className="h-6 w-6" />
@@ -447,24 +432,8 @@ const BiSetCard = ({
       >
         <div className="h-10" />
         <div className="flex flex-col items-stretch">
-          <ExerciseCard
-            description={first.description}
-            exercise={first.exercise}
-            sets={first.sets}
-            method={first.method}
-            collapsed={first.collapsed}
-            setSelf={self => setFirst({ ...first, ...self })}
-            uncollapsable
-          />
-          <ExerciseCard
-            description={second.description}
-            exercise={second.exercise}
-            sets={second.sets}
-            method={second.method}
-            collapsed={second.collapsed}
-            setSelf={self => setSecond({ ...second, ...self })}
-            uncollapsable
-          />
+          <ExerciseCard exercise={first} setCompletedSet={setCompletedSet} />
+          <ExerciseCard exercise={second} setCompletedSet={setCompletedSet} />
         </div>
       </div>
     </div>
