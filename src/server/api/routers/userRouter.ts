@@ -119,41 +119,4 @@ export const userRouter = createTRPCRouter({
     .mutation(async ({ ctx, input: { profileId } }) => {
       await ctx.prisma.profile.update({ where: { id: profileId }, data: { isActive: true } });
     }),
-
-  getFinishedWorkouts: adminProcedure
-    .input(z.object({ profileId: z.string() }))
-    .query(({ ctx, input: { profileId } }) => {
-      return ctx.prisma.finishedWorkout.findMany({
-        where: { profileId },
-        orderBy: { date: "desc" },
-      });
-    }),
-
-  getFinishedWorkoutsBySession: userProcedure.query(({ ctx }) => {
-    return ctx.prisma.finishedWorkout.findMany({
-      where: { profile: { userId: ctx.session.user.id } },
-      orderBy: { date: "desc" },
-    });
-  }),
-
-  finishWorkout: userProcedure
-    .input(
-      z.object({
-        workoutId: z.string(),
-        date: z.date(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const profile = await ctx.prisma.profile.findUniqueOrThrow({
-        where: { userId: ctx.session.user.id },
-      });
-
-      await ctx.prisma.finishedWorkout.create({
-        data: {
-          workoutId: input.workoutId,
-          profileId: profile.id,
-          date: input.date,
-        },
-      });
-    }),
 });

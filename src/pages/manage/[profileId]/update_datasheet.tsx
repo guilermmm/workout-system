@@ -1,4 +1,4 @@
-import type { GetServerSidePropsContext } from "next";
+import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Alert from "../../../components/Alert";
@@ -9,7 +9,9 @@ import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { api } from "../../../utils/api";
 
-const AdminUpdateDatasheet = () => {
+const AdminUpdateDatasheet = ({
+  isSuperUser,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const router = useRouter();
 
   const { profileId } = router.query as { profileId: string };
@@ -82,7 +84,7 @@ const AdminUpdateDatasheet = () => {
         setDatasheet={setDatasheet}
         profileQuery={profile}
       >
-        <AdminNavbar />
+        <AdminNavbar isSuperUser={isSuperUser} />
       </CreateDatasheetPage>
     </>
   );
@@ -93,9 +95,11 @@ export default AdminUpdateDatasheet;
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   const session = await getServerAuthSession(ctx);
 
-  if (!session || session.user.email !== env.ADMIN_EMAIL) {
+  if (!session || session.user.role !== "admin") {
     return { redirect: { destination: "/", permanent: false } };
   }
 
-  return { props: {} };
+  const isSuperUser = session.user.email === env.ADMIN_EMAIL;
+
+  return { props: { isSuperUser } };
 }

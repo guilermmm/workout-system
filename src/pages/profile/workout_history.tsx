@@ -4,11 +4,10 @@ import WorkoutHistoryPage from "../../components/pages/WorkoutHistoryPage";
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 const WorkoutHistory = () => {
-  const workouts = api.workout.getManyBySession.useQuery();
-  const finishedWorkouts = api.user.getFinishedWorkoutsBySession.useQuery();
+  const finishedWorkouts = api.finishedWorkout.getManyBySession.useQuery();
 
   return (
-    <WorkoutHistoryPage workouts={workouts.data} finishedWorkouts={finishedWorkouts.data}>
+    <WorkoutHistoryPage finishedWorkouts={finishedWorkouts.data}>
       <Fragment />
     </WorkoutHistoryPage>
   );

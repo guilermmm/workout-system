@@ -1,4 +1,4 @@
-import type { FinishedWorkout, Workout } from "@prisma/client";
+import type { FinishedWorkout } from "@prisma/client";
 import { useRouter } from "next/router";
 import { capitalize, classList, getDateArrayFromDate } from "../../utils";
 import { weekdaysAbbrv } from "../../utils/consts";
@@ -7,7 +7,6 @@ import Spinner from "../Spinner";
 import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
 
 interface Props {
-  workouts: Workout[] | undefined;
   finishedWorkouts: FinishedWorkout[] | undefined;
 }
 
@@ -15,7 +14,7 @@ interface PageProps extends Props {
   children: React.ReactNode;
 }
 
-const WorkoutHistoryPage = ({ workouts, finishedWorkouts, children }: PageProps) => {
+const WorkoutHistoryPage = ({ finishedWorkouts, children }: PageProps) => {
   const router = useRouter();
 
   return (
@@ -32,7 +31,7 @@ const WorkoutHistoryPage = ({ workouts, finishedWorkouts, children }: PageProps)
         </h1>
       </div>
       <div className="flex h-full w-full items-center justify-center overflow-y-auto p-2">
-        <Calendar workouts={workouts} finishedWorkouts={finishedWorkouts} />
+        <Calendar finishedWorkouts={finishedWorkouts} />
       </div>
 
       {children}
@@ -40,8 +39,8 @@ const WorkoutHistoryPage = ({ workouts, finishedWorkouts, children }: PageProps)
   );
 };
 
-const Calendar = ({ workouts, finishedWorkouts }: Props) => {
-  if (!workouts || !finishedWorkouts) {
+const Calendar = ({ finishedWorkouts }: Props) => {
+  if (!finishedWorkouts) {
     return (
       <div className="flex h-full items-center justify-center">
         <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
@@ -50,11 +49,10 @@ const Calendar = ({ workouts, finishedWorkouts }: Props) => {
   }
 
   const workoutDates = finishedWorkouts.map(finishedWorkout => {
-    const date = new Date(finishedWorkout.date);
     return {
-      day: date.getDate(),
-      month: date.getMonth(),
-      workout: workouts.find(workout => workout.id === finishedWorkout.workoutId),
+      day: finishedWorkout.startedAt.getDate(),
+      month: finishedWorkout.startedAt.getMonth(),
+      workout: finishedWorkout,
     };
   });
 

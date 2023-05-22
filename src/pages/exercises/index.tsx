@@ -1,5 +1,5 @@
 import type { Exercise } from "@prisma/client";
-import type { GetServerSidePropsContext } from "next";
+import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
@@ -10,7 +10,7 @@ import QueryErrorAlert from "../../components/QueryErrorAlert";
 import Spinner from "../../components/Spinner";
 import TextInput from "../../components/TextInput";
 import Header from "../../components/admin/Header";
-import Navbar from "../../components/admin/Navbar";
+import AdminNavbar from "../../components/admin/Navbar";
 import ArrowDownTrayIcon from "../../components/icons/ArrowDownTrayIcon";
 import ExclamationTriangleIcon from "../../components/icons/ExclamationTriangleIcon";
 import MagnifyingGlassIcon from "../../components/icons/MagnifyingGlassIcon";
@@ -24,7 +24,7 @@ import { api } from "../../utils/api";
 
 const organizeByParser = z.union([z.literal("name"), z.literal("category")]);
 
-const Dashboard = () => {
+const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const { data: session } = useSession();
 
   const [searchInput, setSearchInput] = useState("");
@@ -429,7 +429,7 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-      <Navbar />
+      <AdminNavbar isSuperUser={isSuperUser} />
     </FullPage>
   );
 };
@@ -503,9 +503,11 @@ export default Dashboard;
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   const session = await getServerAuthSession(ctx);
 
-  if (!session || session.user.email !== env.ADMIN_EMAIL) {
+  if (!session || session.user.role !== "admin") {
     return { redirect: { destination: "/", permanent: false } };
   }
 
-  return { props: {} };
+  const isSuperUser = session.user.email === env.ADMIN_EMAIL;
+
+  return { props: { isSuperUser } };
 }

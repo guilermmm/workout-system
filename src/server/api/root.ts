@@ -1,5 +1,6 @@
 import { datasheetRouter } from "./routers/datasheetRouter";
 import { exerciseRouter } from "./routers/exerciseRouter";
+import { finishedWorkoutRouter } from "./routers/finishedWorkoutRouter";
 import { userRouter } from "./routers/userRouter";
 import { workoutRouter } from "./routers/workoutRouter";
 import { createTRPCRouter } from "./trpc";
@@ -14,6 +15,7 @@ export const router = createTRPCRouter({
   workout: workoutRouter,
   exercise: exerciseRouter,
   datasheet: datasheetRouter,
+  finishedWorkout: finishedWorkoutRouter,
 });
 
 // export type definition of API

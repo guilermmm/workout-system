@@ -22,6 +22,7 @@ import { classList, useFormValidation, useLocalStorage } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
 import { methodExplanation, methodTranslation, weekdaysTranslation } from "../../../utils/consts";
+import type { Sets } from "../../../utils/types";
 
 const exerciseParser = z.object({
   id: z.string(),
@@ -313,7 +314,8 @@ const Workout = () => {
         </div>
       </div>
       <Footer
-        workoutId={id}
+        workoutName={workout?.name}
+        groups={groups}
         timer={timerStorage[id]}
         setTimer={timer => setTimerStorage({ [id]: timer })}
         resetStorage={resetWorkoutStorage}
@@ -622,8 +624,38 @@ const ExerciseLabel = ({ children }: { children: string }) => {
   );
 };
 
+const exerciseToApi = (exercise: Exercise) => {
+  return {
+    exercise: {
+      name: exercise.exercise.name,
+      category: exercise.exercise.category,
+    },
+    description: exercise.description,
+    method: exercise.method,
+    sets: exercise.sets.map(set =>
+      "reps" in set
+        ? { reps: set.reps, weight: set.weight }
+        : { time: set.time, weight: set.weight },
+    ) as Sets,
+  };
+};
+
+const groupToApi = (group: Exercise | ExerciseGroup) => {
+  if ("exercises" in group) {
+    const [first, second] = group.exercises;
+    return {
+      exercises: [exerciseToApi(first), exerciseToApi(second)] as [
+        ReturnType<typeof exerciseToApi>,
+        ReturnType<typeof exerciseToApi>,
+      ],
+    };
+  }
+  return exerciseToApi(group);
+};
+
 type FooterProps = {
-  workoutId: string;
+  workoutName?: string;
+  groups?: (ExerciseGroup | Exercise)[];
   timer?: Timer;
   setTimer: (timer: Timer) => void;
   resetStorage: () => void;
@@ -632,7 +664,8 @@ type FooterProps = {
 };
 
 const Footer = ({
-  workoutId,
+  workoutName,
+  groups,
   timer,
   setTimer,
   resetStorage,
@@ -644,7 +677,7 @@ const Footer = ({
   const [showFinishAlert, setShowFinishAlert] = useState(false);
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
 
-  const finishWorkout = api.user.finishWorkout.useMutation({
+  const finishWorkout = api.finishedWorkout.create.useMutation({
     onSuccess: () => {
       setState("finished");
       pause();
@@ -684,6 +717,14 @@ const Footer = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verifiedStorage]);
+
+  const workout = workoutName &&
+    groups &&
+    timer?.startedAt && {
+      name: workoutName,
+      exercises: groups.map(groupToApi),
+      startedAt: new Date(timer.startedAt),
+    };
 
   return (
     <div className="flex items-center justify-between bg-white px-4 py-2 shadow-up">
@@ -738,7 +779,7 @@ const Footer = ({
         <div className="text-slate-900/500 font-medium">Buscando dados do treino...</div>
       )}
 
-      {showFinishAlert && (
+      {showFinishAlert && workout && (
         <Alert
           icon={
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-600" />
@@ -753,16 +794,14 @@ const Footer = ({
               <button
                 className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
                 onClick={() => {
-                  void updateChanges().then(() =>
-                    finishWorkout.mutate({ date: new Date(), workoutId }),
-                  );
+                  void updateChanges().then(() => finishWorkout.mutate(workout));
                 }}
               >
                 Salvar e finalizar
               </button>
               <button
                 className="rounded-md border-1 border-red-500 bg-red-500 py-2 px-4 text-white shadow-md"
-                onClick={() => finishWorkout.mutate({ date: new Date(), workoutId })}
+                onClick={() => finishWorkout.mutate(workout)}
               >
                 Finalizar sem salvar
               </button>
@@ -770,7 +809,7 @@ const Footer = ({
           ) : (
             <button
               className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
-              onClick={() => finishWorkout.mutate({ date: new Date(), workoutId })}
+              onClick={() => finishWorkout.mutate(workout)}
             >
               Confirmar
             </button>

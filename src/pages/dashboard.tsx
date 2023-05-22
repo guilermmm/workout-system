@@ -16,10 +16,10 @@ import AdminNavbar from "../components/admin/Navbar";
 import CheckIcon from "../components/icons/CheckIcon";
 import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
 import XMarkIcon from "../components/icons/XMarkIcon";
+import { env } from "../env/server.mjs";
 import { getServerAuthSession } from "../server/auth";
 import { classList, useEndOfScroll, useFormValidation, validateEmail } from "../utils";
 import { api } from "../utils/api";
-import { env } from "../env/server.mjs";
 
 const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const { data: session } = useSession();
