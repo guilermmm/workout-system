@@ -22,7 +22,6 @@ import { classList, useFormValidation, useLocalStorage } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
 import { methodExplanation, methodTranslation, weekdaysTranslation } from "../../../utils/consts";
-import type { Sets } from "../../../utils/types";
 
 const exerciseParser = z.object({
   id: z.string(),
@@ -632,11 +631,7 @@ const exerciseToApi = (exercise: Exercise) => {
     },
     description: exercise.description,
     method: exercise.method,
-    sets: exercise.sets.map(set =>
-      "reps" in set
-        ? { reps: set.reps, weight: set.weight }
-        : { time: set.time, weight: set.weight },
-    ) as Sets,
+    sets: exercise.sets,
   };
 };
 

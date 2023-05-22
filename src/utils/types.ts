@@ -15,6 +15,11 @@ export type TimeSet = {
 
 export type BiSets = [string, string][];
 
+export type FinishedExerciseSets = (
+  | { reps: number; weight: number; completed: boolean }
+  | { time: number; weight: number; completed: boolean }
+)[];
+
 type Exercise = {
   exercise: {
     name: string;
@@ -22,7 +27,7 @@ type Exercise = {
   };
   description: string | null;
   method: Method;
-  sets: Sets;
+  sets: FinishedExerciseSets;
 };
 
 type ExerciseGroup = { exercises: [Exercise, Exercise] };

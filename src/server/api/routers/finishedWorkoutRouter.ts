@@ -10,10 +10,14 @@ const exerciseParser = z.object({
   }),
   description: z.string().nullable(),
   method: z.nativeEnum(Method),
-  sets: z.union([
-    z.array(z.object({ reps: z.number().min(0), weight: z.number().min(0) })).min(1),
-    z.array(z.object({ time: z.number().min(0), weight: z.number().min(0) })).min(1),
-  ]),
+  sets: z
+    .array(
+      z.union([
+        z.object({ reps: z.number().min(0), weight: z.number().min(0), completed: z.boolean() }),
+        z.object({ time: z.number().min(0), weight: z.number().min(0), completed: z.boolean() }),
+      ]),
+    )
+    .min(1),
 });
 
 export const finishedWorkoutRouter = createTRPCRouter({
