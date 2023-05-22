@@ -128,7 +128,7 @@ model FinishedWorkout {
     name      String
     profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
     profileId String
-    exercises Json[]
+    exercises Json
 
     startedAt  DateTime
     finishedAt DateTime

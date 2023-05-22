@@ -33,20 +33,27 @@ export const finishedWorkoutRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const now = new Date();
+
+      await ctx.prisma.finishedWorkout.deleteMany({
+        where: {
+          profile: { userId: ctx.session.user.id },
+          OR: [
+            // 30 days ago
+            { startedAt: { lt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30) } },
+            // today
+            { startedAt: { gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) } },
+          ],
+        },
+      });
+
       await ctx.prisma.finishedWorkout.create({
         data: {
           name: input.name,
           exercises: input.exercises,
           startedAt: input.startedAt,
-          finishedAt: new Date(),
+          finishedAt: now,
           profile: { connect: { userId: ctx.session.user.id } },
-        },
-      });
-
-      await ctx.prisma.finishedWorkout.deleteMany({
-        where: {
-          profile: { userId: ctx.session.user.id },
-          finishedAt: { lt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30) },
         },
       });
     }),
