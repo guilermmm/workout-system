@@ -20,7 +20,7 @@ export type FinishedExerciseSets = (
   | { time: number; weight: number; completed: boolean }
 )[];
 
-type Exercise = {
+export type FinishedExercise = {
   exercise: {
     name: string;
     category: string;
@@ -30,9 +30,9 @@ type Exercise = {
   sets: FinishedExerciseSets;
 };
 
-type ExerciseGroup = { exercises: [Exercise, Exercise] };
+export type FinishedExerciseGroup = { exercises: [FinishedExercise, FinishedExercise] };
 
-export type FinishedExercise = Exercise | ExerciseGroup;
+export type FinishedGroup = FinishedExercise | FinishedExerciseGroup;
 
 export type ParseSets<T> = T extends { sets: Prisma.JsonValue }
   ? Simplify<Omit<T, "sets"> & { sets: Sets }>
@@ -59,5 +59,5 @@ export type ParseJsonValues<T> = Simplify<ParseBiSets<ParseSets<T>>>;
 export type ParsedDatasheet = Omit<Datasheet, "createdAt">;
 
 export type ParseFinishedWorkout<T extends { exercises: Prisma.JsonValue }> = Simplify<
-  Omit<T, "exercises"> & { exercises: FinishedExercise[] }
+  Omit<T, "exercises"> & { exercises: FinishedGroup[] }
 >;

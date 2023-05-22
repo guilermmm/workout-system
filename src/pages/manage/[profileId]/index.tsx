@@ -119,7 +119,7 @@ const Manage = () => {
           {!deleteWorkout.isLoading && (
             <button
               className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutateAlert(false)}
+              onClick={() => setToRemove(null)}
             >
               Cancelar
             </button>
