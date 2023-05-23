@@ -307,7 +307,7 @@ const ExerciseCard = ({ exercise }: { exercise: FinishedExercise }) => {
                   {set.completed ? (
                     <CheckIcon className="h-full w-full p-1" />
                   ) : (
-                    <XMarkIcon className="h-full w-full p-1" />
+                    <XMarkIcon className="h-full w-full p-0.5" />
                   )}
                 </div>
               </div>
