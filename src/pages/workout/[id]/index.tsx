@@ -22,6 +22,8 @@ import { classList, useFormValidation, useLocalStorage } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
 import { methodExplanation, methodTranslation, weekdaysTranslation } from "../../../utils/consts";
+import Modal from "../../../components/Modal";
+import Image from "next/image";
 
 const exerciseParser = z.object({
   id: z.string(),
@@ -101,6 +103,12 @@ const Workout = () => {
     storageParser,
     {},
   );
+
+  const [showImageModal, setShowImageModal] = useState("");
+
+  const selectedExerciseImage = api.exercise.getExerciseImageById.useQuery({
+    id: showImageModal,
+  });
 
   const workoutQuery = api.workout.getByIdBySession.useQuery(id, { enabled: false });
 
@@ -239,8 +247,37 @@ const Workout = () => {
     [workout],
   );
 
+  const handleInfo = (id: string) => () => {
+    setShowImageModal(id);
+  };
+
   return (
     <FullPage>
+      {showImageModal && (
+        <Modal
+          onClickOutside={() => setShowImageModal("")}
+          buttons={
+            <button
+              onClick={() => setShowImageModal("")}
+              className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Fechar
+            </button>
+          }
+        >
+          <h1 className="self-center font-medium">Imagem atual</h1>
+          {selectedExerciseImage.data ? (
+            <Image
+              src={selectedExerciseImage.data}
+              alt="imagem do exercicio"
+              className="max-h-xs max-w-xs"
+            />
+          ) : (
+            <h1>Não há imagem para esse exercício.</h1>
+          )}
+        </Modal>
+      )}
+
       <QueryErrorAlert queries={[workoutQuery]} />
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
         <div className="flex items-center">
@@ -277,6 +314,7 @@ const Workout = () => {
                 const [first, second] = group.exercises;
                 return (
                   <BiSetCard
+                    handleInfo={handleInfo}
                     key={group.id}
                     first={first}
                     second={second}
@@ -291,6 +329,7 @@ const Workout = () => {
               const exercise = group;
               return (
                 <ExerciseCard
+                  handleInfo={handleInfo}
                   key={exercise.id}
                   exercise={exercise}
                   originalWeights={originalWeights.find(({ id }) => id === exercise.id)?.sets}
@@ -342,6 +381,7 @@ type ExerciseCardProps = {
   setCollapsed?: (collapsed: boolean) => void;
   setSetCompleted: (setIndex: number) => (completed: boolean) => void;
   setSetWeight: (setIndex: number) => (weight: number) => void;
+  handleInfo: (id: string) => () => void;
 };
 
 const ExerciseCard = ({
@@ -351,6 +391,7 @@ const ExerciseCard = ({
   setCollapsed,
   setSetCompleted,
   setSetWeight,
+  handleInfo,
 }: ExerciseCardProps) => {
   const [showAlert, setShowAlert] = useState(false);
 
@@ -413,6 +454,9 @@ const ExerciseCard = ({
             <div className="flex flex-row flex-wrap items-center">
               <div className="opacity-0">{exercise.exercise.name}</div>
               <div className="ml-4 text-sm text-slate-600">{exercise.exercise.category}</div>
+              <button onClick={handleInfo(exercise.id)} className="pl-3">
+                <InformationIcon className="h-6 w-6 text-black" />
+              </button>
             </div>
             {exercise.method !== "Standard" && (
               <div className="mr-10 text-sm">
@@ -535,6 +579,7 @@ type BiSetCardProps = {
     ids: string[],
   ) => (exercise: Partial<Exercise> | ((exercise: Exercise) => Partial<Exercise>)) => void;
   collapsed: boolean;
+  handleInfo: (id: string) => () => void;
 };
 
 const BiSetCard = ({
@@ -544,6 +589,7 @@ const BiSetCard = ({
   timerOn,
   setExercises,
   collapsed,
+  handleInfo,
 }: BiSetCardProps) => {
   const both = [first.id, second.id];
 
@@ -596,6 +642,7 @@ const BiSetCard = ({
         <div className="h-10" />
         <div className="flex flex-col items-stretch">
           <ExerciseCard
+            handleInfo={handleInfo}
             exercise={first}
             originalWeights={originalWeights.find(({ id }) => id === first.id)?.sets}
             timerOn={timerOn}
@@ -603,6 +650,7 @@ const BiSetCard = ({
             setSetWeight={setSetWeight(first.id)}
           />
           <ExerciseCard
+            handleInfo={handleInfo}
             exercise={second}
             originalWeights={originalWeights.find(({ id }) => id === second.id)?.sets}
             timerOn={timerOn}
