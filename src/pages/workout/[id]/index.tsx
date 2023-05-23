@@ -270,7 +270,7 @@ const Workout = () => {
         >
           <h1 className="self-center font-medium">Imagem atual</h1>
           {selectedExerciseImage.data ? (
-            <Image
+            <img
               src={selectedExerciseImage.data}
               alt="imagem do exercicio"
               className="max-h-xs max-w-xs"
