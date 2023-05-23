@@ -1,21 +1,37 @@
-import { useRouter } from "next/router";
-import ExclamationCircleIcon from "../components/icons/ExclamationCircleIcon";
+import { useState } from "react";
+import { api } from "../utils/api";
 
-const ErrorPage = () => {
-  const router = useRouter();
+const Test = () => {
+  const [b64, setB64] = useState("");
+  const create = api.exercise.create.useMutation();
+
+  const img = api.exercise.getExerciseImageById.useQuery({ id: "clhzlvenw0002j1ic3qhwbmxs" });
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-evenly bg-red-500 px-4">
-      <ExclamationCircleIcon className="h-64 w-64 fill-gray-50 text-red-500" />
-      <p className="text-2xl font-medium text-gray-50">Ocorreu um erro ao carregar a página</p>
+    <div>
+      <input
+        type="file"
+        onChange={e => {
+          const reader = new FileReader();
+
+          reader.onload = () => {
+            setB64(reader.result! as string);
+          };
+
+          reader.readAsDataURL(e.target.files![0]!);
+        }}
+      />
+
+      {img.data && <img src={img.data} alt="" />}
       <button
-        className="rounded-full bg-gray-50 px-6 py-3 text-lg font-medium text-red-500"
-        onClick={router.reload}
+        onClick={() => {
+          create.mutate({ name: "teste", category: "fodas", image: b64 });
+        }}
       >
-        Recarregar
+        butao
       </button>
     </div>
   );
 };
 
-export default ErrorPage;
+export default Test;

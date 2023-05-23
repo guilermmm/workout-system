@@ -19,8 +19,9 @@ import TrashIcon from "../../components/icons/TrashIcon";
 import XMarkIcon from "../../components/icons/XMarkIcon";
 import { env } from "../../env/server.mjs";
 import { getServerAuthSession } from "../../server/auth";
-import { useFormValidation, useLocalStorage } from "../../utils";
+import { classList, useFormValidation, useLocalStorage } from "../../utils";
 import { api } from "../../utils/api";
+import InformationIcon from "../../components/icons/InformationIcon";
 
 const organizeByParser = z.union([z.literal("name"), z.literal("category")]);
 
@@ -63,7 +64,11 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
     [filteredGroups, groups],
   );
 
-  const [newExercise, setNewExercise] = useState({ name: "", category: "" });
+  const [newExercise, setNewExercise] = useState({
+    name: "",
+    category: "",
+    file: null as string | null,
+  });
 
   const newExerciseNameProps = useFormValidation(
     newExercise.name,
@@ -86,11 +91,17 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
       void groups.refetch();
       setShowExerciseModal(false);
       setShowAddConfirmation(false);
-      setNewExercise({ name: "", category: "" });
+      setNewExercise({ name: "", category: "", file: null });
     },
   });
 
   const [editedExercise, setEditedExercise] = useState({ name: "", category: "", id: "" });
+
+  const [showImageModal, setShowImageModal] = useState("");
+
+  const selectedExerciseImage = api.exercise.getExerciseImageById.useQuery({
+    id: showImageModal,
+  });
 
   useEffect(() => {
     console.log("editedExercise", editedExercise);
@@ -129,6 +140,11 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
     },
   });
 
+  const handleInfo = (id: string) => () => {
+    console.log("id", id);
+    setShowImageModal(id);
+  };
+
   return (
     <FullPage>
       {showExerciseModal && (
@@ -153,6 +169,13 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           }
         >
           <h1 className="self-center font-medium">Adicionar exercício</h1>
+          <input
+            type="file"
+            className={classList(
+              "peer block h-full w-full appearance-none border-gray-300 bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-gray-900 outline-none ring-0 duration-300 focus:border-blue-600 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
+            )}
+          />
+
           <TextInput
             label="Nome"
             className="rounded-md bg-white"
@@ -186,7 +209,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
         >
           <button
             className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => addExercise.mutate(newExercise)}
+            // onClick={() => addExercise.mutate(newExercise)}
             disabled={addExercise.isLoading}
           >
             {addExercise.isLoading ? (
@@ -221,6 +244,31 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
             OK
           </button>
         </Alert>
+      )}
+
+      {showImageModal && (
+        <Modal
+          onClickOutside={() => setShowImageModal("")}
+          buttons={
+            <button
+              onClick={() => setShowImageModal("")}
+              className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Fechar
+            </button>
+          }
+        >
+          <h1 className="self-center font-medium">Imagem atual</h1>
+          {selectedExerciseImage.data ? (
+            <img
+              src={selectedExerciseImage.data}
+              alt="imagem do exercicio"
+              className="max-h-xs max-w-xs"
+            />
+          ) : (
+            <h1>Não há imagem para esse exercício.</h1>
+          )}
+        </Modal>
       )}
 
       {showEditModal && (
@@ -413,6 +461,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
                         key={category.category}
                         handleRemoveExercise={e => () => setToBeRemoved(e)}
                         handleEditExercise={e => () => setEditedExercise(e)}
+                        handleInfo={handleInfo}
                       />
                     ))
                   : filteredExercises?.map(exercise => (
@@ -422,6 +471,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
                         showCategory
                         handleRemoveExercise={e => () => setToBeRemoved(e)}
                         handleEditExercise={e => () => setEditedExercise(e)}
+                        handleInfo={handleInfo}
                       />
                     ))}
               </div>
@@ -441,6 +491,7 @@ const ExerciseCard = ({
   showCategory = false,
   handleRemoveExercise,
   handleEditExercise,
+  handleInfo,
 }: {
   id: string;
   name: string;
@@ -448,9 +499,13 @@ const ExerciseCard = ({
   showCategory?: boolean;
   handleRemoveExercise: (e: { id: string; name: string }) => () => void;
   handleEditExercise: (e: { id: string; name: string; category: string }) => () => void;
+  handleInfo: (id: string) => () => void;
 }) => {
   return (
     <div className="flex max-w-[calc(100vw_-_2rem)] flex-1 flex-row items-center justify-between rounded-md bg-blue-500">
+      <button onClick={handleInfo(id)} className="pl-3">
+        <InformationIcon className="h-6 w-6 text-gold-500" />
+      </button>
       <div className="flex w-full flex-col justify-between truncate px-3 py-2">
         <div className="text-md truncate text-white">{name}</div>
         {showCategory && <div className="truncate text-sm text-slate-100">{category}</div>}
@@ -472,11 +527,13 @@ const CategoryCard = ({
   exercises,
   handleRemoveExercise,
   handleEditExercise,
+  handleInfo,
 }: {
   category: string;
-  exercises: Exercise[];
+  exercises: Omit<Exercise, "image">[];
   handleRemoveExercise: (e: { id: string; name: string }) => () => void;
   handleEditExercise: (e: { id: string; name: string; category: string }) => () => void;
+  handleInfo: (id: string) => () => void;
 }) => {
   return (
     <div className="flex flex-1 flex-col" key={category}>
@@ -491,6 +548,7 @@ const CategoryCard = ({
             key={exercise.id}
             handleRemoveExercise={handleRemoveExercise}
             handleEditExercise={handleEditExercise}
+            handleInfo={handleInfo}
           />
         ))}
       </div>

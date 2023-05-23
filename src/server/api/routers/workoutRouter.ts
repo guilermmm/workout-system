@@ -55,7 +55,12 @@ export const workoutRouter = createTRPCRouter({
   getById: adminProcedure.input(z.string()).query(async ({ ctx, input }) => {
     const workout = await ctx.prisma.workout.findUniqueOrThrow({
       where: { id: input },
-      include: { exercises: { include: { exercise: true } }, profile: { include: { user: true } } },
+      include: {
+        exercises: {
+          include: { exercise: { select: { id: true, category: true, name: true, image: false } } },
+        },
+        profile: { include: { user: true } },
+      },
     });
 
     workout.exercises.sort((a, b) => a.index - b.index);
@@ -80,7 +85,9 @@ export const workoutRouter = createTRPCRouter({
     const workout = await ctx.prisma.workout.findFirstOrThrow({
       where: { id: input, profile: { userId: ctx.session.user.id } },
       include: {
-        exercises: { include: { exercise: true } },
+        exercises: {
+          include: { exercise: { select: { id: true, category: true, name: true, image: false } } },
+        },
       },
     });
 
@@ -171,7 +178,13 @@ export const workoutRouter = createTRPCRouter({
         const workout = await tx.workout.update({
           where: { id: workoutId },
           data: { name, days },
-          include: { exercises: { include: { exercise: true } } },
+          include: {
+            exercises: {
+              include: {
+                exercise: { select: { id: true, category: true, name: true, image: false } },
+              },
+            },
+          },
         });
 
         const exercisesToCreate = exercises.filter(exercise => typeof exercise.id !== "string");
@@ -203,7 +216,13 @@ export const workoutRouter = createTRPCRouter({
 
         const { exercises: newExercises } = await tx.workout.findUniqueOrThrow({
           where: { id: workoutId },
-          include: { exercises: { include: { exercise: true } } },
+          include: {
+            exercises: {
+              include: {
+                exercise: { select: { id: true, category: true, name: true, image: false } },
+              },
+            },
+          },
         });
 
         const biSetsData = biSets.map(([index1, index2]) => [
