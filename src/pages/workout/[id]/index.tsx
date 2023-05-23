@@ -1,11 +1,13 @@
 import { Method, Weekday } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useStopwatch } from "react-timer-hook";
 import { z } from "zod";
 import Alert from "../../../components/Alert";
 import FullPage from "../../../components/FullPage";
+import Modal from "../../../components/Modal";
 import NumberInput from "../../../components/NumberInput";
 import QueryErrorAlert from "../../../components/QueryErrorAlert";
 import Spinner from "../../../components/Spinner";
@@ -22,12 +24,11 @@ import { classList, useFormValidation, useLocalStorage } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
 import { methodExplanation, methodTranslation, weekdaysTranslation } from "../../../utils/consts";
-import Modal from "../../../components/Modal";
-import Image from "next/image";
 
 const exerciseParser = z.object({
   id: z.string(),
   exercise: z.object({
+    id: z.string(),
     name: z.string(),
     category: z.string(),
   }),
@@ -74,6 +75,7 @@ const storageFromQuery = (workout: RouterOutputs["workout"]["getByIdBySession"])
   exercises: workout.exercises.map(exercise => ({
     id: exercise.id,
     exercise: {
+      id: exercise.exercise.id,
       name: exercise.exercise.name,
       category: exercise.exercise.category,
     },
@@ -106,9 +108,10 @@ const Workout = () => {
 
   const [showImageModal, setShowImageModal] = useState("");
 
-  const selectedExerciseImage = api.exercise.getExerciseImageById.useQuery({
-    id: showImageModal,
-  });
+  const selectedExerciseImage = api.exercise.getExerciseImageById.useQuery(
+    { id: showImageModal },
+    { enabled: !!showImageModal },
+  );
 
   const workoutQuery = api.workout.getByIdBySession.useQuery(id, { enabled: false });
 
@@ -454,7 +457,7 @@ const ExerciseCard = ({
             <div className="flex flex-row flex-wrap items-center">
               <div className="opacity-0">{exercise.exercise.name}</div>
               <div className="ml-4 text-sm text-slate-600">{exercise.exercise.category}</div>
-              <button onClick={handleInfo(exercise.id)} className="pl-3">
+              <button onClick={handleInfo(exercise.exercise.id)} className="pl-3">
                 <InformationIcon className="h-6 w-6 text-black" />
               </button>
             </div>
@@ -674,6 +677,7 @@ const ExerciseLabel = ({ children }: { children: string }) => {
 const exerciseToApi = (exercise: Exercise) => {
   return {
     exercise: {
+      id: exercise.exercise.id,
       name: exercise.exercise.name,
       category: exercise.exercise.category,
     },
