@@ -41,7 +41,7 @@ export const exerciseRouter = createTRPCRouter({
     }),
 
   create: baseProcedure
-    .input(z.object({ name: z.string(), category: z.string(), image: z.string().optional() }))
+    .input(z.object({ name: z.string(), category: z.string(), image: z.string().nullable() }))
     .mutation(async ({ ctx, input: { name, category, image } }) => {
       await ctx.prisma.exercise.create({ data: { name, category, image } });
     }),
@@ -52,7 +52,7 @@ export const exerciseRouter = createTRPCRouter({
         id: z.string(),
         name: z.string(),
         category: z.string(),
-        image: z.string().optional(),
+        image: z.string().nullish(),
       }),
     )
     .mutation(async ({ ctx, input: { id, name, category, image } }) => {

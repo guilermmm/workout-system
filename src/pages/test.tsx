@@ -1,36 +1,30 @@
 import { useState } from "react";
-import { api } from "../utils/api";
+import FullPage from "../components/FullPage";
+import { ImageInput } from "../components/ImageInput";
+import XMarkIcon from "../components/icons/XMarkIcon";
 
 const Test = () => {
-  const [b64, setB64] = useState("");
-  const create = api.exercise.create.useMutation();
-
-  const img = api.exercise.getExerciseImageById.useQuery({ id: "clhzlvenw0002j1ic3qhwbmxs" });
+  const [imageUrl, setImageUrl] = useState<string>();
 
   return (
-    <div>
-      <input
-        type="file"
-        onChange={e => {
-          const reader = new FileReader();
-
-          reader.onload = () => {
-            setB64(reader.result! as string);
-          };
-
-          reader.readAsDataURL(e.target.files![0]!);
-        }}
-      />
-
-      {img.data && <img src={img.data} alt="" />}
-      <button
-        onClick={() => {
-          create.mutate({ name: "teste", category: "fodas", image: b64 });
-        }}
-      >
-        butao
-      </button>
-    </div>
+    <FullPage>
+      <div className="flex h-full w-full flex-col items-center justify-center">
+        <ImageInput
+          className="h-40 w-40 rounded-md bg-slate-500 text-white"
+          imageUrl={imageUrl}
+          onChange={setImageUrl}
+        />
+        {imageUrl !== undefined && (
+          <div className="">
+            <button type="button" className="h-10 w-10" onClick={() => setImageUrl(undefined)}>
+              <div className="flex h-full w-full items-center justify-center rounded-full bg-red-500">
+                <XMarkIcon className="h-6 w-6 text-white" />
+              </div>
+            </button>
+          </div>
+        )}
+      </div>
+    </FullPage>
   );
 };
 

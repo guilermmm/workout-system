@@ -1,10 +1,11 @@
-import type { Exercise } from "@prisma/client";
 import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import Alert from "../../components/Alert";
 import FullPage from "../../components/FullPage";
+import { ImageInput } from "../../components/ImageInput";
 import Modal from "../../components/Modal";
 import QueryErrorAlert from "../../components/QueryErrorAlert";
 import Spinner from "../../components/Spinner";
@@ -12,18 +13,27 @@ import TextInput from "../../components/TextInput";
 import Header from "../../components/admin/Header";
 import AdminNavbar from "../../components/admin/Navbar";
 import ArrowDownTrayIcon from "../../components/icons/ArrowDownTrayIcon";
+import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
 import ExclamationTriangleIcon from "../../components/icons/ExclamationTriangleIcon";
+import InformationIcon from "../../components/icons/InformationIcon";
 import MagnifyingGlassIcon from "../../components/icons/MagnifyingGlassIcon";
 import PencilSquareIcon from "../../components/icons/PencilSquareIcon";
 import TrashIcon from "../../components/icons/TrashIcon";
 import XMarkIcon from "../../components/icons/XMarkIcon";
 import { env } from "../../env/server.mjs";
 import { getServerAuthSession } from "../../server/auth";
-import { classList, useFormValidation, useLocalStorage } from "../../utils";
+import { useFormValidation, useLocalStorage } from "../../utils";
+import type { RouterInputs } from "../../utils/api";
 import { api } from "../../utils/api";
-import InformationIcon from "../../components/icons/InformationIcon";
 
 const organizeByParser = z.union([z.literal("name"), z.literal("category")]);
+
+type Exercise = {
+  id: string;
+  name: string;
+  category: string;
+  image: string | null;
+};
 
 const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const { data: session } = useSession();
@@ -64,21 +74,21 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
     [filteredGroups, groups],
   );
 
-  const [newExercise, setNewExercise] = useState({
+  const [newExercise, setNewExercise] = useState<Omit<Exercise, "id">>({
     name: "",
     category: "",
-    file: null as string | null,
+    image: null,
   });
 
   const newExerciseNameProps = useFormValidation(
-    newExercise.name,
-    v => v.length < 1 && "Nome vazio",
+    newExercise?.name,
+    v => v?.length !== undefined && v.length < 1 && "Nome vazio",
     false,
   );
 
   const newExerciseCategoryProps = useFormValidation(
-    newExercise.category,
-    v => v.length < 1 && "Categoria vazia",
+    newExercise?.category,
+    v => v?.length !== undefined && v.length < 1 && "Categoria vazia",
     false,
   );
 
@@ -91,59 +101,58 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
       void groups.refetch();
       setShowExerciseModal(false);
       setShowAddConfirmation(false);
-      setNewExercise({ name: "", category: "", file: null });
+      setNewExercise({ name: "", category: "", image: null });
     },
   });
 
-  const [editedExercise, setEditedExercise] = useState({ name: "", category: "", id: "" });
-
-  const [showImageModal, setShowImageModal] = useState("");
-
-  const selectedExerciseImage = api.exercise.getExerciseImageById.useQuery({
-    id: showImageModal,
-  });
+  const [editedExercise, setEditedExercise] = useState<RouterInputs["exercise"]["update"]>();
 
   useEffect(() => {
     console.log("editedExercise", editedExercise);
   }, [editedExercise]);
 
   const editedExerciseNameProps = useFormValidation(
-    editedExercise.name,
-    v => v.length < 1 && "Nome vazio",
+    editedExercise?.name,
+    v => v?.length !== undefined && v.length < 1 && "Nome vazio",
     false,
   );
 
   const editedExerciseCategoryProps = useFormValidation(
-    editedExercise.category,
-    v => v.length < 1 && "Categoria vazia",
+    editedExercise?.category,
+    v => v?.length !== undefined && v.length < 1 && "Categoria vazia",
     false,
   );
-
-  const showEditModal = editedExercise.id !== "";
 
   const [showEditConfirmation, setShowEditConfirmation] = useState(false);
 
   const editExercise = api.exercise.update.useMutation({
     onSuccess: () => {
       void groups.refetch();
-      setEditedExercise({ name: "", category: "", id: "" });
+      setEditedExercise(undefined);
       setShowExerciseModal(false);
     },
   });
 
-  const [toBeRemoved, setToBeRemoved] = useState<{ id: string; name: string } | null>(null);
+  const [toBeRemoved, setToBeRemoved] = useState<Omit<Exercise, "category" | "image">>();
 
   const removeExercise = api.exercise.delete.useMutation({
     onSuccess: () => {
-      setToBeRemoved(null);
+      setToBeRemoved(undefined);
       void groups.refetch();
     },
   });
 
-  const handleInfo = (id: string) => () => {
-    console.log("id", id);
-    setShowImageModal(id);
-  };
+  const [showImageModal, setShowImageModal] = useState<Omit<Exercise, "category" | "image">>();
+
+  const selectedExerciseImage = api.exercise.getExerciseImageById.useQuery(
+    { id: showImageModal?.id ?? "" },
+    { enabled: showImageModal !== undefined },
+  );
+
+  const editedExerciseImage = api.exercise.getExerciseImageById.useQuery(
+    { id: editedExercise?.id ?? "" },
+    { enabled: editedExercise !== undefined },
+  );
 
   return (
     <FullPage>
@@ -169,13 +178,26 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           }
         >
           <h1 className="self-center font-medium">Adicionar exercício</h1>
-          <input
-            type="file"
-            className={classList(
-              "peer block h-full w-full appearance-none border-gray-300 bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-gray-900 outline-none ring-0 duration-300 focus:border-blue-600 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
+          <div className="relative flex flex-col items-center justify-center">
+            <ImageInput
+              className="h-72 w-72 rounded-md bg-slate-200 text-slate-800"
+              imageUrl={newExercise.image}
+              onChange={image => setNewExercise({ ...newExercise, image })}
+            />
+            <div className="h-4 w-4" />
+            {newExercise.image !== undefined && (
+              <div className="absolute bottom-0 flex h-8 w-full justify-center">
+                <button
+                  className="h-8 w-8"
+                  onClick={() => setNewExercise({ ...newExercise, image: null })}
+                >
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-red-500">
+                    <XMarkIcon className="h-4 w-4 text-white" />
+                  </div>
+                </button>
+              </div>
             )}
-          />
-
+          </div>
           <TextInput
             label="Nome"
             className="rounded-md bg-white"
@@ -198,7 +220,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           </datalist>
         </Modal>
       )}
-      {showAddConfirmation && (
+      {newExercise && showAddConfirmation && (
         <Alert
           icon={
             <ArrowDownTrayIcon className="h-10 w-10 rounded-full bg-green-200 p-2 text-green-600" />
@@ -209,7 +231,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
         >
           <button
             className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            // onClick={() => addExercise.mutate(newExercise)}
+            onClick={() => addExercise.mutate(newExercise)}
             disabled={addExercise.isLoading}
           >
             {addExercise.isLoading ? (
@@ -248,32 +270,39 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
 
       {showImageModal && (
         <Modal
-          onClickOutside={() => setShowImageModal("")}
+          onClickOutside={() => setShowImageModal(undefined)}
           buttons={
             <button
-              onClick={() => setShowImageModal("")}
+              onClick={() => setShowImageModal(undefined)}
               className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               Fechar
             </button>
           }
         >
-          <h1 className="self-center font-medium">Imagem atual</h1>
-          {selectedExerciseImage.data ? (
-            <img
-              src={selectedExerciseImage.data}
-              alt="imagem do exercicio"
-              className="max-h-xs max-w-xs"
-            />
+          <h1 className="self-center font-medium">{showImageModal.name}</h1>
+          {selectedExerciseImage.isLoading ? (
+            <div className="flex h-full w-full items-center justify-center">
+              <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+            </div>
+          ) : selectedExerciseImage.data ? (
+            <div className="relative h-72 w-72">
+              <Image
+                src={selectedExerciseImage.data}
+                alt="imagem do exercicio"
+                className="h-full w-full rounded-md object-cover"
+                fill
+              />
+            </div>
           ) : (
             <h1>Não há imagem para esse exercício.</h1>
           )}
         </Modal>
       )}
 
-      {showEditModal && (
+      {editedExercise && (
         <Modal
-          onClickOutside={() => setEditedExercise({ name: "", category: "", id: "" })}
+          onClickOutside={() => setEditedExercise(undefined)}
           buttons={
             <>
               <button
@@ -285,7 +314,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
               </button>
               <button
                 className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-                onClick={() => setEditedExercise({ name: "", category: "", id: "" })}
+                onClick={() => setEditedExercise(undefined)}
               >
                 Cancelar
               </button>
@@ -293,6 +322,48 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           }
         >
           <h1 className="self-center font-medium">Editar exercício</h1>
+          <div className="relative flex flex-col items-center justify-center">
+            {editedExerciseImage.isLoading ? (
+              <div className="flex h-72 w-72 items-center justify-center">
+                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              </div>
+            ) : (
+              editedExerciseImage.isSuccess && (
+                <ImageInput
+                  className="h-72 w-72 rounded-md bg-slate-200 text-slate-800"
+                  imageUrl={
+                    editedExercise.image === undefined
+                      ? editedExerciseImage.data
+                      : editedExercise.image
+                  }
+                  onChange={image => setEditedExercise({ ...editedExercise, image })}
+                />
+              )
+            )}
+            <div className="h-4 w-4" />
+            <div className="absolute bottom-0 flex h-8 w-full justify-around">
+              {editedExercise.image !== null && (
+                <button
+                  className="h-8 w-8"
+                  onClick={() => setEditedExercise({ ...editedExercise, image: null })}
+                >
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-red-500">
+                    <XMarkIcon className="h-4 w-4 text-white" />
+                  </div>
+                </button>
+              )}
+              {editedExercise.image !== undefined && (
+                <button
+                  className="h-8 w-8"
+                  onClick={() => setEditedExercise({ ...editedExercise, image: undefined })}
+                >
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-blue-500">
+                    <ArrowUturnLeftIcon className="h-4 w-4 text-white" />
+                  </div>
+                </button>
+              )}
+            </div>
+          </div>
           <TextInput
             label="Nome"
             className="rounded-md bg-white"
@@ -315,7 +386,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           </datalist>
         </Modal>
       )}
-      {showEditConfirmation && (
+      {editedExercise && showEditConfirmation && (
         <Alert
           icon={
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-700" />
@@ -368,7 +439,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title={`Tem certeza que deseja remover ${toBeRemoved.name}?`}
           text={`Todos os treinos que contém ${toBeRemoved.name} serão afetados, e não será possível desfazer esta ação`}
-          onClickOutside={() => setToBeRemoved(null)}
+          onClickOutside={() => setToBeRemoved(undefined)}
         >
           <button
             className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
@@ -386,7 +457,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           {!removeExercise.isLoading && (
             <button
               className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setToBeRemoved(null)}
+              onClick={() => setToBeRemoved(undefined)}
             >
               Cancelar
             </button>
@@ -461,7 +532,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
                         key={category.category}
                         handleRemoveExercise={e => () => setToBeRemoved(e)}
                         handleEditExercise={e => () => setEditedExercise(e)}
-                        handleInfo={handleInfo}
+                        handleInfo={e => () => setShowImageModal(e)}
                       />
                     ))
                   : filteredExercises?.map(exercise => (
@@ -471,7 +542,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
                         showCategory
                         handleRemoveExercise={e => () => setToBeRemoved(e)}
                         handleEditExercise={e => () => setEditedExercise(e)}
-                        handleInfo={handleInfo}
+                        handleInfo={e => () => setShowImageModal(e)}
                       />
                     ))}
               </div>
@@ -497,25 +568,31 @@ const ExerciseCard = ({
   name: string;
   category: string;
   showCategory?: boolean;
-  handleRemoveExercise: (e: { id: string; name: string }) => () => void;
-  handleEditExercise: (e: { id: string; name: string; category: string }) => () => void;
-  handleInfo: (id: string) => () => void;
+  handleRemoveExercise: (e: Omit<Exercise, "category" | "image">) => () => void;
+  handleEditExercise: (e: RouterInputs["exercise"]["update"]) => () => void;
+  handleInfo: (e: Omit<Exercise, "category" | "image">) => () => void;
 }) => {
   return (
     <div className="flex max-w-[calc(100vw_-_2rem)] flex-1 flex-row items-center justify-between rounded-md bg-blue-500">
-      <button onClick={handleInfo(id)} className="pl-3">
+      <button onClick={handleInfo({ id, name })} className="ml-3">
         <InformationIcon className="h-6 w-6 text-gold-500" />
       </button>
       <div className="flex w-full flex-col justify-between truncate px-3 py-2">
         <div className="text-md truncate text-white">{name}</div>
         {showCategory && <div className="truncate text-sm text-slate-100">{category}</div>}
       </div>
-      <div className="flex items-center justify-center gap-1 px-3">
-        <button onClick={handleEditExercise({ id, name, category })}>
-          <PencilSquareIcon className="h-6 w-6 text-gold-500" />
-        </button>
-        <button onClick={handleRemoveExercise({ id, name })}>
-          <TrashIcon className="h-6 w-6 text-red-500" />
+      <button
+        onClick={handleEditExercise({ id, name, category, image: undefined })}
+        className="mr-3 rounded-full p-1.5 text-gold-500 transition-colors hover:bg-gold-600 hover:text-white"
+      >
+        <PencilSquareIcon className="h-5 w-5" />
+      </button>
+      <div className="relative flex h-full items-center justify-center gap-1.5 rounded-r-md bg-blue-400 p-1 pl-1.5 transition-colors hover:bg-blue-500">
+        <button
+          onClick={handleRemoveExercise({ id, name })}
+          className="rounded-full bg-blue-200 p-1.5 text-red-500 shadow-md transition-colors hover:bg-red-500 hover:text-white"
+        >
+          <TrashIcon className="h-5 w-5" />
         </button>
       </div>
     </div>
@@ -531,9 +608,9 @@ const CategoryCard = ({
 }: {
   category: string;
   exercises: Omit<Exercise, "image">[];
-  handleRemoveExercise: (e: { id: string; name: string }) => () => void;
-  handleEditExercise: (e: { id: string; name: string; category: string }) => () => void;
-  handleInfo: (id: string) => () => void;
+  handleRemoveExercise: (e: Omit<Exercise, "category" | "image">) => () => void;
+  handleEditExercise: (e: RouterInputs["exercise"]["update"]) => () => void;
+  handleInfo: (e: Omit<Exercise, "category" | "image">) => () => void;
 }) => {
   return (
     <div className="flex flex-1 flex-col" key={category}>
