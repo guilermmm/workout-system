@@ -1,4 +1,4 @@
-import { Html, Head, Main, NextScript } from "next/document";
+import { Head, Html, Main, NextScript } from "next/document";
 
 export default function Document() {
   return (
@@ -20,6 +20,8 @@ export default function Document() {
         <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon16.png" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="shortcut icon" href="/favicon.ico" />
+
+        <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
       </Head>
       <body>
         <Main />
