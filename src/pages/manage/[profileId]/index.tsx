@@ -17,6 +17,8 @@ import { getServerAuthSession } from "../../../server/auth";
 import { capitalize, classList, join } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
+import DownloadPDFButton from "../../../components/DownloadPDFButton";
+import BasicDocument from "../../../utils/pdf";
 
 type Workout = RouterOutputs["workout"]["getMany"][number];
 
@@ -227,12 +229,21 @@ const Manage = () => {
                   </div>
                 </div>
               ))}
-              <Link
-                className="grow rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                href={`/manage/${profileId}/create_workout`}
-              >
-                Adicionar treino
-              </Link>
+              <div className="mt-4 flex w-full max-w-[32rem] flex-row flex-wrap justify-center gap-2">
+                <Link
+                  className="grow rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                  href={`/manage/${profileId}/create_workout`}
+                >
+                  Adicionar treino
+                </Link>
+                <DownloadPDFButton
+                  fileName={`Treino - ${profile.data?.user?.name ?? profile.data?.email ?? ""}.pdf`}
+                  className="grow rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                  document={<BasicDocument profile={profile.data!} workouts={workouts.data} />}
+                >
+                  Baixar treinos
+                </DownloadPDFButton>
+              </div>
             </div>
           )
         )}

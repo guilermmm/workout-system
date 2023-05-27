@@ -14,9 +14,13 @@ import ExclamationTriangleIcon from "../../components/icons/ExclamationTriangleI
 import { getServerAuthSession } from "../../server/auth";
 import { api } from "../../utils/api";
 import { dataSheetTranslation, dataSheetUnit, datasheetLayout } from "../../utils/consts";
+import DownloadPDFButton from "../../components/DownloadPDFButton";
+import BasicDocument from "../../utils/pdf";
 
 const Profile = () => {
   const profile = api.user.getProfileBySession.useQuery();
+
+  const workouts = api.workout.getManyBySession.useQuery();
 
   const latestDataSheet = api.datasheet.getLatestBySession.useQuery();
 
@@ -79,13 +83,20 @@ const Profile = () => {
       </div>
       <div className="flex grow flex-col items-center pb-4">
         <div className="flex w-full max-w-[40rem] grow flex-col items-center overflow-y-auto">
-          <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2 p-2">
+          <div className="flex w-full flex-row items-center gap-2 p-2">
             <Link
               href="/profile/workout_history"
-              className="flex w-full flex-col justify-center rounded-md bg-blue-500 py-3 px-6 text-center text-white shadow-md transition-colors hover:bg-blue-600"
+              className="flex w-full justify-center rounded-md bg-blue-500 py-3 px-6 text-center text-white shadow-md transition-colors hover:bg-blue-600"
             >
               <div>Histórico de treinos</div>
             </Link>
+            <DownloadPDFButton
+              fileName={`Treino - ${profile.data?.user?.name ?? profile.data?.email ?? ""}.pdf`}
+              className="flex w-full justify-center rounded-md bg-blue-500 py-3 px-6 text-center text-white shadow-md transition-colors hover:bg-blue-600"
+              document={<BasicDocument profile={profile.data!} workouts={workouts.data!} />}
+            >
+              Baixar treinos
+            </DownloadPDFButton>
           </div>
           <div className="flex w-full grow flex-col justify-center gap-2 p-2">
             {latestDataSheet.isLoading ? (
@@ -129,7 +140,7 @@ const Profile = () => {
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                <p>Não há medidas cadastradas</p>
+                <p className="text-center">Não há medidas cadastradas</p>
                 <Link
                   href="/profile/update_datasheet"
                   className="flex flex-col justify-center rounded-md bg-blue-500 py-3 px-6 text-center text-white shadow-md transition-colors hover:bg-blue-600"
