@@ -1,11 +1,47 @@
 /* eslint-disable jsx-a11y/alt-text */
 
-import type { Exercise, ExerciseInWorkout, Profile, User, Workout } from "@prisma/client";
+import type {
+  Exercise as DbExercise,
+  Workout as DbWorkout,
+  ExerciseInWorkout,
+  Method,
+  Profile,
+  User,
+} from "@prisma/client";
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import dynamic from "next/dynamic";
 import FullPage from "../components/FullPage";
-import { dataSheetTranslation, datasheetLayout, weekdaysTranslation } from "../utils/consts";
-import type { ParseJsonValues } from "../utils/types";
+import { join } from "../utils";
+import { RouterOutputs } from "../utils/api";
+import {
+  dataSheetTranslation,
+  datasheetLayout,
+  methodExplanation,
+  methodTranslation,
+  weekdaysTranslation,
+} from "../utils/consts";
+import type { ParseJsonValues, RepSet, TimeSet } from "../utils/types";
+
+type Workout = ParseJsonValues<
+  DbWorkout & { exercises: (ExerciseInWorkout & { exercise: DbExercise })[] }
+>;
+
+type Exercise = Workout["exercises"][number];
+
+type ExerciseGroup = { id: string; exercises: readonly [Exercise, Exercise] };
+
+type Sets = (
+  | {
+      time: number;
+      weight: number;
+      reps: undefined;
+    }
+  | {
+      time: undefined;
+      weight: number;
+      reps: number;
+    }
+)[];
 
 const PDFViewerWithNoSSR = dynamic(async () => (await import("@react-pdf/renderer")).PDFViewer, {
   ssr: false,
@@ -62,6 +98,9 @@ const styles = StyleSheet.create({
     fontFamily: "Inter",
     backgroundColor: "#ffffff",
     color: "#000000",
+    display: "flex",
+    flexDirection: "column",
+    padding: 32,
   },
   section: {
     margin: 10,
@@ -79,7 +118,6 @@ const styles = StyleSheet.create({
     width: 100,
   },
   logoContainer: {
-    padding: 32,
     display: "flex",
     flexDirection: "row",
     justifyContent: "center",
@@ -93,21 +131,12 @@ const MeasurementCard = ({ title }: { title: string }) => (
   <View
     style={{
       width: "100%",
+      height: "100%",
       borderWidth: 1,
       padding: 8,
     }}
   >
-    <View style={{ fontSize: 14 }}>
-      <Text>{title}</Text>
-    </View>
-    <View
-      style={{
-        fontSize: 14,
-        color: "#111827",
-        height: "100%",
-        width: "100%",
-      }}
-    ></View>
+    <Text>{title}</Text>
   </View>
 );
 
@@ -121,89 +150,262 @@ function BasicDocument(props: Props) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.logoContainer}>
-          <Image src="/logo1.png" style={styles.logo} />
-          <Image src="/logo2.png" style={styles.logo} />
-        </View>
-        <View style={styles.title}>
-          <Text style={styles.blueText}>FICHA DE TREINO</Text>
-          <Text style={{ fontSize: 20, fontWeight: 500 }}>|</Text>
-          <Text>IDMFit</Text>
-        </View>
-        <View style={{ padding: 32 }}>
-          <Text style={{ textAlign: "center" }}>{props.profile.user.name}</Text>
-          <View
-            style={{
-              padding: 16,
-              height: "70%",
-              width: "100%",
-              gap: 8,
-            }}
-          >
-            <Text style={{ padding: "0 0 32 0", color: "#2563eb" }}>Medidas:</Text>
-            {datasheetLayout.map(([left, right], i) => (
-              <View
-                key={i}
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  gap: 8,
-                }}
-              >
-                <MeasurementCard title={dataSheetTranslation[left]} />
-                <MeasurementCard title={dataSheetTranslation[right]} />
-              </View>
-            ))}
+        <View style={{ display: "flex", flexDirection: "column", gap: 32, paddingBottom: 16 }}>
+          <View style={styles.logoContainer}>
+            <Image src="/logo1.png" style={styles.logo} />
+            <Image src="/logo2.png" style={styles.logo} />
           </View>
+          <View style={styles.title}>
+            <Text style={styles.blueText}>FICHA DE TREINO</Text>
+            <Text style={{ fontSize: 20, fontWeight: 500 }}>|</Text>
+            <Text>IDMFit</Text>
+          </View>
+          <View style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Text style={{ textAlign: "center" }}>{props.profile.user.name}</Text>
+            <Text style={{ textAlign: "center", fontSize: 14 }}>{props.profile.user.email}</Text>
+          </View>
+        </View>
+        <View
+          style={{
+            paddingHorizontal: 16,
+            color: "#2563eb",
+            fontSize: 14,
+          }}
+        >
+          <Text style={{ backgroundColor: "#ffd700", padding: 8 }}>Medidas:</Text>
+        </View>
+        <View
+          style={{
+            fontSize: 12,
+            padding: 16,
+            width: "100%",
+            gap: 8,
+            flexGrow: 1,
+          }}
+        >
+          {datasheetLayout.map(([left, right], i) => (
+            <View
+              key={i}
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 8,
+                flexGrow: 1,
+              }}
+            >
+              <MeasurementCard title={dataSheetTranslation[left]} />
+              <MeasurementCard title={dataSheetTranslation[right]} />
+            </View>
+          ))}
         </View>
       </Page>
       <Page size="A4" style={styles.page}>
-        <View style={{ padding: 32 }}>
-          <Text style={{ textAlign: "center" }}>Treinos:</Text>
-          <View
-            style={{
-              padding: 16,
-              height: "70%",
-              width: "100%",
-              gap: 8,
-            }}
-          >
-            {props.workouts.map((workout, i) => (
-              <View
-                key={i}
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  gap: 8,
-                }}
-              >
-                <View
-                  style={{
-                    width: "100%",
-                    borderWidth: 1,
-                    padding: 8,
-                  }}
-                >
-                  <View style={{ fontSize: 14 }}>
-                    <Text>{workout.name}</Text>
-
-                    <Text>{workout.days.map(w => weekdaysTranslation[w]).join(", ")}</Text>
-                  </View>
-                  <View
-                    style={{
-                      fontSize: 14,
-                      color: "#111827",
-                      height: "100%",
-                      width: "100%",
-                    }}
-                  ></View>
-                </View>
-              </View>
-            ))}
-          </View>
+        <View
+          style={{
+            padding: 8,
+            gap: 8,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-around",
+          }}
+        >
+          {props.workouts.map((workout, i) => (
+            <WorkoutCard key={i} workout={workout} />
+          ))}
         </View>
       </Page>
     </Document>
+  );
+}
+
+function WorkoutCard({ workout }: { workout: Workout }) {
+  const exerciseGroups = workout?.exercises.reduce((acc, exercise) => {
+    const isAlreadyInAGroup = acc.find(
+      g => "exercises" in g && g.exercises.find(e => e.id === exercise.id),
+    );
+    if (isAlreadyInAGroup) {
+      return acc;
+    }
+
+    if (workout.biSets.some(([, b]) => b === exercise.id)) {
+      return acc;
+    }
+
+    const biSet = workout.biSets.find(([a]) => a === exercise.id);
+    if (biSet) {
+      const [, b] = biSet;
+      const group = [exercise, workout.exercises.find(e => e.id === b)!] as const;
+
+      return [...acc, { id: exercise.id, exercises: group }];
+    }
+
+    return [...acc, exercise];
+  }, [] as (ExerciseGroup | Exercise)[]);
+
+  const categories = workout.exercises.reduce((acc, exercise) => {
+    if (acc.includes(exercise.exercise.category)) {
+      return acc;
+    }
+
+    acc.push(exercise.exercise.category);
+    return acc;
+  }, [] as string[]);
+
+  return (
+    <View
+      wrap={false}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        fontSize: 12,
+      }}
+    >
+      <View
+        style={{
+          backgroundColor: "#ffd700",
+          padding: 8,
+          display: "flex",
+          justifyContent: "space-between",
+          flexDirection: "row",
+        }}
+      >
+        <Text style={{ color: "#2563eb" }}>
+          Treino
+          <Text style={{ fontWeight: 700 }}> {workout.name}</Text> - {join(categories)}
+        </Text>
+        <Text style={{ color: "#2563eb", fontWeight: 600 }}>
+          {join(workout.days.map(w => weekdaysTranslation[w]))}
+        </Text>
+      </View>
+      <View
+        style={{
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <View
+          style={{
+            paddingVertical: 8,
+            display: "flex",
+            flexDirection: "row",
+            backgroundColor: "#2563eb",
+            color: "#ffffff",
+          }}
+        >
+          <View style={{ display: "flex", alignItems: "center", width: "20%" }}>
+            <Text>Exercício</Text>
+          </View>
+          <View style={{ display: "flex", alignItems: "center", width: "20%" }}>
+            <Text style={{ textAlign: "center" }}>Séries</Text>
+          </View>
+          <View style={{ display: "flex", alignItems: "center", width: "20%" }}>
+            <Text>Peso</Text>
+          </View>
+          <View style={{ display: "flex", alignItems: "center", width: "20%" }}>
+            <Text>Descrição</Text>
+          </View>
+          <View style={{ display: "flex", alignItems: "center", width: "20%" }}>
+            <Text>Método</Text>
+          </View>
+        </View>
+        {exerciseGroups.map((group, i) => {
+          if ("exercises" in group) {
+            const [first, second] = group.exercises;
+            return (
+              <View key={i} style={{ backgroundColor: i % 2 === 0 ? "#eff6ff" : "#dbeafe" }}>
+                <BiSetCard first={first} second={second} />
+              </View>
+            );
+          }
+
+          return (
+            <View key={i} style={{ backgroundColor: i % 2 === 0 ? "#eff6ff" : "#dbeafe" }}>
+              <ExerciseCard exercise={group} />
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function ExerciseCard({ exercise }: { exercise: Exercise }) {
+  const groups = (exercise.sets as Sets).reduce((acc, set) => {
+    const last = acc.at(-1);
+
+    if (
+      (last?.set.reps === set.reps || last?.set.time === set.time) &&
+      last?.set.weight === set.weight
+    ) {
+      last.quantity++;
+      return acc;
+    }
+
+    acc.push({ quantity: 1, set });
+    return acc;
+  }, [] as { quantity: number; set: Sets[number] }[]);
+
+  return (
+    <View
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        paddingVertical: 8,
+        textAlign: "center",
+        width: "100%",
+        fontSize: 10,
+      }}
+    >
+      <View
+        style={{ width: "20%", display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <Text>{exercise.exercise.name}</Text>
+      </View>
+
+      <View
+        style={{ width: "20%", display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        {groups.map(({ quantity, set }, i) => (
+          <Text key={i}>
+            {quantity}
+            {" x "}
+            {set.reps
+              ? set.reps
+              : `${set.time! > 60 ? `${Math.floor(set.time! / 60)}min` : ""}${
+                  set.time! % 60 > 0 ? `${set.time! % 60}s` : ""
+                }`}
+          </Text>
+        ))}
+      </View>
+      <View
+        style={{ width: "20%", display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        {groups.map(({ set }, i) => (
+          <Text key={i}>{set.weight / 1000}kg</Text>
+        ))}
+      </View>
+
+      <View
+        style={{ width: "20%", display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <Text>{exercise.description}</Text>
+      </View>
+      <View
+        style={{ width: "20%", display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <Text>{methodTranslation[exercise.method]}</Text>
+      </View>
+    </View>
+  );
+}
+
+function BiSetCard({ first, second }: { first: Exercise; second: Exercise }) {
+  return (
+    <View style={{ display: "flex", flexDirection: "column", borderWidth: 1 }}>
+      <ExerciseCard exercise={first} />
+      <ExerciseCard exercise={second} />
+    </View>
   );
 }
 
@@ -225,13 +427,12 @@ const profile: Profile & { user: User } = {
 };
 
 const workouts: ParseJsonValues<
-  Workout & { exercises: (ExerciseInWorkout & { exercise: Exercise })[] }
+  Workout & { exercises: (ExerciseInWorkout & { exercise: DbExercise })[] }
 >[] = [
   {
     id: "1",
     profileId: "1",
     name: "A",
-
     days: ["Monday", "Wednesday", "Friday"],
     exercises: [
       {
@@ -252,27 +453,700 @@ const workouts: ParseJsonValues<
         index: 0,
         method: "Standard",
         sets: [
-          {
-            reps: 10,
-            weight: 0,
-          },
-          {
-            reps: 10,
-            weight: 0,
-          },
-          {
-            reps: 10,
-            weight: 0,
-          },
-          {
-            reps: 10,
-            weight: 0,
-          },
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+        ],
+      },
+      {
+        id: "2",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "estore o curso natural do movimento",
+        exercise: {
+          id: "2",
+          name: "Supino Inclinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "2",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 6000 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado do zap",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Pyramid",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
         ],
       },
     ],
-    biSets: [["0", "1"]],
-
+    biSets: [["1", "2"]],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "1",
+    profileId: "1",
+    name: "A",
+    days: ["Monday", "Wednesday", "Friday"],
+    exercises: [
+      {
+        id: "1",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "1",
+          name: "Supino Reto",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "1",
+        index: 0,
+        method: "Standard",
+        sets: [
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+        ],
+      },
+      {
+        id: "2",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "estore o curso natural do movimento",
+        exercise: {
+          id: "2",
+          name: "Supino Inclinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "2",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 6000 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado do zap",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Pyramid",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+    ],
+    biSets: [["1", "2"]],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "1",
+    profileId: "1",
+    name: "A",
+    days: ["Monday", "Wednesday", "Friday"],
+    exercises: [
+      {
+        id: "1",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "1",
+          name: "Supino Reto",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "1",
+        index: 0,
+        method: "Standard",
+        sets: [
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+        ],
+      },
+      {
+        id: "2",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "estore o curso natural do movimento",
+        exercise: {
+          id: "2",
+          name: "Supino Inclinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "2",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 6000 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado do zap",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Pyramid",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+    ],
+    biSets: [["1", "2"]],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "1",
+    profileId: "1",
+    name: "A",
+    days: ["Monday", "Wednesday", "Friday"],
+    exercises: [
+      {
+        id: "1",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "1",
+          name: "Supino Reto",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "1",
+        index: 0,
+        method: "Standard",
+        sets: [
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+        ],
+      },
+      {
+        id: "2",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "estore o curso natural do movimento",
+        exercise: {
+          id: "2",
+          name: "Supino Inclinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "2",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 6000 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado do zap",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Pyramid",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+    ],
+    biSets: [["1", "2"]],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "1",
+    profileId: "1",
+    name: "A",
+    days: ["Monday", "Wednesday", "Friday"],
+    exercises: [
+      {
+        id: "1",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "1",
+          name: "Supino Reto",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "1",
+        index: 0,
+        method: "Standard",
+        sets: [
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+        ],
+      },
+      {
+        id: "2",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "estore o curso natural do movimento",
+        exercise: {
+          id: "2",
+          name: "Supino Inclinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "2",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 6000 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado do zap",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Pyramid",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+    ],
+    biSets: [["1", "2"]],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "1",
+    profileId: "1",
+    name: "A",
+    days: ["Monday", "Wednesday", "Friday"],
+    exercises: [
+      {
+        id: "1",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "1",
+          name: "Supino Reto",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "1",
+        index: 0,
+        method: "Standard",
+        sets: [
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+        ],
+      },
+      {
+        id: "2",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "estore o curso natural do movimento",
+        exercise: {
+          id: "2",
+          name: "Supino Inclinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "2",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 6000 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado do zap",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Pyramid",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+    ],
+    biSets: [["1", "2"]],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "1",
+    profileId: "1",
+    name: "A",
+    days: ["Monday", "Wednesday", "Friday"],
+    exercises: [
+      {
+        id: "1",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "1",
+          name: "Supino Reto",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "1",
+        index: 0,
+        method: "Standard",
+        sets: [
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+          { reps: 8, weight: 6000 },
+        ],
+      },
+      {
+        id: "2",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "estore o curso natural do movimento",
+        exercise: {
+          id: "2",
+          name: "Supino Inclinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "2",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 8000 },
+          { reps: 10, weight: 6000 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Standard",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+      {
+        id: "3",
+        workoutId: "1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: "",
+        exercise: {
+          id: "3",
+          name: "Supino Declinado do zap",
+          category: "Peitoral",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          image: null,
+        },
+        exerciseId: "3",
+        index: 1,
+        method: "Pyramid",
+        sets: [
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 4000 },
+          { time: 90, weight: 0 },
+        ],
+      },
+    ],
+    biSets: [["1", "2"]],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
