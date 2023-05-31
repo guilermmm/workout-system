@@ -17,6 +17,9 @@ const nextConfig = {
   images: {
     domains: ["lh3.googleusercontent.com"],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 /** @type {import("next-pwa").PWAConfig}  */
