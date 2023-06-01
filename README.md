@@ -75,7 +75,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] ajeitar os input number
 
 - [x] alerta para confirmar cada mutation
-- [ ] botar o carregamento nos botao q ta faltando
+- [x] botar o carregamento nos botao q ta faltando
 - [x] modal por cima de modal pra confirmar mutation em form de modal
 - [x] modal pra cadastrar usuario
 
@@ -83,7 +83,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] marcar os dois exercicios do bi-set ao msm tempo ou colocar só um check pros dois exercicios
 - [x] poder clicar no exercicio no calendario p saber quais foram completos e quais nao foram
 - [x] aluno colocar o peso no exercicio
-- [ ] poder colocar uma imagem no cadastro do exercicio
+- [x] poder colocar uma imagem no cadastro do exercicio
 - [x] poder adicionar mais emails como adm, manter o email superuser no .env, pq só ele que vai poder adicionar e remover novos adm
 
-- [ ] pensar em opção para quem nao usa celular (conferir com ela a questao do pdf dps q fazer tudo)
+- [x] pensar em opção para quem nao usa celular (conferir com ela a questao do pdf dps q fazer tudo)
