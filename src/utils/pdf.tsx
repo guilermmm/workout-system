@@ -9,7 +9,7 @@ import type {
 } from "@prisma/client";
 import { Document, Font, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import dynamic from "next/dynamic";
-import { join } from ".";
+import { getAge, join } from ".";
 import { methodTranslation, weekdaysTranslation } from "./consts";
 import type { ParseJsonValues } from "./types";
 
@@ -159,6 +159,9 @@ function BasicDocument(props: Props) {
               {props.profile?.user && props.profile.user.name}
             </Text>
             <Text style={{ textAlign: "center", fontSize: 14 }}>{props.profile?.email}</Text>
+            <Text style={{ textAlign: "center", fontSize: 14 }}>
+              {props.profile?.birthdate && getAge(props.profile?.birthdate)} anos
+            </Text>
           </View>
         </View>
         {/* <View

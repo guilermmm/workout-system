@@ -79,6 +79,7 @@ model Workout {
 model Profile {
     id               String            @id @default(cuid())
     email            String            @unique
+    birthdate        DateTime
     user             User?             @relation(fields: [userId], references: [id])
     userId           String?           @unique
     isActive         Boolean           @default(true)

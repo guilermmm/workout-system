@@ -57,6 +57,8 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
 
   const [email, setEmail] = useState("");
 
+  const [birthdate, setBirthdate] = useState<Date | null>(null);
+
   const emailProps = useFormValidation(
     email,
     v => {
@@ -93,7 +95,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
               <button
                 onClick={() => setShowMutateAlert(true)}
                 className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={!validateEmail(email)}
+                disabled={!validateEmail(email) || birthdate === null}
               >
                 Cadastrar
               </button>
@@ -114,6 +116,12 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
             onChange={setEmail}
             {...emailProps}
           />
+          <input
+            type="date"
+            value={birthdate?.toISOString().slice(0, 10) ?? ""}
+            onChange={e => setBirthdate(new Date(e.target.value))}
+            className="peer block h-full w-full appearance-none rounded-md border-1 border-gray-300 bg-transparent p-2.5 text-sm text-gray-900 outline-none ring-0 duration-300 focus:border-blue-600 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
+          />
         </Modal>
       )}
       {showMutateAlert && (
@@ -126,7 +134,8 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           <button
             className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             onClick={() => {
-              createProfile.mutate({ email });
+              if (birthdate === null) return;
+              createProfile.mutate({ email, birthdate });
               setEmail("");
               setShowModal(false);
             }}

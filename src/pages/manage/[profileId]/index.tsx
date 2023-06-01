@@ -14,7 +14,7 @@ import PencilSquareIcon from "../../../components/icons/PencilSquareIcon";
 import TrashIcon from "../../../components/icons/TrashIcon";
 import XMarkIcon from "../../../components/icons/XMarkIcon";
 import { getServerAuthSession } from "../../../server/auth";
-import { capitalize, classList, join } from "../../../utils";
+import { capitalize, classList, getAge, join } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
 import BasicDocument from "../../../utils/pdf";
@@ -150,6 +150,9 @@ const Manage = () => {
               <div className="flex flex-col items-center justify-center">
                 <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
                   <span className="font-bold">{profile.data.user?.name ?? profile.data.email}</span>
+                </h1>
+                <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
+                  <span className="font-bold">{getAge(profile.data.birthdate)} anos</span>
                 </h1>
 
                 <button
