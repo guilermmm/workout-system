@@ -152,7 +152,11 @@ const Manage = () => {
                   <span className="font-bold">{profile.data.user?.name ?? profile.data.email}</span>
                 </h1>
                 <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
-                  <span className="font-bold">{getAge(profile.data.birthdate)} anos</span>
+                  <span>
+                    {`${getAge(
+                      profile.data.birthdate,
+                    )} anos - ${profile.data.birthdate.toLocaleDateString()}`}
+                  </span>
                 </h1>
 
                 <button

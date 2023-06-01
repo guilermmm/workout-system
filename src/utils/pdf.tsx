@@ -159,9 +159,13 @@ function BasicDocument(props: Props) {
               {props.profile?.user && props.profile.user.name}
             </Text>
             <Text style={{ textAlign: "center", fontSize: 14 }}>{props.profile?.email}</Text>
-            <Text style={{ textAlign: "center", fontSize: 14 }}>
-              {props.profile?.birthdate && getAge(props.profile?.birthdate)} anos
-            </Text>
+            {props.profile && (
+              <Text style={{ textAlign: "center", fontSize: 14 }}>
+                {`${getAge(
+                  props.profile.birthdate,
+                )} anos - ${props.profile.birthdate.toLocaleDateString()}`}
+              </Text>
+            )}
           </View>
         </View>
         {/* <View

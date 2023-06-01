@@ -16,6 +16,7 @@ import { api } from "../../utils/api";
 import { dataSheetTranslation, dataSheetUnit, datasheetLayout } from "../../utils/consts";
 import DownloadPDFButton from "../../components/DownloadPDFButton";
 import BasicDocument from "../../utils/pdf";
+import { getAge } from "../../utils";
 
 const Profile = () => {
   const profile = api.user.getProfileBySession.useQuery();
@@ -69,9 +70,18 @@ const Profile = () => {
             )}
           </div>
           {profile.data && (
-            <h1 className="mt-2 w-full self-start truncate text-center text-lg font-medium text-slate-900">
-              <span className="font-bold">{profile.data.user?.name ?? profile.data.email}</span>
-            </h1>
+            <div className="flex flex-col items-center justify-center">
+              <h1 className="mt-2 w-full self-start truncate text-center text-lg font-medium text-slate-900">
+                <span className="font-bold">{profile.data.user?.name ?? profile.data.email}</span>
+              </h1>
+              <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
+                <span>
+                  {`${getAge(
+                    profile.data.birthdate,
+                  )} anos - ${profile.data.birthdate.toLocaleDateString()}`}
+                </span>
+              </h1>
+            </div>
           )}
         </div>
         <button
