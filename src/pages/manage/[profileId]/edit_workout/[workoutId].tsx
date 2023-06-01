@@ -18,7 +18,6 @@ import Bars2Icon from "../../../../components/icons/Bars2Icon";
 import CheckCircleIcon from "../../../../components/icons/CheckCircleIcon";
 import ExclamationTriangleIcon from "../../../../components/icons/ExclamationTriangleIcon";
 import PlusIcon from "../../../../components/icons/PlusIcon";
-import { env } from "../../../../env/server.mjs";
 import { getServerAuthSession } from "../../../../server/auth";
 import { api, type RouterOutputs } from "../../../../utils/api";
 import { weekdaysOrder, weekdaysTranslation } from "../../../../utils/consts";

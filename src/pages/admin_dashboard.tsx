@@ -1,6 +1,7 @@
 import type { AdminProfile, User } from "@prisma/client";
 import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useSession } from "next-auth/react";
+import { env } from "process";
 import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
@@ -15,12 +16,11 @@ import Header from "../components/admin/Header";
 import AdminNavbar from "../components/admin/Navbar";
 import CheckIcon from "../components/icons/CheckIcon";
 import MagnifyingGlassIcon from "../components/icons/MagnifyingGlassIcon";
+import TrashIcon from "../components/icons/TrashIcon";
 import XMarkIcon from "../components/icons/XMarkIcon";
 import { getServerAuthSession } from "../server/auth";
 import { useFormValidation, validateEmail } from "../utils";
 import { api } from "../utils/api";
-import TrashIcon from "../components/icons/TrashIcon";
-import { env } from "process";
 
 const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const { data: session } = useSession();
@@ -31,7 +31,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
 
   const [showCreateAlert, setShowMutateAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
-  const [toRemove, setToRemove] = useState<AdminProfile | null>(null);
+  const [toRemove, setToRemove] = useState<(AdminProfile & { user: User | null }) | null>(null);
 
   const profiles = api.user.getAdminProfiles.useQuery({ search: debouncedInput });
 
@@ -150,7 +150,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           icon={<TrashIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Confirmar exclusão"
           text={`Tem certeza que deseja excluir o administrador ${
-            toRemove.name ?? toRemove.email
+            toRemove.user?.name ?? toRemove.email
           }?`}
           onClickOutside={() => setToRemove(null)}
         >
@@ -224,7 +224,7 @@ const UserCard = ({
   setToRemove,
 }: {
   profile: AdminProfile & { user: User | null };
-  setToRemove: Dispatch<SetStateAction<AdminProfile | null>>;
+  setToRemove: Dispatch<SetStateAction<(AdminProfile & { user: User | null }) | null>>;
 }) => {
   return (
     <div className="flex w-full grow flex-row items-center justify-between rounded-md bg-slate-50 shadow-md transition-shadow hover:shadow-xl">

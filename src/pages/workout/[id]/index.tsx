@@ -106,10 +106,10 @@ const Workout = () => {
     {},
   );
 
-  const [showImageModal, setShowImageModal] = useState("");
+  const [showImageModal, setShowImageModal] = useState<Exercise["exercise"] | null>(null);
 
   const selectedExerciseImage = api.exercise.getExerciseImageById.useQuery(
-    { id: showImageModal },
+    { id: showImageModal?.id ?? "" },
     { enabled: !!showImageModal },
   );
 
@@ -250,33 +250,36 @@ const Workout = () => {
     [workout],
   );
 
-  const handleInfo = (id: string) => () => {
-    setShowImageModal(id);
+  const handleInfo = (exercise: Exercise["exercise"]) => () => {
+    setShowImageModal(exercise);
   };
 
   return (
     <FullPage>
       {showImageModal && (
         <Modal
-          onClickOutside={() => setShowImageModal("")}
+          onClickOutside={() => setShowImageModal(null)}
           buttons={
             <button
-              onClick={() => setShowImageModal("")}
+              onClick={() => setShowImageModal(null)}
               className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               Fechar
             </button>
           }
         >
-          <h1 className="self-center font-medium">Imagem atual</h1>
+          <h1 className="self-center font-medium">{showImageModal.name}</h1>
           {selectedExerciseImage.data ? (
-            <img
-              src={selectedExerciseImage.data}
-              alt="imagem do exercicio"
-              className="max-h-xs max-w-xs"
-            />
+            <div className="relative h-72 w-72">
+              <Image
+                src={selectedExerciseImage.data}
+                className="h-full w-full rounded-md object-cover"
+                alt={showImageModal.name}
+                fill
+              />
+            </div>
           ) : (
-            <h1>Não há imagem para esse exercício.</h1>
+            <h2>Não há imagem para {showImageModal.name}.</h2>
           )}
         </Modal>
       )}
@@ -384,7 +387,7 @@ type ExerciseCardProps = {
   setCollapsed?: (collapsed: boolean) => void;
   setSetCompleted: (setIndex: number) => (completed: boolean) => void;
   setSetWeight: (setIndex: number) => (weight: number) => void;
-  handleInfo: (id: string) => () => void;
+  handleInfo: (exercise: Exercise["exercise"]) => () => void;
 };
 
 const ExerciseCard = ({
@@ -457,7 +460,7 @@ const ExerciseCard = ({
             <div className="flex flex-row flex-wrap items-center">
               <div className="opacity-0">{exercise.exercise.name}</div>
               <div className="ml-4 text-sm text-slate-600">{exercise.exercise.category}</div>
-              <button onClick={handleInfo(exercise.exercise.id)} className="pl-3">
+              <button onClick={handleInfo(exercise.exercise)} className="pl-3">
                 <InformationIcon className="h-6 w-6 text-black" />
               </button>
             </div>
@@ -582,7 +585,7 @@ type BiSetCardProps = {
     ids: string[],
   ) => (exercise: Partial<Exercise> | ((exercise: Exercise) => Partial<Exercise>)) => void;
   collapsed: boolean;
-  handleInfo: (id: string) => () => void;
+  handleInfo: (exercise: Exercise["exercise"]) => () => void;
 };
 
 const BiSetCard = ({

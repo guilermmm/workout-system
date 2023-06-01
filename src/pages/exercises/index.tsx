@@ -130,6 +130,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
       void groups.refetch();
       setEditedExercise(undefined);
       setShowExerciseModal(false);
+      setShowEditConfirmation(false);
     },
   });
 

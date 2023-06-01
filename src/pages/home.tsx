@@ -116,7 +116,7 @@ const WorkoutCard = ({ id, name, description }: WorkoutCardProps) => {
       <div className="text-xl">
         Treino <span className="font-medium">{name}</span>
       </div>
-      <div className="text-sm font-thin opacity-90">{description}</div>
+      <div className="text-sm font-light opacity-90">{description}</div>
     </Link>
   );
 };

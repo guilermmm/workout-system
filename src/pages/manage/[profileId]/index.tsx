@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import Alert from "../../../components/Alert";
+import DownloadPDFButton from "../../../components/DownloadPDFButton";
 import FullPage from "../../../components/FullPage";
 import ProfilePic from "../../../components/ProfilePic";
 import QueryErrorAlert from "../../../components/QueryErrorAlert";
@@ -12,12 +13,10 @@ import ExclamationCircleIcon from "../../../components/icons/ExclamationCircleIc
 import PencilSquareIcon from "../../../components/icons/PencilSquareIcon";
 import TrashIcon from "../../../components/icons/TrashIcon";
 import XMarkIcon from "../../../components/icons/XMarkIcon";
-import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { capitalize, classList, join } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
-import DownloadPDFButton from "../../../components/DownloadPDFButton";
 import BasicDocument from "../../../utils/pdf";
 
 type Workout = RouterOutputs["workout"]["getMany"][number];
@@ -211,7 +210,7 @@ const Manage = () => {
                       <div className="text-xl">
                         Treino <span className="font-medium">{workout.name}</span>
                       </div>
-                      <div className="text-sm font-thin opacity-90">
+                      <div className="text-sm font-light opacity-90">
                         {capitalize(join(workout.categories))}
                       </div>
                     </div>
