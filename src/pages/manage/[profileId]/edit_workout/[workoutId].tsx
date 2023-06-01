@@ -408,7 +408,7 @@ export default EditWorkout;
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   const session = await getServerAuthSession(ctx);
 
-  if (!session || session.user.email !== env.ADMIN_EMAIL) {
+  if (!session || session.user.role !== "admin") {
     return { redirect: { destination: "/", permanent: false } };
   }
 
