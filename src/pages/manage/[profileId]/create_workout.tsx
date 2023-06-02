@@ -19,7 +19,6 @@ import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
 import ExclamationTriangleIcon from "../../../components/icons/ExclamationTriangleIcon";
 import PlusIcon from "../../../components/icons/PlusIcon";
 import XMarkIcon from "../../../components/icons/XMarkIcon";
-import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
 import { useLocalStorage } from "../../../utils";
 import { api } from "../../../utils/api";

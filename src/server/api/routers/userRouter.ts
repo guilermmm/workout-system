@@ -91,15 +91,30 @@ export const userRouter = createTRPCRouter({
     }),
 
   createProfile: adminProcedure
-    .input(z.object({ email: z.string().email(), birthdate: z.date() }))
+    .input(z.object({ email: z.string().email() }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.prisma.profile.create({ data: { email: input.email, birthdate: input.birthdate } });
+      await ctx.prisma.profile.create({ data: { email: input.email } });
     }),
 
   createAdminProfile: superAdminProcedure
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.prisma.adminProfile.create({ data: { email: input.email } });
+    }),
+
+  updateProfile: adminProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        email: z.string().email(),
+        birthdate: z.date(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.prisma.profile.update({
+        where: { id: input.id },
+        data: { email: input.email, birthdate: input.birthdate },
+      });
     }),
 
   deleteAdminProfileByEmail: superAdminProcedure

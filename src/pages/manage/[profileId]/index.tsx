@@ -14,10 +14,21 @@ import PencilSquareIcon from "../../../components/icons/PencilSquareIcon";
 import TrashIcon from "../../../components/icons/TrashIcon";
 import XMarkIcon from "../../../components/icons/XMarkIcon";
 import { getServerAuthSession } from "../../../server/auth";
-import { capitalize, classList, getAge, join } from "../../../utils";
+import {
+  capitalize,
+  classList,
+  getAge,
+  join,
+  useFormValidation,
+  validateEmail,
+} from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
 import BasicDocument from "../../../utils/pdf";
+import CheckIcon from "../../../components/icons/CheckIcon";
+import Modal from "../../../components/Modal";
+import TextInput from "../../../components/TextInput";
+import DatePicker from "../../../components/DatePicker";
 
 type Workout = RouterOutputs["workout"]["getMany"][number];
 
@@ -39,6 +50,29 @@ const Manage = () => {
   });
 
   const [showMutateAlert, setShowMutateAlert] = useState(false);
+
+  const [showMutateProfileConfirmAlert, setShowMutateProfileConfirmAlert] = useState(false);
+  const [showMutateProfileModal, setShowMutateProfileModal] = useState(false);
+
+  const [email, setEmail] = useState(profile.data?.email ?? "");
+  const [birthdate, setBirthdate] = useState<Date | null>(profile.data?.birthdate ?? null);
+
+  const emailProps = useFormValidation(
+    email,
+    v => {
+      if (!validateEmail(v)) {
+        return "E-mail inválido";
+      }
+    },
+    false,
+  );
+
+  const updateProfile = api.user.updateProfile.useMutation({
+    onSuccess: () => {
+      void profile.refetch();
+      setShowMutateProfileConfirmAlert(false);
+    },
+  });
 
   const [toRemove, setToRemove] = useState<Workout | null>(null);
 
@@ -127,6 +161,80 @@ const Manage = () => {
           )}
         </Alert>
       )}
+      {showMutateProfileModal && (
+        <Modal
+          onClickOutside={() => setShowMutateProfileModal(false)}
+          buttons={
+            <>
+              <button
+                onClick={() => setShowMutateProfileConfirmAlert(true)}
+                className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!validateEmail(email)}
+              >
+                Atualizar
+              </button>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => setShowMutateProfileModal(false)}
+              >
+                Cancelar
+              </button>
+            </>
+          }
+        >
+          <h1 className="self-center font-medium">
+            Atualizar usuário {profile.data?.user?.name ?? profile.data?.email}
+          </h1>
+          <TextInput
+            label="Email"
+            className="rounded-md bg-white"
+            value={email}
+            onChange={setEmail}
+            {...emailProps}
+          />
+          <DatePicker
+            label="Data de nascimento"
+            className="rounded-md bg-white"
+            value={birthdate}
+            onChange={setBirthdate}
+          />
+        </Modal>
+      )}
+      {showMutateProfileConfirmAlert && (
+        <Alert
+          icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
+          title="Confirmar Atualização"
+          text={`Tem certeza que deseja realizar essas alterações?`}
+          onClickOutside={() => setShowMutateProfileConfirmAlert(false)}
+        >
+          <button
+            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => {
+              if (!birthdate) return;
+              updateProfile.mutate({ id: profileId, email, birthdate });
+              setEmail("");
+              setBirthdate(null);
+              setShowMutateProfileModal(false);
+            }}
+          >
+            {updateProfile.isLoading ? (
+              <div className="flex h-full w-full items-center justify-center">
+                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              </div>
+            ) : (
+              "Confirmar"
+            )}
+          </button>
+          {!updateProfile.isLoading && (
+            <button
+              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+              onClick={() => setShowMutateProfileConfirmAlert(false)}
+            >
+              Cancelar
+            </button>
+          )}
+        </Alert>
+      )}
       <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
         <div className="absolute left-0 top-0 right-0 h-20 bg-gold-500" />
         <Link
@@ -151,13 +259,15 @@ const Manage = () => {
                 <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
                   <span className="font-bold">{profile.data.user?.name ?? profile.data.email}</span>
                 </h1>
-                <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
-                  <span>
-                    {`${getAge(
-                      profile.data.birthdate,
-                    )} anos - ${profile.data.birthdate.toLocaleDateString()}`}
-                  </span>
-                </h1>
+                {profile.data.birthdate && (
+                  <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
+                    <span>
+                      {`${getAge(
+                        profile.data.birthdate,
+                      )} anos - ${profile.data.birthdate.toLocaleDateString()}`}
+                    </span>
+                  </h1>
+                )}
 
                 <button
                   onClick={() => setShowMutateAlert(true)}
@@ -177,16 +287,16 @@ const Manage = () => {
         </div>
       </div>
       <div className="flex flex-col items-center">
-        <div className="flex w-full max-w-[32rem] flex-row flex-wrap justify-center gap-2 px-2">
+        <div className="flex w-full max-w-[32rem] flex-row justify-center gap-2 px-2">
           <Link
-            className="grow rounded-md bg-blue-500 p-2 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+            className="w-full rounded-md bg-blue-500 p-2 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
             href={`/manage/${profileId}/workout_history`}
           >
             Histórico de treinos
           </Link>
           <Link
             href={`/manage/${profileId}/datasheet_history`}
-            className="grow rounded-md bg-blue-500 p-2 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+            className="w-full rounded-md bg-blue-500 p-2 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
           >
             Histórico de medidas
           </Link>
@@ -235,20 +345,26 @@ const Manage = () => {
                   </div>
                 </div>
               ))}
-              <div className="mt-4 flex w-full max-w-[32rem] flex-row flex-wrap justify-center gap-2">
+              <div className="mt-4 flex w-full max-w-[32rem] flex-row justify-center gap-2">
                 <Link
-                  className="grow rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                  className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
                   href={`/manage/${profileId}/create_workout`}
                 >
                   Adicionar treino
                 </Link>
                 <DownloadPDFButton
                   fileName={`Treino - ${profile.data?.user?.name ?? profile.data?.email ?? ""}.pdf`}
-                  className="grow rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                  className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
                   document={<BasicDocument profile={profile.data!} workouts={workouts.data} />}
                 >
                   Baixar treinos
                 </DownloadPDFButton>
+                <button
+                  onClick={() => setShowMutateProfileModal(true)}
+                  className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                >
+                  Atualizar perfil
+                </button>
               </div>
             </div>
           )
