@@ -319,6 +319,11 @@ const Manage = () => {
                 <h2 className="text-lg font-medium">Treinos</h2>
                 <div className="h-1 w-full bg-gold-500" />
               </div>
+              {profile.data?.workoutUpdateDate && (
+                <h3 className="w-full text-start text-sm">
+                  Última atualização: {profile.data?.workoutUpdateDate?.toLocaleDateString()}
+                </h3>
+              )}
               {workouts.data.map(workout => (
                 <div
                   className="flex w-full flex-1 justify-between rounded-md bg-blue-500 text-slate-100 shadow-md"

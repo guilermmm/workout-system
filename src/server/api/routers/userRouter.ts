@@ -134,4 +134,17 @@ export const userRouter = createTRPCRouter({
     .mutation(async ({ ctx, input: { profileId } }) => {
       await ctx.prisma.profile.update({ where: { id: profileId }, data: { isActive: true } });
     }),
+
+  updateWorkoutDate: adminProcedure
+    .input(
+      z.object({
+        profileId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input: { profileId } }) => {
+      await ctx.prisma.profile.update({
+        where: { id: profileId },
+        data: { workoutUpdateDate: new Date() },
+      });
+    }),
 });

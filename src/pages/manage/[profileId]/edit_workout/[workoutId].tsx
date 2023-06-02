@@ -108,7 +108,13 @@ const EditWorkout = () => {
     [originalWorkout.data, workoutId],
   );
 
-  const updateWorkout = api.workout.update.useMutation();
+  const updateWorkoutDate = api.user.updateWorkoutDate.useMutation();
+
+  const updateWorkout = api.workout.update.useMutation({
+    onSuccess: () => {
+      updateWorkoutDate.mutate({ profileId });
+    },
+  });
 
   const [workout, setWorkout] = useState<WorkoutState>({
     name: "",

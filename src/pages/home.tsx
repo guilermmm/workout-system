@@ -54,6 +54,11 @@ const Home = () => {
       </div>
       <div className="grow overflow-y-auto">
         <div className="flex h-full grow flex-col items-center">
+          {profile.data?.workoutUpdateDate && (
+            <h3 className="text-md pt-4">
+              Última atualização: {profile.data?.workoutUpdateDate?.toLocaleDateString()}
+            </h3>
+          )}
           {workouts.isLoading ? (
             <div className="flex h-full items-center justify-center">
               <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />

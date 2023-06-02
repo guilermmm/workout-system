@@ -68,7 +68,13 @@ const CreateWorkout = () => {
   const profile = api.user.getProfileById.useQuery(profileId, { refetchOnWindowFocus: false });
   const categories = api.exercise.getGroups.useQuery(undefined, { refetchOnWindowFocus: false });
 
-  const createWorkout = api.workout.create.useMutation();
+  const updateWorkoutDate = api.user.updateWorkoutDate.useMutation();
+
+  const createWorkout = api.workout.create.useMutation({
+    onSuccess: () => {
+      updateWorkoutDate.mutate({ profileId });
+    },
+  });
 
   const [isConfirmationAlertOpen, setConfirmationAlertOpen] = useState(false);
 

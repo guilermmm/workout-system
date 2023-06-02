@@ -77,15 +77,16 @@ model Workout {
 }
 
 model Profile {
-    id               String            @id @default(cuid())
-    email            String            @unique
-    birthdate        DateTime?
-    user             User?             @relation(fields: [userId], references: [id])
-    userId           String?           @unique
-    isActive         Boolean           @default(true)
-    workouts         Workout[]         @relation("workouts")
-    finishedWorkouts FinishedWorkout[]
-    datasheets       Datasheet[]
+    id                String            @id @default(cuid())
+    email             String            @unique
+    birthdate         DateTime?
+    user              User?             @relation(fields: [userId], references: [id])
+    userId            String?           @unique
+    isActive          Boolean           @default(true)
+    workouts          Workout[]         @relation("workouts")
+    finishedWorkouts  FinishedWorkout[]
+    datasheets        Datasheet[]
+    workoutUpdateDate DateTime?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
