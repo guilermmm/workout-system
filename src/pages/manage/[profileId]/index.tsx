@@ -37,7 +37,12 @@ const Manage = () => {
 
   const { profileId } = router.query as { profileId: string };
 
-  const profile = api.user.getProfileById.useQuery(profileId);
+  const profile = api.user.getProfileById.useQuery(profileId, {
+    onSuccess: data => {
+      setEmail(data.email);
+      setBirthdate(data.birthdate);
+    },
+  });
   const workouts = api.workout.getMany.useQuery({ profileId });
 
   const changeStatus = (
