@@ -53,7 +53,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
 
   const [email, setEmail] = useState("");
 
-  const emailProps = useFormValidation(
+  const [emailProps] = useFormValidation(
     email,
     v => {
       if (!validateEmail(v)) {

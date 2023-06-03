@@ -1,9 +1,11 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { Simplify } from "@trpc/server";
+import * as argon2 from "argon2";
 import type { GetServerSidePropsContext } from "next";
 import type { DefaultSession, NextAuthOptions } from "next-auth";
-import { getServerSession } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import { getSession } from "next-auth/react";
 import { env } from "../env/server.mjs";
 import { prisma } from "./db";
 
@@ -31,16 +33,47 @@ declare module "next-auth" {
  **/
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    async session({ session, user }) {
-      const adminProfiles = await prisma.adminProfile.findMany();
-      if (session.user) {
-        session.user.id = user.id;
-        session.user.role =
-          env.ADMIN_EMAIL === user.email ||
-          adminProfiles.some(profile => profile.email === user.email)
-            ? "admin"
-            : "user";
+    async session({ session }) {
+      if (!session.user || !session.user.email) {
+        throw new Error("Invalid session");
       }
+
+      if (session.user.email === env.ADMIN_EMAIL) {
+        const admin = await prisma.user.findUnique({
+          where: { email: session.user.email },
+          select: { id: true },
+        });
+
+        if (!admin) {
+          throw new Error("Admin not found");
+        }
+
+        session.user.id = admin.id;
+        session.user.role = "admin";
+        return session;
+      }
+
+      const adminProfile = await prisma.adminProfile.findUnique({
+        where: { email: session.user.email },
+        select: { userId: true },
+      });
+      if (adminProfile) {
+        session.user.id = adminProfile.userId!;
+        session.user.role = "admin";
+        return session;
+      }
+
+      const profile = await prisma.profile.findUnique({
+        where: { email: session.user.email },
+        select: { userId: true },
+      });
+
+      if (profile) {
+        session.user.id = profile.userId!;
+        session.user.role = "user";
+        return session;
+      }
+
       return session;
     },
 
@@ -49,15 +82,21 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
 
-      const adminProfiles = await prisma.adminProfile.findMany();
-
-      if (
-        user.email === env.ADMIN_EMAIL ||
-        adminProfiles.some(profile => profile.email === user.email)
-      )
+      if (user.email === env.ADMIN_EMAIL) {
         return true;
+      }
 
-      const profile = await prisma.profile.findUnique({ where: { email: user.email } });
+      const adminProfile = await prisma.adminProfile.findUnique({
+        where: { email: user.email },
+        select: { email: true },
+      });
+
+      if (adminProfile) return true;
+
+      const profile = await prisma.profile.findUnique({
+        where: { email: user.email },
+        select: { isActive: true },
+      });
 
       if (!profile || !profile.isActive) {
         return "/unauthorized";
@@ -66,12 +105,47 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
   },
+  session: {
+    strategy: "jwt",
+  },
 
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
+    }),
+    CredentialsProvider({
+      credentials: {
+        email: { label: "Email", type: "text" },
+        password: { label: "Senha", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials || credentials.email == null || credentials.password == null) {
+          throw new Error("Credenciais inválidas");
+        }
+
+        const userInfo = await prisma.credentials.findUnique({
+          where: { email: credentials.email },
+        });
+
+        if (!userInfo) {
+          throw new Error("Usuário não encontrado");
+        }
+
+        const isValid = await argon2.verify(userInfo.password, credentials.password);
+
+        if (!isValid) {
+          throw new Error("Senha inválida");
+        }
+
+        return {
+          id: userInfo.id,
+          email: userInfo.email,
+          name: userInfo.name,
+          image: userInfo.image,
+        };
+      },
     }),
     /**
      * ...add more providers here
@@ -94,5 +168,5 @@ export const getServerAuthSession = (ctx: {
   req: GetServerSidePropsContext["req"];
   res: GetServerSidePropsContext["res"];
 }) => {
-  return getServerSession(ctx.req, ctx.res, authOptions);
+  return getSession(ctx);
 };

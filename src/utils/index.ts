@@ -172,9 +172,12 @@ export const useFormValidation = <T>(
   );
 
   const handleBlur = useCallback(() => {
-    const error = validate?.(value);
+    const errorValue = validate?.(value);
+    const error = errorValue === false ? undefined : errorValue;
 
-    setError(error === false ? undefined : error);
+    setError(error);
+
+    return error;
   }, [value, validate]);
 
   const props = useMemo(
@@ -186,7 +189,9 @@ export const useFormValidation = <T>(
     [handleBlur, error],
   );
 
-  return props;
+  const methods = useMemo(() => ({ error: handleBlur }), [handleBlur]);
+
+  return [props, methods] as const;
 };
 
 export const validateEmail = (email: string) => {
@@ -194,9 +199,8 @@ export const validateEmail = (email: string) => {
   return regex.test(email);
 };
 
-export const getAge = (dateString: Date) => {
+export const getAge = (birthDate: Date) => {
   const today = new Date();
-  const birthDate = new Date(dateString);
   const age = today.getFullYear() - birthDate.getFullYear();
   const m = today.getMonth() - birthDate.getMonth();
 

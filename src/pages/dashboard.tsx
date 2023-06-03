@@ -57,7 +57,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
 
   const [email, setEmail] = useState("");
 
-  const emailProps = useFormValidation(
+  const [emailProps] = useFormValidation(
     email,
     v => {
       if (!validateEmail(v)) {
@@ -218,6 +218,8 @@ export default Dashboard;
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   const session = await getServerAuthSession(ctx);
+
+  console.log(session);
 
   if (!session || session.user.role !== "admin") {
     return { redirect: { destination: "/", permanent: false } };

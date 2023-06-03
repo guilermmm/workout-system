@@ -3,12 +3,16 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import Alert from "../../../components/Alert";
+import DatePicker from "../../../components/DatePicker";
 import DownloadPDFButton from "../../../components/DownloadPDFButton";
 import FullPage from "../../../components/FullPage";
+import Modal from "../../../components/Modal";
 import ProfilePic from "../../../components/ProfilePic";
 import QueryErrorAlert from "../../../components/QueryErrorAlert";
 import Spinner from "../../../components/Spinner";
+import TextInput from "../../../components/TextInput";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
+import CheckIcon from "../../../components/icons/CheckIcon";
 import ExclamationCircleIcon from "../../../components/icons/ExclamationCircleIcon";
 import PencilSquareIcon from "../../../components/icons/PencilSquareIcon";
 import TrashIcon from "../../../components/icons/TrashIcon";
@@ -25,10 +29,6 @@ import {
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
 import BasicDocument from "../../../utils/pdf";
-import CheckIcon from "../../../components/icons/CheckIcon";
-import Modal from "../../../components/Modal";
-import TextInput from "../../../components/TextInput";
-import DatePicker from "../../../components/DatePicker";
 
 type Workout = RouterOutputs["workout"]["getMany"][number];
 
@@ -62,7 +62,7 @@ const Manage = () => {
   const [email, setEmail] = useState(profile.data?.email ?? "");
   const [birthdate, setBirthdate] = useState<Date | null>(profile.data?.birthdate ?? null);
 
-  const emailProps = useFormValidation(
+  const [emailProps] = useFormValidation(
     email,
     v => {
       if (!validateEmail(v)) {

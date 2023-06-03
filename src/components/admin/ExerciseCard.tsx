@@ -48,7 +48,7 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
   collapsed,
   disabled,
 }: ExerciseCardProps<Exercise>) => {
-  const exerciseIdProps = useFormValidation(
+  const [exerciseIdProps] = useFormValidation(
     exercise.exerciseId,
     v => v === "" && "Selecione um exercício",
   );
@@ -319,22 +319,22 @@ const SetCard = <E extends ExerciseBase>({
 }: SetProps<E>) => {
   const set = exercise.sets[index]!;
 
-  const repsProps = useFormValidation(set.reps, n => {
+  const [repsProps] = useFormValidation(set.reps, n => {
     if (n < 1) return "Número de repetições deve ser maior que 0";
     if (n % 1 !== 0) return "Número de repetições deve ser inteiro";
   });
 
-  const weightProps = useFormValidation(set.weightKg, n => {
+  const [weightProps] = useFormValidation(set.weightKg, n => {
     if (n < 0) return "Peso deve ser maior ou igual a 0";
     if (n % 0.5 !== 0) return "Peso deve ser múltiplo de 0,5";
   });
 
-  const minutesProps = useFormValidation(set.time.minutes, n => {
+  const [minutesProps] = useFormValidation(set.time.minutes, n => {
     if (n < 0) return "Minutos deve ser maior ou igual a 0";
     if (n % 1 !== 0) return "Minutos deve ser inteiro";
   });
 
-  const secondsProps = useFormValidation(set.time.seconds, n => {
+  const [secondsProps] = useFormValidation(set.time.seconds, n => {
     if (n < 0) return "Segundos deve ser maior ou igual a 0";
     if (n % 1 !== 0) return "Segundos deve ser inteiro";
   });

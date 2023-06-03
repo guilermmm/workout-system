@@ -2,9 +2,12 @@ import { classList } from "../utils";
 
 type Props = {
   label: string;
+  type?: "text" | "password";
+  name?: string;
   className?: string;
   model?: "outline" | "floor";
   error?: string;
+  autoComplete?: string;
   value: string;
   onChange: (e: string) => void;
   onFocus?: () => void;
@@ -15,18 +18,22 @@ type Props = {
 
 const TextInput: React.FC<Props> = ({
   value,
+  type = "text",
+  name,
   onChange,
   label,
   className,
   model = "outline",
   error,
+  autoComplete = "off",
   ...props
 }) => {
   return (
     <div className={className}>
       <div className="relative h-full w-full bg-inherit">
         <input
-          type="text"
+          type={type}
+          name={name}
           className={classList(
             "peer block h-full w-full appearance-none border-gray-300 bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-gray-900 outline-none ring-0 duration-300 focus:border-blue-600 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
             {
@@ -39,6 +46,7 @@ const TextInput: React.FC<Props> = ({
           value={value}
           onChange={e => onChange(e.target.value)}
           {...props}
+          autoComplete={autoComplete}
         />
         <label
           className={classList(
@@ -53,7 +61,7 @@ const TextInput: React.FC<Props> = ({
           {label}
         </label>
         {error !== undefined && (
-          <label className="pointer-events-none absolute left-1 top-1/2 origin-[0] -translate-y-1/2 transform cursor-text bg-inherit px-2 text-sm text-red-500 duration-300">
+          <label className="pointer-events-none absolute left-1 top-2 w-[125%] origin-[0] -translate-y-4 scale-75 transform cursor-text bg-inherit px-2 text-sm text-red-500">
             {error}
           </label>
         )}

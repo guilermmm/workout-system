@@ -511,7 +511,7 @@ const Set = ({ index, set, originalWeight, timerOn, setCompleted, setWeight }: S
 
   const setWeightKg = (n: number) => setWeight(n * 1000);
 
-  const weightProps = useFormValidation(weightKg, n => {
+  const [weightProps] = useFormValidation(weightKg, n => {
     if (n < 0) return "Peso deve ser maior ou igual a 0";
     if (n % 0.5 !== 0) return "Peso deve ser múltiplo de 0,5";
   });

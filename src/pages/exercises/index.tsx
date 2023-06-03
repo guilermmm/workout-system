@@ -80,13 +80,13 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
     image: null,
   });
 
-  const newExerciseNameProps = useFormValidation(
+  const [newExerciseNameProps] = useFormValidation(
     newExercise?.name,
     v => v?.length !== undefined && v.length < 1 && "Nome vazio",
     false,
   );
 
-  const newExerciseCategoryProps = useFormValidation(
+  const [newExerciseCategoryProps] = useFormValidation(
     newExercise?.category,
     v => v?.length !== undefined && v.length < 1 && "Categoria vazia",
     false,
@@ -111,13 +111,13 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
     console.log("editedExercise", editedExercise);
   }, [editedExercise]);
 
-  const editedExerciseNameProps = useFormValidation(
+  const [editedExerciseNameProps] = useFormValidation(
     editedExercise?.name,
     v => v?.length !== undefined && v.length < 1 && "Nome vazio",
     false,
   );
 
-  const editedExerciseCategoryProps = useFormValidation(
+  const [editedExerciseCategoryProps] = useFormValidation(
     editedExercise?.category,
     v => v?.length !== undefined && v.length < 1 && "Categoria vazia",
     false,

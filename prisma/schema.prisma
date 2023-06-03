@@ -160,6 +160,15 @@ model FinishedWorkout {
 //
 
 // Necessary for Next auth
+
+model Credentials {
+    id       String  @id @default(cuid())
+    email    String  @unique
+    password String
+    name     String
+    image    String?
+}
+
 model Account {
     id                String  @id @default(cuid())
     userId            String
