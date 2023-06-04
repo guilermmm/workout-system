@@ -288,6 +288,8 @@ const EditWorkout = () => {
             value={workout.name}
             onChange={name => setWorkout({ ...workout, name })}
             disabled={saving || originalWorkout.isLoading}
+            minLength={1}
+            maxLength={3}
           />
           <MultiSelect
             label="Dia(s)"

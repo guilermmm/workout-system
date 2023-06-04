@@ -13,6 +13,8 @@ type Props = {
   onBlur?: () => void;
   disabled?: boolean;
   list?: string;
+  minLength?: number;
+  maxLength?: number;
 };
 
 const TextInput: React.FC<Props> = ({
