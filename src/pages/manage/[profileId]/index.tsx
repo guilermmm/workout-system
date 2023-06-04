@@ -269,7 +269,7 @@ const Manage = () => {
                     <span>
                       {`${getAge(
                         profile.data.birthdate,
-                      )} anos - ${profile.data.birthdate.toLocaleDateString()}`}
+                      )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR")}`}
                     </span>
                   </h1>
                 )}
@@ -321,7 +321,7 @@ const Manage = () => {
               </div>
               {profile.data?.workoutUpdateDate && (
                 <h3 className="w-full text-start text-sm">
-                  Última atualização: {profile.data?.workoutUpdateDate?.toLocaleDateString()}
+                  Última atualização: {profile.data?.workoutUpdateDate?.toLocaleDateString("pt-BR")}
                 </h3>
               )}
               {workouts.data.map(workout => (
@@ -362,13 +362,17 @@ const Manage = () => {
                 >
                   Adicionar treino
                 </Link>
-                <DownloadPDFButton
-                  fileName={`Treino - ${profile.data?.user?.name ?? profile.data?.email ?? ""}.pdf`}
-                  className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                  document={<BasicDocument profile={profile.data!} workouts={workouts.data} />}
-                >
-                  Baixar treinos
-                </DownloadPDFButton>
+                {profile.data && workouts.data && (
+                  <DownloadPDFButton
+                    fileName={`Treino - ${
+                      profile.data?.user?.name ?? profile.data?.email ?? ""
+                    }.pdf`}
+                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-white shadow-md transition-colors hover:bg-blue-600"
+                    document={<BasicDocument profile={profile.data} workouts={workouts.data} />}
+                  >
+                    Baixar treinos
+                  </DownloadPDFButton>
+                )}
                 <button
                   onClick={() => setShowMutateProfileModal(true)}
                   className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"

@@ -79,7 +79,7 @@ const Profile = () => {
                   <span>
                     {`${getAge(
                       profile.data.birthdate,
-                    )} anos - ${profile.data.birthdate.toLocaleDateString()}`}
+                    )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR")}`}
                   </span>
                 </h1>
               )}
@@ -102,13 +102,15 @@ const Profile = () => {
             >
               <div>Histórico de treinos</div>
             </Link>
-            <DownloadPDFButton
-              fileName={`Treino - ${profile.data?.user?.name ?? profile.data?.email ?? ""}.pdf`}
-              className="flex w-full justify-center rounded-md bg-blue-500 py-3 px-6 text-center text-white shadow-md transition-colors hover:bg-blue-600"
-              document={<BasicDocument profile={profile.data!} workouts={workouts.data!} />}
-            >
-              Baixar treinos
-            </DownloadPDFButton>
+            {profile.data && workouts.data && (
+              <DownloadPDFButton
+                fileName={`Treino - ${profile.data?.user?.name ?? profile.data?.email ?? ""}.pdf`}
+                className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-white shadow-md transition-colors hover:bg-blue-600"
+                document={<BasicDocument profile={profile.data} workouts={workouts.data} />}
+              >
+                Baixar treinos
+              </DownloadPDFButton>
+            )}
           </div>
           <div className="flex w-full grow flex-col justify-center gap-2 p-2">
             {latestDataSheet.isLoading ? (
