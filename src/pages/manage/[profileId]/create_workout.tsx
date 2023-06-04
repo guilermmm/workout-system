@@ -370,7 +370,7 @@ const CreateWorkout = () => {
           )
         )}
         {categories.data && (
-          <div className="flex flex-row items-center justify-center">
+          <div className="mb-20 flex flex-row items-center justify-center">
             <button
               className="mt-2 flex items-center gap-3 rounded-full bg-blue-500 px-6 py-2 font-medium text-white shadow-md hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500"
               onClick={handleAddExercise}

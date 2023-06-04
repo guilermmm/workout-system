@@ -521,19 +521,21 @@ const Set = ({ index, set, originalWeight, timerOn, setCompleted, setWeight }: S
       <div className="font-medium">{index + 1}.</div>
 
       <div className="flex items-center gap-1">
-        <span>Peso (kg): </span>
-        <NumberInput
-          label="Peso (kg)"
-          className={classList("inline-block h-8 w-20 bg-white text-center", {
-            "font-medium": originalWeight !== undefined && set.weight !== originalWeight,
-          })}
-          value={weightKg}
-          onChange={setWeightKg}
-          min={0}
-          step={0.5}
-          max={1000}
-          {...weightProps}
-        />
+        <div className="flex h-full w-20 flex-col gap-1">
+          <NumberInput
+            label="Peso (kg)"
+            className={classList("inline-block h-8 w-full bg-white text-center", {
+              "font-medium": originalWeight !== undefined && set.weight !== originalWeight,
+            })}
+            value={weightKg}
+            onChange={setWeightKg}
+            min={0}
+            step={0.5}
+            max={1000}
+            {...weightProps}
+          />
+          {weightProps.error && <span className="text-xs text-red-500">{weightProps.error}</span>}
+        </div>
         {originalWeight !== undefined && originalWeight !== set.weight ? (
           <button className="rounded-full p-2" onClick={() => setWeight(originalWeight)}>
             <ArrowUturnLeftIcon className="h-4 w-4" />

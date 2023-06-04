@@ -24,7 +24,7 @@ import { api } from "../utils/api";
 const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const { data: session } = useSession();
 
-  api.user.getAdminProfileBySession.useQuery();
+  api.user.getAdminProfileBySession.useQuery(undefined, { retry: false });
 
   const [searchInput, setSearchInput] = useState("");
 
@@ -205,7 +205,7 @@ const UserCard = ({ profile }: { profile: Profile & { user: User | null } }) => 
         </div>
       </div>
       <div
-        className={classList("h-full w-3 rounded-r-md", {
+        className={classList("h-full w-3 flex-none rounded-r-md", {
           "bg-green-500": profile.isActive,
           "bg-red-500": !profile.isActive,
         })}

@@ -52,11 +52,6 @@ const DatePicker = ({
         >
           {label}
         </label>
-        {error !== undefined && (
-          <label className="pointer-events-none absolute left-1 top-1/2 origin-[0] -translate-y-1/2 transform cursor-text bg-inherit px-2 text-sm text-red-500 duration-300">
-            {error}
-          </label>
-        )}
       </div>
     </div>
   );

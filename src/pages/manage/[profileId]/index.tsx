@@ -187,19 +187,20 @@ const Manage = () => {
             </>
           }
         >
-          <h1 className="self-center font-medium">
+          <h1 className="max-w-full self-center truncate whitespace-pre-wrap font-medium">
             Atualizar usuário {profile.data?.user?.name ?? profile.data?.email}
           </h1>
           <TextInput
             label="Email"
-            className="rounded-md bg-white"
+            className="rounded-md bg-slate-50"
             value={email}
             onChange={setEmail}
             {...emailProps}
           />
+          {emailProps.error && <span className="text-xs text-red-500">{emailProps.error}</span>}
           <DatePicker
             label="Data de nascimento"
-            className="rounded-md bg-white"
+            className="rounded-md bg-slate-50"
             value={birthdate}
             onChange={setBirthdate}
           />
@@ -355,20 +356,24 @@ const Manage = () => {
                   </div>
                 </div>
               ))}
-              <div className="mt-4 flex w-full max-w-[32rem] flex-row justify-center gap-2">
+              <div className="mt-4 flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
                 <Link
                   className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
                   href={`/manage/${profileId}/create_workout`}
                 >
                   Adicionar treino
                 </Link>
-                <DownloadPDFButton
-                  fileName={`Treino - ${profile.data?.user?.name ?? profile.data?.email ?? ""}.pdf`}
-                  className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                  document={<BasicDocument profile={profile.data!} workouts={workouts.data} />}
-                >
-                  Baixar treinos
-                </DownloadPDFButton>
+                {profile.data && workouts.data && (
+                  <DownloadPDFButton
+                    fileName={`Treino - ${
+                      profile.data?.user?.name ?? profile.data?.email ?? ""
+                    }.pdf`}
+                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                    document={<BasicDocument profile={profile.data} workouts={workouts.data} />}
+                  >
+                    Baixar treinos
+                  </DownloadPDFButton>
+                )}
                 <button
                   onClick={() => setShowMutateProfileModal(true)}
                   className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"

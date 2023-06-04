@@ -105,11 +105,12 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           <h1 className="self-center font-medium">Adicionar administrador</h1>
           <TextInput
             label="Email"
-            className="rounded-md bg-white"
+            className="rounded-md bg-slate-50"
             value={email}
             onChange={setEmail}
             {...emailProps}
           />
+          {emailProps.error && <span className="text-xs text-red-500">{emailProps.error}</span>}
         </Modal>
       )}
       {showCreateAlert && (
