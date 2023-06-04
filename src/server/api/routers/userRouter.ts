@@ -109,9 +109,11 @@ export const userRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const birthdate = new Date(input.birthdate);
+      birthdate.setUTCHours(0, 0, 0, 0);
       await ctx.prisma.profile.update({
         where: { id: input.id },
-        data: { email: input.email, birthdate: input.birthdate },
+        data: { email: input.email, birthdate },
       });
     }),
 
