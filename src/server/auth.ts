@@ -125,25 +125,26 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Credenciais inválidas");
         }
 
-        const userInfo = await prisma.credentials.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: credentials.email },
+          include: { credentials: true },
         });
 
-        if (!userInfo) {
-          throw new Error("Usuário não encontrado");
+        if (!user || !user.credentials) {
+          throw new Error("Credenciais inválidas");
         }
 
-        const isValid = await argon2.verify(userInfo.password, credentials.password);
+        const isValid = await argon2.verify(user.credentials.password, credentials.password);
 
         if (!isValid) {
-          throw new Error("Senha inválida");
+          throw new Error("Credenciais inválidas");
         }
 
         return {
-          id: userInfo.id,
-          email: userInfo.email,
-          name: userInfo.name,
-          image: userInfo.image,
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
         };
       },
     }),

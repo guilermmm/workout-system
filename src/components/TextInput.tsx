@@ -7,7 +7,6 @@ type Props = {
   className?: string;
   model?: "outline" | "floor";
   error?: string;
-  autoComplete?: string;
   value: string;
   onChange: (e: string) => void;
   onFocus?: () => void;
@@ -25,7 +24,6 @@ const TextInput: React.FC<Props> = ({
   className,
   model = "outline",
   error,
-  autoComplete = "off",
   ...props
 }) => {
   return (
@@ -46,15 +44,15 @@ const TextInput: React.FC<Props> = ({
           value={value}
           onChange={e => onChange(e.target.value)}
           {...props}
-          autoComplete={autoComplete}
         />
         <label
           className={classList(
-            "pointer-events-none absolute top-2 left-1 origin-[0] -translate-y-4 scale-75 transform cursor-text whitespace-nowrap bg-inherit px-2 text-sm duration-300 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-blue-600",
+            "pointer-events-none absolute top-2 left-1 origin-[0] -translate-y-4 scale-75 transform cursor-text whitespace-nowrap bg-inherit px-2 text-sm duration-300",
+            "peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-blue-600",
+            "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100",
             {
               "text-red-500": error !== undefined,
-              "text-gray-500 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100":
-                error === undefined,
+              "text-gray-500": error === undefined,
             },
           )}
         >

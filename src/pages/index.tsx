@@ -51,6 +51,69 @@ const Index = () => {
         <Image alt="logo" src="/logo2.png" width={200} height={223} />
       </div>
       <div className="flex flex-col gap-2 font-medium text-white">
+        <form
+          className="flex flex-col gap-3 rounded-xl bg-white p-3"
+          onSubmit={e => {
+            e.preventDefault();
+
+            setCredentialsError(null);
+
+            if (emailError() || passwordError()) {
+              return;
+            }
+
+            setLoading(true);
+            void signIn("credentials", {
+              email,
+              password,
+              redirect: false,
+            }).then(res => {
+              setLoading(false);
+              if (res?.error) {
+                setCredentialsError(res.error);
+              }
+            });
+          }}
+        >
+          {credentialsError && (
+            <div className="rounded-md bg-red-500 py-2 px-3 text-center text-sm text-white">
+              {credentialsError}
+            </div>
+          )}
+          <TextInput
+            className="bg-white"
+            label="Email"
+            name="email"
+            value={email}
+            onChange={setEmail}
+            {...emailProps}
+          />
+          {emailProps.error && <span className="text-xs text-red-500">{emailProps.error}</span>}
+          <TextInput
+            className="bg-white"
+            label="Senha"
+            name="password"
+            type="password"
+            value={password}
+            onChange={setPassword}
+            {...passwordProps}
+          />
+          {passwordProps.error && (
+            <span className="text-xs text-red-500">{passwordProps.error}</span>
+          )}
+          <button
+            type="submit"
+            className="block w-full rounded-md bg-blue-600 p-4 text-sm transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!email || !password || !!emailProps.error || !!passwordProps.error}
+          >
+            Entrar com credenciais
+          </button>
+        </form>
+        <div className="flex flex-row items-center text-slate-900">
+          <div className="h-0.5 w-full rounded bg-slate-900/50" />
+          <span className="px-1">OU</span>
+          <div className="h-0.5 w-full rounded bg-slate-900/50" />
+        </div>
         <button
           onClick={() => {
             setLoading(true);
@@ -71,64 +134,6 @@ const Index = () => {
             <span className="mx-3 grow text-center">Entrar com Google</span>
           </div>
         </button>
-        <div className="flex flex-row items-center text-slate-900">
-          <div className="h-0.5 w-full rounded bg-slate-900/50" />
-          <span className="px-1">OU</span>
-          <div className="h-0.5 w-full rounded bg-slate-900/50" />
-        </div>
-        <form
-          className="flex flex-col items-center gap-3 rounded-xl bg-white p-3"
-          onSubmit={e => {
-            e.preventDefault();
-
-            if (emailError() || passwordError()) {
-              return;
-            }
-
-            setLoading(true);
-            void signIn("credentials", {
-              email,
-              password,
-              redirect: false,
-            }).then(res => {
-              setLoading(false);
-              if (res?.error) {
-                setCredentialsError(res.error);
-              }
-            });
-          }}
-        >
-          {credentialsError && (
-            <div className="rounded-md bg-red-500 py-1 px-2 text-sm text-white">
-              {credentialsError}
-            </div>
-          )}
-          <TextInput
-            className="bg-white"
-            label="Email"
-            name="email"
-            value={email}
-            onChange={setEmail}
-            {...emailProps}
-          />
-          <TextInput
-            className="bg-white"
-            label="Senha"
-            name="password"
-            type="password"
-            value={password}
-            onChange={setPassword}
-            autoComplete="current-password"
-            {...passwordProps}
-          />
-          <button
-            type="submit"
-            className="block w-full rounded-md bg-blue-600 p-4 transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!email || !password || !!emailProps.error || !!passwordProps.error}
-          >
-            Entrar com credenciais
-          </button>
-        </form>
       </div>
     </div>
   );
