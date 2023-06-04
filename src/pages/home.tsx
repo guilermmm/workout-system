@@ -56,7 +56,7 @@ const Home = () => {
         <div className="flex h-full grow flex-col items-center">
           {profile.data?.workoutUpdateDate && (
             <h3 className="text-md pt-4">
-              Última atualização: {profile.data?.workoutUpdateDate?.toLocaleDateString()}
+              Última atualização: {profile.data?.workoutUpdateDate?.toLocaleDateString("pt-BR")}
             </h3>
           )}
           {workouts.isLoading ? (

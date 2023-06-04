@@ -161,7 +161,7 @@ function BasicDocument(props: Props) {
             <Text style={{ textAlign: "center", fontSize: 14 }}>{props.profile?.email}</Text>
             {props.profile?.workoutUpdateDate && (
               <Text style={{ textAlign: "center", fontSize: 14 }}>
-                Última atualização: {props.profile?.workoutUpdateDate?.toLocaleDateString()}
+                Última atualização: {props.profile?.workoutUpdateDate?.toLocaleDateString("pt-BR")}
               </Text>
             )}
           </View>

@@ -269,7 +269,7 @@ const Manage = () => {
                     <span>
                       {`${getAge(
                         profile.data.birthdate,
-                      )} anos - ${profile.data.birthdate.toLocaleDateString()}`}
+                      )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR")}`}
                     </span>
                   </h1>
                 )}
@@ -321,7 +321,7 @@ const Manage = () => {
               </div>
               {profile.data?.workoutUpdateDate && (
                 <h3 className="w-full text-start text-sm">
-                  Última atualização: {profile.data?.workoutUpdateDate?.toLocaleDateString()}
+                  Última atualização: {profile.data?.workoutUpdateDate?.toLocaleDateString("pt-BR")}
                 </h3>
               )}
               {workouts.data.map(workout => (

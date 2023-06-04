@@ -79,7 +79,7 @@ const Profile = () => {
                   <span>
                     {`${getAge(
                       profile.data.birthdate,
-                    )} anos - ${profile.data.birthdate.toLocaleDateString()}`}
+                    )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR")}`}
                   </span>
                 </h1>
               )}
