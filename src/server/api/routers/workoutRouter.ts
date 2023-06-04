@@ -43,13 +43,20 @@ export const workoutRouter = createTRPCRouter({
       const workouts = await ctx.prisma.workout.findMany({
         where: { profileId: input.profileId },
         include: { exercises: { include: { exercise: true } } },
+        orderBy: { createdAt: "asc" },
       });
+
       const mappedWorkouts = workouts.map(workout => ({
-        ...workout,
+        id: workout.id,
+        profileId: workout.profileId,
+        name: workout.name,
+        days: workout.days,
+        createdAt: workout.createdAt,
+        updatedAt: workout.updatedAt,
         categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
       }));
 
-      return mappedWorkouts as unknown as ParseJsonValues<typeof mappedWorkouts>;
+      return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
     }),
 
   getById: adminProcedure.input(z.string()).query(async ({ ctx, input }) => {
@@ -72,9 +79,16 @@ export const workoutRouter = createTRPCRouter({
     const workouts = await ctx.prisma.workout.findMany({
       where: { profile: { userId: ctx.session.user.id } },
       include: { exercises: { include: { exercise: true } } },
+      orderBy: { createdAt: "asc" },
     });
+
     const mappedWorkouts = workouts.map(workout => ({
-      ...workout,
+      id: workout.id,
+      profileId: workout.profileId,
+      name: workout.name,
+      days: workout.days,
+      createdAt: workout.createdAt,
+      updatedAt: workout.updatedAt,
       categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
     }));
 
