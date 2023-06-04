@@ -47,12 +47,7 @@ export const workoutRouter = createTRPCRouter({
       });
 
       const mappedWorkouts = workouts.map(workout => ({
-        id: workout.id,
-        profileId: workout.profileId,
-        name: workout.name,
-        days: workout.days,
-        createdAt: workout.createdAt,
-        updatedAt: workout.updatedAt,
+        ...workout,
         categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
       }));
 
@@ -83,12 +78,7 @@ export const workoutRouter = createTRPCRouter({
     });
 
     const mappedWorkouts = workouts.map(workout => ({
-      id: workout.id,
-      profileId: workout.profileId,
-      name: workout.name,
-      days: workout.days,
-      createdAt: workout.createdAt,
-      updatedAt: workout.updatedAt,
+      ...workout,
       categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
     }));
 
