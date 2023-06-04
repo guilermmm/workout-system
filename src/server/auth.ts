@@ -63,8 +63,8 @@ export const authOptions: NextAuthOptions = {
         return session;
       }
 
-      const profile = await prisma.profile.findUnique({
-        where: { email: session.user.email },
+      const profile = await prisma.profile.findFirst({
+        where: { email: session.user.email, isActive: true },
         select: { userId: true },
       });
 
@@ -74,7 +74,7 @@ export const authOptions: NextAuthOptions = {
         return session;
       }
 
-      return session;
+      throw new Error("User not found");
     },
 
     async signIn({ user }) {

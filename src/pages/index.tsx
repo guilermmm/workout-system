@@ -38,7 +38,6 @@ const Index = () => {
     if (session.data.user.role === "admin") {
       void router.push("/dashboard");
     } else if (session.data.user.role === "user") {
-      console.log("user");
       void router.push("/home");
     }
 

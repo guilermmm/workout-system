@@ -219,8 +219,6 @@ export default Dashboard;
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   const session = await getServerAuthSession(ctx);
 
-  console.log(session);
-
   if (!session || session.user.role !== "admin") {
     return { redirect: { destination: "/", permanent: false } };
   }
