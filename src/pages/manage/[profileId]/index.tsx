@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import Alert from "../../../components/Alert";
 import DatePicker from "../../../components/DatePicker";
-import DownloadPDFButton from "../../../components/DownloadPDFButton";
 import FullPage from "../../../components/FullPage";
 import Modal from "../../../components/Modal";
 import ProfilePic from "../../../components/ProfilePic";
@@ -497,9 +496,8 @@ const Manage = () => {
                   Adicionar treino
                 </Link>
                 <Link
-                  href={`/pdf/${profileId}`}
-                  className="
-                  w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                  href={`${profileId}/pdf`}
+                  className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
                 >
                   Baixar Treinos
                 </Link>
