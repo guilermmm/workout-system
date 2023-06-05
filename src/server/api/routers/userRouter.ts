@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import * as argon2 from "argon2";
+import { hash, verify } from "argon2";
 import { z } from "zod";
 import { adminProcedure, createTRPCRouter, superAdminProcedure, userProcedure } from "../trpc";
 
@@ -179,41 +179,7 @@ export const userRouter = createTRPCRouter({
         select: { id: true },
       });
 
-      const hashedPassword = await argon2.hash(password);
-
-      await ctx.prisma.user.update({
-        where: { id: user.id },
-        data: {
-          credentials: {
-            create: {
-              id: user.id,
-              password: hashedPassword,
-            },
-          },
-        },
-      });
-    }),
-
-  createPassword: userProcedure
-    .input(z.object({ password: z.string() }))
-    .mutation(async ({ ctx, input: { password } }) => {
-      const user = await ctx.prisma.user.findUnique({
-        where: { id: ctx.session.user.id },
-        include: { credentials: true },
-      });
-
-      if (!user) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
-      }
-
-      if (user.credentials) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: "User already has credentials",
-        });
-      }
-
-      const hashedPassword = await argon2.hash(password);
+      const hashedPassword = await hash(password);
 
       await ctx.prisma.user.update({
         where: { id: user.id },
@@ -244,12 +210,36 @@ export const userRouter = createTRPCRouter({
         throw new TRPCError({ code: "PRECONDITION_FAILED", message: "User has no credentials" });
       }
 
-      const isValid = await argon2.verify(user.credentials.password, oldPassword);
+      const isValid = await verify(user.credentials.password, oldPassword);
       if (!isValid) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid password" });
       }
 
-      const password = await argon2.hash(newPassword);
+      const password = await hash(newPassword);
+
+      await ctx.prisma.user.update({
+        where: { id: user.id },
+        data: { credentials: { update: { password } } },
+      });
+    }),
+
+  updateUserPassword: adminProcedure
+    .input(z.object({ userId: z.string(), newPassword: z.string() }))
+    .mutation(async ({ ctx, input: { userId, newPassword } }) => {
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: userId },
+        include: { credentials: true },
+      });
+
+      if (!user) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      }
+
+      if (!user.credentials) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "User has no credentials" });
+      }
+
+      const password = await hash(newPassword);
 
       await ctx.prisma.user.update({
         where: { id: user.id },

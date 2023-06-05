@@ -1,6 +1,6 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { Simplify } from "@trpc/server";
-import * as argon2 from "argon2";
+import { verify } from "argon2";
 import type { GetServerSidePropsContext } from "next";
 import type { DefaultSession, NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -134,7 +134,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Credenciais inválidas");
         }
 
-        const isValid = await argon2.verify(user.credentials.password, credentials.password);
+        const isValid = await verify(user.credentials.password, credentials.password);
 
         if (!isValid) {
           throw new Error("Credenciais inválidas");

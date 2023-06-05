@@ -88,6 +88,47 @@ const Manage = () => {
     },
   });
 
+  const [user, setUser] = useState({
+    name: "",
+    password: "",
+    confirmPassword: "",
+    image: "" as string | null,
+  });
+
+  const createUser = api.user.createUser.useMutation({
+    onSuccess: () => {
+      setUser({
+        name: "",
+        password: "",
+        confirmPassword: "",
+        image: "",
+      });
+      void profile.refetch();
+    },
+  });
+
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+
+  const [passwordProps, { error: passwordError }] = useFormValidation(
+    user.password,
+    v => {
+      if (v.length < 6) {
+        return "Senha deve ter no mínimo 6 caracteres";
+      }
+    },
+    false,
+  );
+
+  const [confirmPasswordProps, { error: confirmPasswordError }] = useFormValidation(
+    user.confirmPassword,
+    v => {
+      if (v !== user.password) {
+        return "Senhas não coincidem";
+      }
+    },
+    false,
+  );
+
   return (
     <FullPage>
       <QueryErrorAlert queries={[profile, workouts]} />
@@ -241,6 +282,87 @@ const Manage = () => {
           )}
         </Alert>
       )}
+      {showCreateUserModal && (
+        <Modal
+          onClickOutside={() => setShowCreateUserModal(false)}
+          buttons={
+            <>
+              <button
+                onClick={() => {
+                  if (
+                    !user.name ||
+                    !user.password ||
+                    !user.confirmPassword ||
+                    passwordError() ||
+                    confirmPasswordError()
+                  )
+                    return;
+                  createUser.mutate({
+                    ...user,
+                    profileId,
+                  });
+                  setShowCreateUserModal(false);
+                }}
+                className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={
+                  !user.name ||
+                  !user.password ||
+                  !user.confirmPassword ||
+                  !!passwordProps.error ||
+                  !!confirmPasswordProps.error
+                }
+              >
+                Cadastrar
+              </button>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => setShowCreateUserModal(false)}
+              >
+                Cancelar
+              </button>
+            </>
+          }
+        >
+          <h1 className="max-w-full self-center truncate whitespace-pre-wrap font-medium">
+            Cadastrar dados de acesso
+          </h1>
+          <TextInput
+            label="Nome"
+            className="rounded-md bg-slate-50"
+            value={user.name}
+            onChange={v => setUser({ ...user, name: v })}
+          />
+          <TextInput
+            label="Email"
+            className="rounded-md bg-slate-50"
+            value={profile.data?.email ?? ""}
+            onChange={() => null}
+            disabled
+          />
+          <TextInput
+            label="Senha"
+            className="rounded-md bg-slate-50"
+            value={user.password}
+            onChange={v => setUser({ ...user, password: v })}
+            type="password"
+            {...passwordProps}
+          />
+          {passwordProps.error && (
+            <span className="text-xs text-red-500">{passwordProps.error}</span>
+          )}
+          <TextInput
+            label="Confirmar senha"
+            className="rounded-md bg-slate-50"
+            value={user.confirmPassword}
+            onChange={v => setUser({ ...user, confirmPassword: v })}
+            type="password"
+            {...confirmPasswordProps}
+          />
+          {confirmPasswordProps.error && (
+            <span className="text-xs text-red-500">{confirmPasswordProps.error}</span>
+          )}
+        </Modal>
+      )}
       <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
         <div className="absolute left-0 top-0 right-0 h-20 bg-gold-500" />
         <Link
@@ -294,7 +416,17 @@ const Manage = () => {
           <div className="h-6 w-6" />
         </div>
       </div>
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center gap-4">
+        {profile.data?.user === null && (
+          <div className="flex w-full max-w-[32rem] flex-row justify-center gap-2 px-2">
+            <button
+              className="w-full rounded-md bg-gold-400 p-2 py-3 text-center text-sm text-slate-900 shadow-md transition-colors hover:bg-gold-500"
+              onClick={() => setShowCreateUserModal(true)}
+            >
+              Cadastrar dados de acesso
+            </button>
+          </div>
+        )}
         <div className="flex w-full max-w-[32rem] flex-row justify-center gap-2 px-2">
           <Link
             className="w-full rounded-md bg-blue-500 p-2 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
