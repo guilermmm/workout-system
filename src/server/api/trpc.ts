@@ -118,8 +118,14 @@ export const baseProcedure = t.procedure.use(
 
 // export const baseProcedure = t.procedure;
 
-export const superAdminProcedure = baseProcedure.use(logProcedure).use(enforceUserIsSuperAdmin);
+export const superAdminProcedure = (
+  env.NODE_ENV === "development" ? baseProcedure.use(logProcedure) : baseProcedure
+).use(enforceUserIsSuperAdmin);
 
-export const adminProcedure = baseProcedure.use(logProcedure).use(enforceUserIsAdmin);
+export const adminProcedure = (
+  env.NODE_ENV === "development" ? baseProcedure.use(logProcedure) : baseProcedure
+).use(enforceUserIsAdmin);
 
-export const userProcedure = baseProcedure.use(logProcedure).use(enforceUserIsNotAdmin);
+export const userProcedure = (
+  env.NODE_ENV === "development" ? baseProcedure.use(logProcedure) : baseProcedure
+).use(enforceUserIsNotAdmin);
