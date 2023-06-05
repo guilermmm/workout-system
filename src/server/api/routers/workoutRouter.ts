@@ -42,7 +42,7 @@ export const workoutRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const workouts = await ctx.prisma.workout.findMany({
         where: { profileId: input.profileId },
-        include: { exercises: { include: { exercise: true } } },
+        include: { exercises: { include: { exercise: { select: { category: true } } } } },
         orderBy: { createdAt: "asc" },
       });
 
@@ -52,6 +52,18 @@ export const workoutRouter = createTRPCRouter({
       }));
 
       return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
+    }),
+
+  getManyWithExercises: adminProcedure
+    .input(z.object({ profileId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const workouts = await ctx.prisma.workout.findMany({
+        where: { profileId: input.profileId },
+        include: { exercises: { include: { exercise: true } } },
+        orderBy: { createdAt: "asc" },
+      });
+
+      return workouts;
     }),
 
   getById: adminProcedure.input(z.string()).query(async ({ ctx, input }) => {

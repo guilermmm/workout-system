@@ -28,7 +28,6 @@ import {
 } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
-import BasicDocument from "../../../utils/pdf";
 
 type Workout = RouterOutputs["workout"]["getMany"][number];
 
@@ -497,17 +496,14 @@ const Manage = () => {
                 >
                   Adicionar treino
                 </Link>
-                {profile.data && workouts.data && (
-                  <DownloadPDFButton
-                    fileName={`Treino - ${
-                      profile.data?.user?.name ?? profile.data?.email ?? ""
-                    }.pdf`}
-                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                    document={<BasicDocument profile={profile.data} workouts={workouts.data} />}
-                  >
-                    Baixar treinos
-                  </DownloadPDFButton>
-                )}
+                <Link
+                  href={`/pdf/${profileId}`}
+                  className="
+                  w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                >
+                  Baixar Treinos
+                </Link>
+
                 <button
                   onClick={() => setShowMutateProfileModal(true)}
                   className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
