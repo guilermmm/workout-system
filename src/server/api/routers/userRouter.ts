@@ -155,7 +155,7 @@ export const userRouter = createTRPCRouter({
       z.object({
         profileId: z.string(),
         name: z.string(),
-        password: z.string(),
+        password: z.string().min(6),
         image: z.string().nullish(),
       }),
     )
@@ -195,7 +195,7 @@ export const userRouter = createTRPCRouter({
     }),
 
   updatePassword: userProcedure
-    .input(z.object({ oldPassword: z.string(), newPassword: z.string() }))
+    .input(z.object({ oldPassword: z.string(), newPassword: z.string().min(6) }))
     .mutation(async ({ ctx, input: { oldPassword, newPassword } }) => {
       const user = await ctx.prisma.user.findUnique({
         where: { id: ctx.session.user.id },
@@ -224,7 +224,7 @@ export const userRouter = createTRPCRouter({
     }),
 
   updateUserPassword: adminProcedure
-    .input(z.object({ userId: z.string(), newPassword: z.string() }))
+    .input(z.object({ userId: z.string(), newPassword: z.string().min(6) }))
     .mutation(async ({ ctx, input: { userId, newPassword } }) => {
       const user = await ctx.prisma.user.findUnique({
         where: { id: userId },
