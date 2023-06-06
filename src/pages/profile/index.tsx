@@ -65,22 +65,6 @@ const Profile = () => {
               <Spinner className="h-24 w-24 fill-blue-600 text-gray-200" />
             )}
           </div>
-          {profile.data && (
-            <div className="flex flex-col items-center justify-center">
-              <h1 className="mt-2 w-full self-start truncate text-center text-lg font-medium text-slate-900">
-                <span className="font-bold">{profile.data.user?.name ?? profile.data.email}</span>
-              </h1>
-              {profile.data.birthdate && (
-                <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
-                  <span>
-                    {`${getAge(
-                      profile.data.birthdate,
-                    )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR")}`}
-                  </span>
-                </h1>
-              )}
-            </div>
-          )}
         </div>
         <button
           className="z-10 rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
@@ -90,11 +74,25 @@ const Profile = () => {
         </button>
       </div>
       <div className="flex grow flex-col items-center pb-4">
+        {profile.data && (
+          <div className="flex min-w-0 max-w-full flex-col items-center justify-center px-2">
+            <h1 className="mt-2 w-full  self-start truncate text-center text-lg font-medium text-slate-900">
+              {profile.data.user?.name ?? profile.data.email}
+            </h1>
+            {profile.data.birthdate && (
+              <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
+                {`${getAge(
+                  profile.data.birthdate,
+                )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR")}`}
+              </h1>
+            )}
+          </div>
+        )}
         <div className="flex w-full max-w-[40rem] grow flex-col items-center overflow-y-auto">
           <div className="flex w-full flex-row items-center gap-2 p-2">
             <Link
               href="/profile/workout_history"
-              className="flex w-full justify-center rounded-md bg-blue-500 py-3 px-6 text-center text-white shadow-md transition-colors hover:bg-blue-600"
+              className="flex h-full w-full justify-center rounded-md bg-blue-500 py-3 px-6 text-center text-white shadow-md transition-colors hover:bg-blue-600"
             >
               <div>Histórico de treinos</div>
             </Link>

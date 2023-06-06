@@ -56,6 +56,7 @@ const Manage = () => {
 
   const [showMutateProfileConfirmAlert, setShowMutateProfileConfirmAlert] = useState(false);
   const [showMutateProfileModal, setShowMutateProfileModal] = useState(false);
+  const [showMutateProfileDeleteAlert, setShowMutateProfileDeleteAlert] = useState(false);
 
   const [email, setEmail] = useState(profile.data?.email ?? "");
   const [birthdate, setBirthdate] = useState<Date | null>(profile.data?.birthdate ?? null);
@@ -74,6 +75,12 @@ const Manage = () => {
     onSuccess: () => {
       void profile.refetch();
       setShowMutateProfileConfirmAlert(false);
+    },
+  });
+
+  const deleteProfile = api.user.deleteProfile.useMutation({
+    onSuccess: () => {
+      void router.push("/dashboard");
     },
   });
 
@@ -217,6 +224,7 @@ const Manage = () => {
               >
                 Atualizar
               </button>
+
               <button
                 className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
                 onClick={() => setShowMutateProfileModal(false)}
@@ -361,6 +369,39 @@ const Manage = () => {
           )}
         </Modal>
       )}
+      {showMutateProfileDeleteAlert && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-600" />}
+          title="Confirmar Exclusão"
+          text={`Tem certeza que deseja excluir o usuário ${
+            profile.data?.user?.name ?? profile.data!.email
+          }?`}
+          onClickOutside={() => setShowMutateProfileDeleteAlert(false)}
+        >
+          <button
+            className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => {
+              deleteProfile.mutate(profileId);
+            }}
+          >
+            {deleteProfile.isLoading ? (
+              <div className="flex h-full w-full items-center justify-center">
+                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              </div>
+            ) : (
+              "Excluir"
+            )}
+          </button>
+          {!deleteProfile.isLoading && (
+            <button
+              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+              onClick={() => setShowMutateProfileDeleteAlert(false)}
+            >
+              Cancelar
+            </button>
+          )}
+        </Alert>
+      )}
       <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
         <div className="absolute left-0 top-0 right-0 h-20 bg-gold-500" />
         <Link
@@ -377,44 +418,39 @@ const Manage = () => {
               <Spinner className="h-24 w-24 fill-blue-600 text-gray-200" />
             )}
           </div>
-          {profile.isLoading ? (
-            <div className="h-12" />
-          ) : (
-            profile.data && (
-              <div className="flex flex-col items-center justify-center">
-                <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
-                  <span className="font-bold">{profile.data.user?.name ?? profile.data.email}</span>
-                </h1>
-                {profile.data.birthdate && (
-                  <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
-                    <span>
-                      {`${getAge(
-                        profile.data.birthdate,
-                      )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR", {
-                        timeZone: "UTC",
-                      })}`}
-                    </span>
-                  </h1>
-                )}
-
-                <button
-                  onClick={() => setShowMutateAlert(true)}
-                  className={classList(
-                    "mb-2 rounded-md px-4 py-1 text-sm font-medium text-white",
-                    profile.data.isActive ? "bg-green-500" : "bg-red-500",
-                  )}
-                >
-                  {profile.data.isActive ? "Ativo" : "Inativo"}
-                </button>
-              </div>
-            )
-          )}
+          {profile.isLoading && <div className="h-12" />}
         </div>
         <div className="p-5">
           <div className="h-6 w-6" />
         </div>
       </div>
       <div className="flex flex-col items-center gap-4">
+        {profile.data && (
+          <div className="flex min-w-0 max-w-full flex-col items-center justify-center">
+            <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
+              <span className="font-bold">{profile.data.user?.name ?? profile.data.email}</span>
+            </h1>
+            {profile.data.birthdate && (
+              <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
+                <span>
+                  {`${getAge(
+                    profile.data.birthdate,
+                  )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR")}`}
+                </span>
+              </h1>
+            )}
+
+            <button
+              onClick={() => setShowMutateAlert(true)}
+              className={classList(
+                "mb-2 rounded-md px-4 py-1 text-sm font-medium text-white",
+                profile.data.isActive ? "bg-green-500" : "bg-red-500",
+              )}
+            >
+              {profile.data.isActive ? "Ativo" : "Inativo"}
+            </button>
+          </div>
+        )}
         {profile.data?.user === null && (
           <div className="flex w-full max-w-[32rem] flex-row justify-center gap-2 px-2">
             <button
@@ -453,7 +489,7 @@ const Manage = () => {
                 <div className="h-1 w-full bg-gold-500" />
               </div>
               {profile.data?.workoutUpdateDate && (
-                <h3 className="w-full text-start text-sm">
+                <h3 className="text-md pt-2 font-light text-slate-600">
                   Última atualização: {profile.data?.workoutUpdateDate?.toLocaleDateString("pt-BR")}
                 </h3>
               )}
@@ -509,6 +545,12 @@ const Manage = () => {
                   Atualizar perfil
                 </button>
               </div>
+              <button
+                onClick={() => setShowMutateProfileDeleteAlert(true)}
+                className="w-full rounded-md bg-red-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-red-600"
+              >
+                Excluir perfil
+              </button>
             </div>
           )
         )}

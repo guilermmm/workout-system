@@ -23,7 +23,12 @@ import { getServerAuthSession } from "../../../server/auth";
 import { classList, useFormValidation, useLocalStorage } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
-import { methodExplanation, methodTranslation, weekdaysTranslation } from "../../../utils/consts";
+import {
+  methodExplanation,
+  methodTranslation,
+  weekdaysAbbrv,
+  weekdaysTranslation,
+} from "../../../utils/consts";
 
 const exerciseParser = z.object({
   id: z.string(),
@@ -285,28 +290,16 @@ const Workout = () => {
       )}
 
       <QueryErrorAlert queries={[workoutQuery]} />
-      <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
-        <div className="flex items-center">
-          <button
-            className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
-            onClick={() => router.back()}
-          >
-            <ArrowUturnLeftIcon className="h-6 w-6" />
-          </button>
-          <h1 className="ml-4 text-xl font-medium text-blue-700">
-            Treino <span className="font-bold">{workout?.name}</span>
-          </h1>
-        </div>
-        <div className="flex h-full p-1 pt-1.5">
-          {workout?.days.map(day => (
-            <div
-              key={day}
-              className="m-1 flex items-center justify-center rounded-md bg-blue-600 p-3 text-sm text-white"
-            >
-              {weekdaysTranslation[day]}
-            </div>
-          ))}
-        </div>
+      <div className="flex flex-row items-center bg-gold-500 p-2">
+        <button
+          className="rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
+          onClick={() => router.back()}
+        >
+          <ArrowUturnLeftIcon className="h-6 w-6" />
+        </button>
+        <h1 className="ml-4 text-xl font-medium text-blue-700">
+          Treino <span className="font-bold">{workout?.name}</span>
+        </h1>
       </div>
       <div className="flex grow flex-col items-center overflow-y-auto">
         <div className="min-h-full w-full max-w-[48rem]">
