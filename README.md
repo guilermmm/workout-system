@@ -88,16 +88,12 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 
 - [x] pensar em opção para quem nao usa celular (conferir com ela a questao do pdf dps q fazer tudo)
 
-- pagina de perfil na view do user:
-  - se tiver credentialsId:
-    - botao p altera senha:
-    - senha atual
-    - senha nova
-    - confirma senha nova
-- se nao tive credentialsId:
-  - botao p cria senha:
-    - senha
-    - confirma senha
+- [x] pagina de perfil na view do user:
+  - [x] se tiver credentialsId:
+    - [x] botao p altera senha:
+    - [x] senha atual
+    - [x] senha nova
+    - [x] confirma senha nova
 
 confirmacao de senha so serve pro front validar se é igual, pro back so manda 1
 
