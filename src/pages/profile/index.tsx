@@ -12,9 +12,12 @@ import ArrowRightOnRectangleIcon from "../../components/icons/ArrowRightOnRectan
 import ArrowUturnLeftIcon from "../../components/icons/ArrowUturnLeftIcon";
 import ExclamationTriangleIcon from "../../components/icons/ExclamationTriangleIcon";
 import { getServerAuthSession } from "../../server/auth";
-import { getAge } from "../../utils";
+import { getAge, useFormValidation } from "../../utils";
 import { api } from "../../utils/api";
 import { dataSheetTranslation, dataSheetUnit, datasheetLayout } from "../../utils/consts";
+import Modal from "../../components/Modal";
+import TextInput from "../../components/TextInput";
+import CheckIcon from "../../components/icons/CheckIcon";
 
 const Profile = () => {
   const profile = api.user.getProfileBySession.useQuery();
@@ -22,6 +25,66 @@ const Profile = () => {
   const latestDataSheet = api.datasheet.getLatestBySession.useQuery();
 
   const [showAlert, setShowAlert] = useState(false);
+
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showMutatePasswordAlert, setShowMutatePasswordAlert] = useState(false);
+
+  const [wrongPassword, setWrongPassword] = useState(false);
+
+  const [user, setUser] = useState({
+    oldPassword: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [
+    { error: oldPasswordErrorProp, ...oldPasswordProps },
+    { error: oldPasswordError, resetError: resetOldPasswordError },
+  ] = useFormValidation(
+    user.oldPassword,
+    v => {
+      if (v.length < 6) {
+        return "Senha deve ter no mínimo 6 caracteres";
+      }
+    },
+    false,
+  );
+
+  const [passwordProps, { error: passwordError, resetError: resetPasswordError }] =
+    useFormValidation(
+      user.password,
+      v => {
+        if (v.length < 6) {
+          return "Senha deve ter no mínimo 6 caracteres";
+        }
+      },
+      false,
+    );
+
+  const [
+    confirmPasswordProps,
+    { error: confirmPasswordError, resetError: resetConfirmPasswordError },
+  ] = useFormValidation(
+    user.confirmPassword,
+    v => {
+      if (v !== user.password) {
+        return "Senhas não coincidem";
+      }
+    },
+    false,
+  );
+
+  const updatePassword = api.user.updatePassword.useMutation({
+    onSuccess: () => {
+      setShowMutatePasswordAlert(false);
+      setShowChangePasswordModal(false);
+      setUser({ oldPassword: "", password: "", confirmPassword: "" });
+    },
+    onError: () => {
+      setShowMutatePasswordAlert(false);
+      setWrongPassword(true);
+    },
+  });
 
   return (
     <FullPage>
@@ -47,6 +110,147 @@ const Profile = () => {
           >
             Cancelar
           </button>
+        </Alert>
+      )}
+      {showChangePasswordModal && (
+        <Modal
+          onClickOutside={() => {
+            setShowChangePasswordModal(false);
+            setUser({
+              password: "",
+              confirmPassword: "",
+              oldPassword: "",
+            });
+            resetConfirmPasswordError();
+            resetOldPasswordError();
+            resetPasswordError();
+            setWrongPassword(false);
+          }}
+          buttons={
+            <>
+              <button
+                onClick={() => {
+                  setShowMutatePasswordAlert(true);
+                }}
+                className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={
+                  !user.oldPassword ||
+                  !user.password ||
+                  !user.confirmPassword ||
+                  !!confirmPasswordProps.error ||
+                  !!passwordProps.error ||
+                  !!oldPasswordErrorProp
+                }
+              >
+                Atualizar
+              </button>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => {
+                  setShowChangePasswordModal(false);
+                  setUser({
+                    password: "",
+                    confirmPassword: "",
+                    oldPassword: "",
+                  });
+                  resetConfirmPasswordError();
+                  resetOldPasswordError();
+                  resetPasswordError();
+                  setWrongPassword(false);
+                }}
+              >
+                Cancelar
+              </button>
+            </>
+          }
+        >
+          <h1 className="max-w-full self-center truncate whitespace-pre-wrap font-medium">
+            Atualizar senha do usuário
+          </h1>
+          <div className="mb-2">
+            <TextInput
+              label="Senha atual"
+              className="rounded-md bg-slate-50"
+              value={user.oldPassword}
+              onChange={v => setUser({ ...user, oldPassword: v })}
+              type="password"
+              error={wrongPassword ? "Senha atual incorreta" : oldPasswordErrorProp}
+              {...oldPasswordProps}
+            />
+            {oldPasswordErrorProp && (
+              <span className="text-xs text-red-500">{oldPasswordErrorProp}</span>
+            )}
+            {wrongPassword && (
+              <span className="mb-2 text-xs text-red-500">Senha atual incorreta</span>
+            )}
+          </div>
+
+          <TextInput
+            label="Nova senha"
+            className="rounded-md bg-slate-50"
+            value={user.password}
+            onChange={v => setUser({ ...user, password: v })}
+            type="password"
+            {...passwordProps}
+          />
+          {passwordProps.error && (
+            <span className="text-xs text-red-500">{passwordProps.error}</span>
+          )}
+          <TextInput
+            label="Confirmar nova senha"
+            className="rounded-md bg-slate-50"
+            value={user.confirmPassword}
+            onChange={v => setUser({ ...user, confirmPassword: v })}
+            type="password"
+            {...confirmPasswordProps}
+          />
+          {confirmPasswordProps.error && (
+            <span className="text-xs text-red-500">{confirmPasswordProps.error}</span>
+          )}
+        </Modal>
+      )}
+      {showMutatePasswordAlert && (
+        <Alert
+          icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
+          title="Confirmar Atualização"
+          text={`Tem certeza que deseja alterar a senha do usuário?`}
+          onClickOutside={() => setShowMutatePasswordAlert(false)}
+        >
+          <button
+            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => {
+              if (
+                !user.password ||
+                !user.confirmPassword ||
+                !user.oldPassword ||
+                oldPasswordError() ||
+                passwordError() ||
+                confirmPasswordError()
+              )
+                return;
+
+              updatePassword.mutate({
+                oldPassword: user.oldPassword,
+                newPassword: user.password,
+              });
+            }}
+          >
+            {updatePassword.isLoading ? (
+              <div className="flex h-full w-full items-center justify-center">
+                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              </div>
+            ) : (
+              "Confirmar"
+            )}
+          </button>
+          {!updatePassword.isLoading && (
+            <button
+              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+              onClick={() => setShowMutatePasswordAlert(false)}
+            >
+              Cancelar
+            </button>
+          )}
         </Alert>
       )}
       <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
@@ -83,7 +287,9 @@ const Profile = () => {
               <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
                 {`${getAge(
                   profile.data.birthdate,
-                )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR")}`}
+                )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR", {
+                  timeZone: "UTC",
+                })}`}
               </h1>
             )}
           </div>
@@ -98,7 +304,7 @@ const Profile = () => {
             </Link>
             <Link
               href={`profile/pdf`}
-              className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+              className="flex h-full w-full items-center justify-center rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
             >
               Baixar Treinos
             </Link>
@@ -142,6 +348,12 @@ const Profile = () => {
                 >
                   Histórico de medidas
                 </Link>
+                <button
+                  onClick={() => setShowChangePasswordModal(true)}
+                  className="flex flex-col items-center justify-center rounded-md bg-blue-500 py-3 px-6 text-white shadow-md transition-colors hover:bg-blue-600"
+                >
+                  Atualizar senha
+                </button>
               </div>
             ) : (
               <div className="flex flex-col gap-4">

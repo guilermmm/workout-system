@@ -180,6 +180,8 @@ export const useFormValidation = <T>(
     return error;
   }, [value, validate]);
 
+  const resetError = useCallback(() => setError(undefined), []);
+
   const props = useMemo(
     () => ({
       onFocus: () => setError(undefined),
@@ -189,7 +191,7 @@ export const useFormValidation = <T>(
     [handleBlur, error],
   );
 
-  const methods = useMemo(() => ({ error: handleBlur }), [handleBlur]);
+  const methods = useMemo(() => ({ error: handleBlur, resetError }), [handleBlur, resetError]);
 
   return [props, methods] as const;
 };
