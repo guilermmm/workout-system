@@ -95,29 +95,49 @@ export const userRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         email: z.string().email(),
-        birthdate: z.date(),
+        birthdate: z.date().nullable(),
         name: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const user = await ctx.prisma.profile.findUnique({
+      const profile = await ctx.prisma.profile.findUnique({
         where: { id: input.id },
-        select: { userId: true },
+        include: { user: { select: { credentialsId: true, id: true } } },
       });
 
-      if (user !== null && user.userId !== null) {
-        await ctx.prisma.user.update({
-          where: { id: user.userId },
-          data: { email: input.email, name: input.name },
-        });
+      if (profile === null || profile.user === null) {
+        throw new TRPCError({ code: "NOT_FOUND" });
       }
 
-      const birthdate = new Date(input.birthdate);
-      birthdate.setUTCHours(0, 0, 0, 0);
-      await ctx.prisma.profile.update({
-        where: { id: input.id },
-        data: { email: input.email, birthdate },
-      });
+      const birthdate = input.birthdate && new Date(input.birthdate);
+      birthdate?.setUTCHours(0, 0, 0, 0);
+
+      if (profile.user.credentialsId !== null) {
+        await ctx.prisma.profile.update({
+          where: { id: input.id },
+          data: {
+            email: input.email,
+            birthdate,
+          },
+        });
+        await ctx.prisma.user.update({
+          where: { id: profile.user.id },
+          data: {
+            email: input.email,
+            name: input.name,
+          },
+        });
+      } else {
+        await ctx.prisma.profile.update({
+          where: { id: profile.id },
+          data: {
+            birthdate,
+            email: input.email,
+            user: { disconnect: true },
+          },
+        });
+        await ctx.prisma.user.delete({ where: { id: profile.user.id } });
+      }
     }),
 
   deactivate: adminProcedure
