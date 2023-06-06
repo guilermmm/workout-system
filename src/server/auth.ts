@@ -55,21 +55,38 @@ export const authOptions: NextAuthOptions = {
 
       const adminProfile = await prisma.adminProfile.findUnique({
         where: { email: session.user.email },
-        select: { userId: true },
+        select: { id: true, userId: true },
       });
       if (adminProfile) {
-        session.user.id = adminProfile.userId!;
+        if (!adminProfile.userId) {
+          const updatedProfile = await prisma.adminProfile.update({
+            where: { id: adminProfile.id },
+            data: { user: { connect: { email: session.user.email } } },
+            select: { userId: true },
+          });
+          session.user.id = updatedProfile.userId!;
+        } else {
+          session.user.id = adminProfile.userId;
+        }
         session.user.role = "admin";
         return session;
       }
 
       const profile = await prisma.profile.findFirst({
         where: { email: session.user.email, isActive: true },
-        select: { userId: true },
+        select: { id: true, userId: true },
       });
-
       if (profile) {
-        session.user.id = profile.userId!;
+        if (!profile.userId) {
+          const updatedProfile = await prisma.profile.update({
+            where: { id: profile.id },
+            data: { user: { connect: { email: session.user.email } } },
+            select: { userId: true },
+          });
+          session.user.id = updatedProfile.userId!;
+        } else {
+          session.user.id = profile.userId!;
+        }
         session.user.role = "user";
         return session;
       }

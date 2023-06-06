@@ -24,8 +24,6 @@ import { api } from "../utils/api";
 const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const { data: session } = useSession();
 
-  api.user.getAdminProfileBySession.useQuery(undefined, { retry: false });
-
   const [searchInput, setSearchInput] = useState("");
 
   const [debouncedInput] = useDebounce(searchInput, 150);

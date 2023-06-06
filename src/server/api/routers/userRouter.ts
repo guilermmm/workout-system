@@ -10,16 +10,6 @@ export const userRouter = createTRPCRouter({
       include: { user: true },
     });
 
-    if (profile.userId == null) {
-      const updatedProfile = await ctx.prisma.profile.update({
-        where: { email: profile.email },
-        data: { userId: ctx.session.user.id },
-        include: { user: true },
-      });
-
-      return updatedProfile;
-    }
-
     return profile;
   }),
 
@@ -32,7 +22,7 @@ export const userRouter = createTRPCRouter({
     if (profile.userId == null) {
       await ctx.prisma.adminProfile.update({
         where: { email: profile.email },
-        data: { userId: ctx.session.user.id, name: ctx.session.user.name! },
+        data: { user: { connect: { email: profile.email } } },
         include: { user: true },
       });
     }

@@ -527,169 +527,172 @@ const Manage = () => {
           )}
         </Alert>
       )}
-      <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
-        <div className="absolute left-0 top-0 right-0 h-20 bg-gold-500" />
-        <Link
-          href="/home"
-          className="z-10 rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
-        >
-          <ArrowUturnLeftIcon className="h-6 w-6" />
-        </Link>
-        <div className="flex w-full flex-col items-center justify-center truncate pt-4">
-          <div className="z-10 rounded-full bg-slate-100 p-2">
-            {profile.data ? (
-              <ProfilePic size="xl" user={profile.data?.user} />
-            ) : (
-              <Spinner className="h-24 w-24 fill-blue-600 text-gray-200" />
-            )}
+      <div className="relative flex h-full flex-col overflow-y-auto">
+        <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
+          <div className="absolute left-0 top-0 right-0 h-20 bg-gold-500" />
+          <Link
+            href="/home"
+            className="z-10 rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
+          >
+            <ArrowUturnLeftIcon className="h-6 w-6" />
+          </Link>
+          <div className="flex w-full flex-col items-center justify-center truncate pt-4">
+            <div className="z-10 rounded-full bg-slate-100 p-2">
+              {profile.data ? (
+                <ProfilePic size="xl" user={profile.data?.user} />
+              ) : (
+                <Spinner className="h-24 w-24 fill-blue-600 text-gray-200" />
+              )}
+            </div>
+            {profile.isLoading && <div className="h-12" />}
           </div>
-          {profile.isLoading && <div className="h-12" />}
+          <div className="p-5">
+            <div className="h-6 w-6" />
+          </div>
         </div>
-        <div className="p-5">
-          <div className="h-6 w-6" />
-        </div>
-      </div>
-      <div className="flex flex-col items-center gap-4">
-        {profile.data && (
-          <div className="flex min-w-0 max-w-full flex-col items-center justify-center">
-            <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
-              <span className="font-bold">{profile.data.user?.name ?? profile.data.email}</span>
-            </h1>
-            {profile.data.birthdate && (
+        <div className="flex flex-col items-center gap-4">
+          {profile.data && (
+            <div className="flex min-w-0 max-w-full flex-col items-center justify-center">
               <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
-                <span>
-                  {`${getAge(
-                    profile.data.birthdate,
-                  )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR", {
-                    timeZone: "UTC",
-                  })}`}
-                </span>
+                <span className="font-bold">{profile.data.user?.name ?? profile.data.email}</span>
               </h1>
-            )}
+              {profile.data.birthdate && (
+                <h1 className="my-1 w-full self-start truncate text-center text-lg font-medium text-slate-900">
+                  <span>
+                    {`${getAge(
+                      profile.data.birthdate,
+                    )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR", {
+                      timeZone: "UTC",
+                    })}`}
+                  </span>
+                </h1>
+              )}
 
-            <button
-              onClick={() => setShowMutateAlert(true)}
-              className={classList(
-                "mb-2 rounded-md px-4 py-1 text-sm font-medium text-white",
-                profile.data.isActive ? "bg-green-500" : "bg-red-500",
-              )}
-            >
-              {profile.data.isActive ? "Ativo" : "Inativo"}
-            </button>
-          </div>
-        )}
-        {profile.data?.user === null && (
-          <div className="flex w-full max-w-[32rem] flex-row justify-center gap-2 px-2">
-            <button
-              className="w-full rounded-md bg-gold-400 p-2 py-3 text-center text-sm text-slate-900 shadow-md transition-colors hover:bg-gold-500"
-              onClick={() => setShowCreateUserModal(true)}
-            >
-              Cadastrar dados de acesso
-            </button>
-          </div>
-        )}
-        <div className="flex w-full max-w-[32rem] flex-row justify-center gap-2 px-2">
-          <Link
-            className="w-full rounded-md bg-blue-500 p-2 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-            href={`/manage/${profileId}/workout_history`}
-          >
-            Histórico de treinos
-          </Link>
-          <Link
-            href={`/manage/${profileId}/datasheet_history`}
-            className="w-full rounded-md bg-blue-500 p-2 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-          >
-            Histórico de medidas
-          </Link>
-        </div>
-      </div>
-      <div className="flex h-full grow flex-col items-center">
-        {workouts.isLoading ? (
-          <div className="flex flex-1 items-center justify-center">
-            <Spinner className="h-32 w-32 fill-blue-600 text-gray-200" />
-          </div>
-        ) : (
-          workouts.data && (
-            <div className="mt-4 flex w-full max-w-[32rem] flex-col items-center gap-2 px-2 pb-4">
-              <div>
-                <h2 className="text-lg font-medium">Treinos</h2>
-                <div className="h-1 w-full bg-gold-500" />
-              </div>
-              {profile.data?.workoutUpdateDate && (
-                <h3 className="text-md pt-2 font-light text-slate-600">
-                  Última atualização: {profile.data?.workoutUpdateDate?.toLocaleDateString("pt-BR")}
-                </h3>
-              )}
-              {workouts.data.map(workout => (
-                <div
-                  className="flex w-full flex-1 justify-between rounded-md bg-blue-500 text-slate-100 shadow-md"
-                  key={workout.id}
-                >
-                  <Link
-                    href={`/manage/${profileId}/edit_workout/${workout.id}`}
-                    className="flex h-full grow items-center justify-center rounded-l-md p-4 pl-6 transition-colors hover:bg-blue-600"
-                  >
-                    <div className="grow">
-                      <div className="text-xl">
-                        Treino <span className="font-medium">{workout.name}</span>
-                      </div>
-                      <div className="text-sm font-light opacity-90">
-                        {capitalize(join(workout.categories))}
-                      </div>
-                    </div>
-                    <div className="pr-2 text-gold-400">
-                      <PencilSquareIcon className="h-6 w-6 text-gold-400" />
-                    </div>
-                  </Link>
-                  <div className="relative flex items-center justify-center rounded-r-md bg-blue-400 p-3 transition-colors hover:bg-blue-500">
-                    <button
-                      onClick={() => setToRemove(workout)}
-                      className="rounded-full bg-blue-200 p-2 text-red-500 shadow-md transition-colors hover:bg-red-500 hover:text-white"
-                    >
-                      <TrashIcon className="h-6 w-6" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <div className="mt-4 flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
-                <Link
-                  className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                  href={`/manage/${profileId}/create_workout`}
-                >
-                  Adicionar treino
-                </Link>
-                <Link
-                  href={`${profileId}/pdf`}
-                  className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                >
-                  Baixar Treinos
-                </Link>
-              </div>
-              <div className="flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
-                <button
-                  onClick={() => setShowMutateProfileModal(true)}
-                  className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                >
-                  Atualizar perfil
-                </button>
-                {profile.data?.user !== null && profile.data?.user.credentialsId && (
-                  <button
-                    onClick={() => setShowChangePasswordModal(true)}
-                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                  >
-                    Trocar senha
-                  </button>
-                )}
-              </div>
               <button
-                onClick={() => setShowMutateProfileDeleteAlert(true)}
-                className="w-full rounded-md bg-red-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-red-600"
+                onClick={() => setShowMutateAlert(true)}
+                className={classList(
+                  "mb-2 rounded-md px-4 py-1 text-sm font-medium text-white",
+                  profile.data.isActive ? "bg-green-500" : "bg-red-500",
+                )}
               >
-                Excluir perfil
+                {profile.data.isActive ? "Ativo" : "Inativo"}
               </button>
             </div>
-          )
-        )}
+          )}
+          {profile.data?.user === null && (
+            <div className="flex w-full max-w-[32rem] flex-row justify-center gap-2 px-2">
+              <button
+                className="w-full rounded-md bg-gold-400 p-2 py-3 text-center text-sm text-slate-900 shadow-md transition-colors hover:bg-gold-500"
+                onClick={() => setShowCreateUserModal(true)}
+              >
+                Cadastrar dados de acesso
+              </button>
+            </div>
+          )}
+          <div className="flex w-full max-w-[32rem] flex-row justify-center gap-2 px-2">
+            <Link
+              className="w-full rounded-md bg-blue-500 p-2 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+              href={`/manage/${profileId}/workout_history`}
+            >
+              Histórico de treinos
+            </Link>
+            <Link
+              href={`/manage/${profileId}/datasheet_history`}
+              className="w-full rounded-md bg-blue-500 p-2 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+            >
+              Histórico de medidas
+            </Link>
+          </div>
+        </div>
+        <div className="flex h-full grow flex-col items-center">
+          {workouts.isLoading ? (
+            <div className="flex flex-1 items-center justify-center">
+              <Spinner className="h-32 w-32 fill-blue-600 text-gray-200" />
+            </div>
+          ) : (
+            workouts.data && (
+              <div className="mt-4 flex w-full max-w-[32rem] flex-col items-center gap-2 px-2 pb-4">
+                <div>
+                  <h2 className="text-lg font-medium">Treinos</h2>
+                  <div className="h-1 w-full bg-gold-500" />
+                </div>
+                {profile.data?.workoutUpdateDate && (
+                  <h3 className="text-md pt-2 font-light text-slate-600">
+                    Última atualização:{" "}
+                    {profile.data?.workoutUpdateDate?.toLocaleDateString("pt-BR")}
+                  </h3>
+                )}
+                {workouts.data.map(workout => (
+                  <div
+                    className="flex w-full flex-1 justify-between rounded-md bg-blue-500 text-slate-100 shadow-md"
+                    key={workout.id}
+                  >
+                    <Link
+                      href={`/manage/${profileId}/edit_workout/${workout.id}`}
+                      className="flex h-full grow items-center justify-center rounded-l-md p-4 pl-6 transition-colors hover:bg-blue-600"
+                    >
+                      <div className="grow">
+                        <div className="text-xl">
+                          Treino <span className="font-medium">{workout.name}</span>
+                        </div>
+                        <div className="text-sm font-light opacity-90">
+                          {capitalize(join(workout.categories))}
+                        </div>
+                      </div>
+                      <div className="pr-2 text-gold-400">
+                        <PencilSquareIcon className="h-6 w-6 text-gold-400" />
+                      </div>
+                    </Link>
+                    <div className="relative flex items-center justify-center rounded-r-md bg-blue-400 p-3 transition-colors hover:bg-blue-500">
+                      <button
+                        onClick={() => setToRemove(workout)}
+                        className="rounded-full bg-blue-200 p-2 text-red-500 shadow-md transition-colors hover:bg-red-500 hover:text-white"
+                      >
+                        <TrashIcon className="h-6 w-6" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <div className="mt-4 flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
+                  <Link
+                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                    href={`/manage/${profileId}/create_workout`}
+                  >
+                    Adicionar treino
+                  </Link>
+                  <Link
+                    href={`${profileId}/pdf`}
+                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                  >
+                    Baixar Treinos
+                  </Link>
+                </div>
+                <div className="flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
+                  <button
+                    onClick={() => setShowMutateProfileModal(true)}
+                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                  >
+                    Atualizar perfil
+                  </button>
+                  {profile.data?.user !== null && profile.data?.user.credentialsId && (
+                    <button
+                      onClick={() => setShowChangePasswordModal(true)}
+                      className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                    >
+                      Trocar senha
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowMutateProfileDeleteAlert(true)}
+                  className="w-full rounded-md bg-red-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-red-600"
+                >
+                  Excluir perfil
+                </button>
+              </div>
+            )
+          )}
+        </div>
       </div>
     </FullPage>
   );
