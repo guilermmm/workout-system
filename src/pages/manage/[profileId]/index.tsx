@@ -39,6 +39,8 @@ const Manage = () => {
     onSuccess: data => {
       setEmail(data.email);
       setBirthdate(data.birthdate);
+
+      if (data.user !== null) setUser({ ...user, name: data.user.name ?? "" });
     },
   });
   const workouts = api.workout.getMany.useQuery({ profileId });
@@ -57,6 +59,8 @@ const Manage = () => {
   const [showMutateProfileConfirmAlert, setShowMutateProfileConfirmAlert] = useState(false);
   const [showMutateProfileModal, setShowMutateProfileModal] = useState(false);
   const [showMutateProfileDeleteAlert, setShowMutateProfileDeleteAlert] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showMutatePasswordAlert, setShowMutatePasswordAlert] = useState(false);
 
   const [email, setEmail] = useState(profile.data?.email ?? "");
   const [birthdate, setBirthdate] = useState<Date | null>(profile.data?.birthdate ?? null);
@@ -123,6 +127,14 @@ const Manage = () => {
     },
     false,
   );
+
+  const updatePassword = api.user.updateUserPassword.useMutation({
+    onSuccess: () => {
+      setShowMutatePasswordAlert(false);
+      setShowChangePasswordModal(false);
+      setUser({ ...user, password: "", confirmPassword: "" });
+    },
+  });
 
   const [confirmPasswordProps, { error: confirmPasswordError }] = useFormValidation(
     user.confirmPassword,
@@ -237,6 +249,14 @@ const Manage = () => {
           <h1 className="max-w-full self-center truncate whitespace-pre-wrap font-medium">
             Atualizar usuário {profile.data?.user?.name ?? profile.data?.email}
           </h1>
+          {profile.data?.user !== null && profile.data?.user.credentialsId && (
+            <TextInput
+              label="Nome"
+              className="rounded-md bg-slate-50"
+              value={user.name}
+              onChange={v => setUser({ ...user, name: v })}
+            />
+          )}
           <TextInput
             label="Email"
             className="rounded-md bg-slate-50"
@@ -264,7 +284,7 @@ const Manage = () => {
             className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             onClick={() => {
               if (!birthdate) return;
-              updateProfile.mutate({ id: profileId, email, birthdate });
+              updateProfile.mutate({ id: profileId, email, birthdate, name: user.name });
               setEmail("");
               setBirthdate(null);
               setShowMutateProfileModal(false);
@@ -396,6 +416,111 @@ const Manage = () => {
             <button
               className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
               onClick={() => setShowMutateProfileDeleteAlert(false)}
+            >
+              Cancelar
+            </button>
+          )}
+        </Alert>
+      )}
+      {showChangePasswordModal && (
+        <Modal
+          onClickOutside={() => setShowChangePasswordModal(false)}
+          buttons={
+            <>
+              <button
+                onClick={() => {
+                  setShowMutatePasswordAlert(true);
+                }}
+                className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={
+                  !user.password ||
+                  !user.confirmPassword ||
+                  !!passwordProps.error ||
+                  !!confirmPasswordProps.error
+                }
+              >
+                Atualizar
+              </button>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => {
+                  setShowChangePasswordModal(false);
+                  setUser({
+                    ...user,
+                    password: "",
+                    confirmPassword: "",
+                  });
+                }}
+              >
+                Cancelar
+              </button>
+            </>
+          }
+        >
+          <h1 className="max-w-full self-center truncate whitespace-pre-wrap font-medium">
+            Atualizar senha do usuário
+          </h1>
+
+          <TextInput
+            label="Nova senha"
+            className="rounded-md bg-slate-50"
+            value={user.password}
+            onChange={v => setUser({ ...user, password: v })}
+            type="password"
+            {...passwordProps}
+          />
+          {passwordProps.error && (
+            <span className="text-xs text-red-500">{passwordProps.error}</span>
+          )}
+          <TextInput
+            label="Confirmar nova senha"
+            className="rounded-md bg-slate-50"
+            value={user.confirmPassword}
+            onChange={v => setUser({ ...user, confirmPassword: v })}
+            type="password"
+            {...confirmPasswordProps}
+          />
+          {confirmPasswordProps.error && (
+            <span className="text-xs text-red-500">{confirmPasswordProps.error}</span>
+          )}
+        </Modal>
+      )}
+      {showMutatePasswordAlert && (
+        <Alert
+          icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
+          title="Confirmar Atualização"
+          text={`Tem certeza que deseja alterar a senha do usuário?`}
+          onClickOutside={() => setShowMutatePasswordAlert(false)}
+        >
+          <button
+            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => {
+              if (
+                !user.password ||
+                !user.confirmPassword ||
+                passwordError() ||
+                confirmPasswordError()
+              )
+                return;
+
+              updatePassword.mutate({
+                userId: profile.data?.userId ?? "",
+                newPassword: user.password,
+              });
+            }}
+          >
+            {updateProfile.isLoading ? (
+              <div className="flex h-full w-full items-center justify-center">
+                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+              </div>
+            ) : (
+              "Confirmar"
+            )}
+          </button>
+          {!updateProfile.isLoading && (
+            <button
+              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+              onClick={() => setShowMutatePasswordAlert(false)}
             >
               Cancelar
             </button>
@@ -537,13 +662,22 @@ const Manage = () => {
                 >
                   Baixar Treinos
                 </Link>
-
+              </div>
+              <div className="flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
                 <button
                   onClick={() => setShowMutateProfileModal(true)}
                   className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
                 >
                   Atualizar perfil
                 </button>
+                {profile.data?.user !== null && profile.data?.user.credentialsId && (
+                  <button
+                    onClick={() => setShowChangePasswordModal(true)}
+                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                  >
+                    Trocar senha
+                  </button>
+                )}
               </div>
               <button
                 onClick={() => setShowMutateProfileDeleteAlert(true)}

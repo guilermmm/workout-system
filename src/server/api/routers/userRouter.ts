@@ -106,9 +106,22 @@ export const userRouter = createTRPCRouter({
         id: z.string(),
         email: z.string().email(),
         birthdate: z.date(),
+        name: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const user = await ctx.prisma.profile.findUnique({
+        where: { id: input.id },
+        select: { userId: true },
+      });
+
+      if (user !== null && user.userId !== null) {
+        await ctx.prisma.user.update({
+          where: { id: user.userId },
+          data: { email: input.email, name: input.name },
+        });
+      }
+
       const birthdate = new Date(input.birthdate);
       birthdate.setUTCHours(0, 0, 0, 0);
       await ctx.prisma.profile.update({
@@ -130,6 +143,19 @@ export const userRouter = createTRPCRouter({
     }),
 
   deleteProfile: adminProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
+    const profile = await ctx.prisma.profile.findUniqueOrThrow({
+      where: { id: input },
+      select: { user: true },
+    });
+
+    if (profile.user !== null) {
+      if (profile?.user?.credentialsId) {
+        await ctx.prisma.credentials.delete({ where: { id: profile.user.credentialsId } });
+      } else {
+        await ctx.prisma.user.delete({ where: { id: profile.user.id } });
+      }
+    }
+
     await ctx.prisma.profile.delete({ where: { id: input } });
   }),
 
