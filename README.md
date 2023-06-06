@@ -87,3 +87,14 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 - [x] poder adicionar mais emails como adm, manter o email superuser no .env, pq só ele que vai poder adicionar e remover novos adm
 
 - [x] pensar em opção para quem nao usa celular (conferir com ela a questao do pdf dps q fazer tudo)
+
+- [x] pagina de perfil na view do user:
+  - [x] se tiver credentialsId:
+    - [x] botao p altera senha:
+    - [x] senha atual
+    - [x] senha nova
+    - [x] confirma senha nova
+
+confirmacao de senha so serve pro front validar se é igual, pro back so manda 1
+
+- [ ] modal nas pagina de perfil tao bugando

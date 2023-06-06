@@ -80,13 +80,13 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
     image: null,
   });
 
-  const newExerciseNameProps = useFormValidation(
+  const [newExerciseNameProps] = useFormValidation(
     newExercise?.name,
     v => v?.length !== undefined && v.length < 1 && "Nome vazio",
     false,
   );
 
-  const newExerciseCategoryProps = useFormValidation(
+  const [newExerciseCategoryProps] = useFormValidation(
     newExercise?.category,
     v => v?.length !== undefined && v.length < 1 && "Categoria vazia",
     false,
@@ -111,13 +111,13 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
     console.log("editedExercise", editedExercise);
   }, [editedExercise]);
 
-  const editedExerciseNameProps = useFormValidation(
+  const [editedExerciseNameProps] = useFormValidation(
     editedExercise?.name,
     v => v?.length !== undefined && v.length < 1 && "Nome vazio",
     false,
   );
 
-  const editedExerciseCategoryProps = useFormValidation(
+  const [editedExerciseCategoryProps] = useFormValidation(
     editedExercise?.category,
     v => v?.length !== undefined && v.length < 1 && "Categoria vazia",
     false,
@@ -201,7 +201,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           </div>
           <TextInput
             label="Nome"
-            className="rounded-md bg-white"
+            className="rounded-md bg-slate-50"
             value={newExercise.name}
             onChange={name => setNewExercise({ ...newExercise, name })}
             {...newExerciseNameProps}
@@ -209,7 +209,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           <TextInput
             label="Categoria"
             list="categories"
-            className="rounded-md bg-white"
+            className="rounded-md bg-slate-50"
             value={newExercise.category}
             onChange={category => setNewExercise({ ...newExercise, category })}
             {...newExerciseCategoryProps}
@@ -367,7 +367,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           </div>
           <TextInput
             label="Nome"
-            className="rounded-md bg-white"
+            className="rounded-md bg-slate-50"
             value={editedExercise.name}
             onChange={name => setEditedExercise({ ...editedExercise, name })}
             {...editedExerciseNameProps}
@@ -375,7 +375,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           <TextInput
             label="Categoria"
             list="categories"
-            className="rounded-md bg-white"
+            className="rounded-md bg-slate-50"
             value={editedExercise.category}
             onChange={category => setEditedExercise({ ...editedExercise, category })}
             {...editedExerciseCategoryProps}
@@ -397,7 +397,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
           onClickOutside={() => setShowEditConfirmation(false)}
         >
           <button
-            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-slate-50 shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             onClick={() => editExercise.mutate(editedExercise)}
             disabled={editExercise.isLoading}
           >

@@ -172,11 +172,90 @@ const EditWorkout = () => {
   const [isConfirmationAlertOpen, setConfirmationAlertOpen] = useState(false);
 
   const setExercises = (exercises: Exercise[] | ((exercises: Exercise[]) => Exercise[])) => {
-    if (typeof exercises === "function") {
-      setWorkout(prev => ({ ...prev, exercises: exercises(prev.exercises) }));
-    } else {
-      setWorkout(prev => ({ ...prev, exercises }));
-    }
+    const handleSetExercises = (prevExercises: Exercise[]) => {
+      let newExercises: Exercise[];
+      if (typeof exercises === "function") {
+        newExercises = exercises(prevExercises);
+      } else {
+        newExercises = exercises;
+      }
+
+      // find exercises that have a biSet
+      const exercisesWithNewBiSet = newExercises.filter(
+        e => e.biSet !== null && e.biSet !== prevExercises.find(pe => pe.id === e.id)?.biSet,
+      );
+
+      exercisesWithNewBiSet.forEach(e => {
+        // find the biSet exercise
+        const biSetExercise = newExercises.find(ne => ne.id === e.biSet)!;
+
+        // make both exercises have the same number of sets, creating new sets if needed
+        const maxSets = Math.max(e.sets.length, biSetExercise.sets.length);
+
+        for (let i = 0; i < maxSets; i++) {
+          const lastSet = e.sets.at(-1);
+          if (i >= e.sets.length) {
+            e.sets.push(
+              lastSet ? { ...lastSet } : { reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } },
+            );
+          }
+          const lastBiSetSet = biSetExercise.sets.at(-1);
+          if (i >= biSetExercise.sets.length) {
+            biSetExercise.sets.push(
+              lastBiSetSet
+                ? { ...lastBiSetSet }
+                : { reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } },
+            );
+          }
+        }
+      });
+
+      // find exercises that continue to have a biSet
+      const exercisesWithSameBiSet = newExercises.filter(
+        e => e.biSet !== null && e.biSet === prevExercises.find(pe => pe.id === e.id)?.biSet,
+      );
+
+      exercisesWithSameBiSet.forEach(e => {
+        // find the biSet exercise
+        const biSetExercise = newExercises.find(ne => ne.id === e.biSet)!;
+
+        // see if new sets have been added or removed in the exercise
+        const oldSets = prevExercises.find(pe => pe.id === e.id)!.sets.length;
+        const newSets = e.sets.length;
+
+        if (oldSets > newSets) {
+          // remove the last set from the biSet exercise
+          biSetExercise.sets.pop();
+        } else if (oldSets < newSets) {
+          // add a new set to the biSet exercise
+          const lastSet = biSetExercise.sets.at(-1);
+          biSetExercise.sets.push(
+            lastSet ? { ...lastSet } : { reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } },
+          );
+        }
+
+        // see if new sets have been added or removed in the biSet exercise
+        const oldBiSetSets = prevExercises.find(pe => pe.id === biSetExercise.id)!.sets.length;
+        const newBiSetSets = biSetExercise.sets.length;
+
+        if (oldBiSetSets > newBiSetSets) {
+          // remove the last set from the exercise
+          e.sets.pop();
+        } else if (oldBiSetSets < newBiSetSets) {
+          // add a new set to the exercise
+          const lastSet = e.sets.at(-1);
+          e.sets.push(
+            lastSet ? { ...lastSet } : { reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } },
+          );
+        }
+      });
+
+      return newExercises;
+    };
+
+    const newExercises = handleSetExercises(workout.exercises);
+
+    setWorkout(prev => ({ ...prev, exercises: newExercises }));
   };
 
   const handleAddExercise = () => {
@@ -288,6 +367,8 @@ const EditWorkout = () => {
             value={workout.name}
             onChange={name => setWorkout({ ...workout, name })}
             disabled={saving || originalWorkout.isLoading}
+            minLength={1}
+            maxLength={3}
           />
           <MultiSelect
             label="Dia(s)"
@@ -376,7 +457,7 @@ const EditWorkout = () => {
         )}
 
         {categories.data && originalWorkout.data && (
-          <div className="flex flex-row items-center justify-center">
+          <div className="mb-20 flex flex-row items-center justify-center">
             <button
               className="mt-2 flex items-center gap-3 rounded-full border-2 border-blue-200 bg-blue-500 px-6 py-2 font-medium text-white hover:border-blue-600 hover:bg-blue-600 disabled:border-gray-300 disabled:bg-gray-300 disabled:text-gray-500"
               onClick={handleAddExercise}

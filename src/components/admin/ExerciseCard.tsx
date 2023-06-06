@@ -48,7 +48,7 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
   collapsed,
   disabled,
 }: ExerciseCardProps<Exercise>) => {
-  const exerciseIdProps = useFormValidation(
+  const [exerciseIdProps] = useFormValidation(
     exercise.exerciseId,
     v => v === "" && "Selecione um exercício",
   );
@@ -193,11 +193,11 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
             )}
           </div>
         </div>
-        <div className="flex flex-row gap-2">
-          <div className="flex grow-1 flex-col gap-2">
-            <div className="flex grow flex-col items-center justify-center">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex grow-1 flex-row gap-2 sm:flex-col">
+            <div className="flex w-full grow flex-row items-center justify-center gap-1 sm:flex-col">
               <span
-                className={classList("mb-1 text-xs font-medium", {
+                className={classList("text-xs font-medium leading-none", {
                   "text-gray-900": exercise.type === "reps",
                   "text-gray-500": exercise.type !== "reps",
                 })}
@@ -225,7 +225,7 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
                 </label>
               </div>
               <span
-                className={classList("text-xs font-medium", {
+                className={classList("text-xs font-medium leading-none", {
                   "text-gray-900": exercise.type === "time",
                   "text-gray-500": exercise.type !== "time",
                 })}
@@ -233,7 +233,7 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
                 Tempo
               </span>
             </div>
-            <div className="flex flex-col">
+            <div className="flex w-full flex-col">
               {otherExercises && otherExercises.length !== 0 && (
                 <div className="flex items-center justify-center overflow-visible">
                   <Dropdown
@@ -319,22 +319,22 @@ const SetCard = <E extends ExerciseBase>({
 }: SetProps<E>) => {
   const set = exercise.sets[index]!;
 
-  const repsProps = useFormValidation(set.reps, n => {
+  const [repsProps] = useFormValidation(set.reps, n => {
     if (n < 1) return "Número de repetições deve ser maior que 0";
     if (n % 1 !== 0) return "Número de repetições deve ser inteiro";
   });
 
-  const weightProps = useFormValidation(set.weightKg, n => {
+  const [weightProps] = useFormValidation(set.weightKg, n => {
     if (n < 0) return "Peso deve ser maior ou igual a 0";
     if (n % 0.5 !== 0) return "Peso deve ser múltiplo de 0,5";
   });
 
-  const minutesProps = useFormValidation(set.time.minutes, n => {
+  const [minutesProps] = useFormValidation(set.time.minutes, n => {
     if (n < 0) return "Minutos deve ser maior ou igual a 0";
     if (n % 1 !== 0) return "Minutos deve ser inteiro";
   });
 
-  const secondsProps = useFormValidation(set.time.seconds, n => {
+  const [secondsProps] = useFormValidation(set.time.seconds, n => {
     if (n < 0) return "Segundos deve ser maior ou igual a 0";
     if (n % 1 !== 0) return "Segundos deve ser inteiro";
   });
@@ -344,68 +344,85 @@ const SetCard = <E extends ExerciseBase>({
       className="m-0.5 flex w-full items-center justify-between rounded border-1 bg-white p-1.5 shadow-md"
       key={index}
     >
-      <div className="flex grow flex-row items-center gap-1">
+      <div className="flex grow flex-row gap-1">
         {exercise.type === "reps" ? (
+          <div className="flex grow flex-col gap-1">
+            <NumberInput
+              label="Repetições"
+              className="w-full bg-white"
+              value={set.reps}
+              onChange={n => {
+                const newSets = [...exercise.sets];
+                newSets[index]!.reps = n;
+                updateSets(newSets);
+              }}
+              min={0}
+              max={100}
+              disabled={disabled}
+              {...repsProps}
+            />
+            {repsProps.error && <span className="text-xs text-red-500">{repsProps.error}</span>}
+          </div>
+        ) : (
+          <>
+            <div className="flex grow flex-col gap-1">
+              <NumberInput
+                label="Minutos"
+                className="w-full bg-white"
+                value={set.time.minutes}
+                onChange={n => {
+                  const newSets = [...exercise.sets];
+                  newSets[index]!.time.minutes = n;
+                  updateSets(newSets);
+                }}
+                min={0}
+                max={1000}
+                disabled={disabled}
+                {...minutesProps}
+              />
+              {minutesProps.error && (
+                <span className="text-xs text-red-500">{minutesProps.error}</span>
+              )}
+            </div>
+            <div className="flex grow flex-col gap-1">
+              <NumberInput
+                label="Segundos"
+                className="w-full bg-white"
+                value={set.time.seconds}
+                onChange={n => {
+                  const newSets = [...exercise.sets];
+                  newSets[index]!.time.seconds = n;
+                  updateSets(newSets);
+                }}
+                min={0}
+                max={59}
+                disabled={disabled}
+                {...secondsProps}
+              />
+              {secondsProps.error && (
+                <span className="text-xs text-red-500">{secondsProps.error}</span>
+              )}
+            </div>
+          </>
+        )}
+        <div className="flex h-full grow flex-col gap-1">
           <NumberInput
-            label="Repetições"
-            className="grow bg-white"
-            value={set.reps}
+            label="Peso (kg)"
+            className="w-full bg-white"
+            value={set.weightKg}
             onChange={n => {
               const newSets = [...exercise.sets];
-              newSets[index]!.reps = n;
+              newSets[index]!.weightKg = n;
               updateSets(newSets);
             }}
             min={0}
+            step={0.5}
+            max={1000}
             disabled={disabled}
-            {...repsProps}
+            {...weightProps}
           />
-        ) : (
-          <>
-            <NumberInput
-              label="Minutos"
-              className="grow bg-white"
-              value={set.time.minutes}
-              onChange={n => {
-                const newSets = [...exercise.sets];
-                newSets[index]!.time.minutes = n;
-                updateSets(newSets);
-              }}
-              min={0}
-              max={1000}
-              disabled={disabled}
-              {...minutesProps}
-            />
-            <NumberInput
-              label="Segundos"
-              className="grow bg-white"
-              value={set.time.seconds}
-              onChange={n => {
-                const newSets = [...exercise.sets];
-                newSets[index]!.time.seconds = n;
-                updateSets(newSets);
-              }}
-              min={0}
-              max={59}
-              disabled={disabled}
-              {...secondsProps}
-            />
-          </>
-        )}
-        <NumberInput
-          label="Peso (kg)"
-          className="grow bg-white"
-          value={set.weightKg}
-          onChange={n => {
-            const newSets = [...exercise.sets];
-            newSets[index]!.weightKg = n;
-            updateSets(newSets);
-          }}
-          min={0}
-          step={0.5}
-          max={1000}
-          disabled={disabled}
-          {...weightProps}
-        />
+          {weightProps.error && <span className="text-xs text-red-500">{weightProps.error}</span>}
+        </div>
       </div>
       {exercise.sets.length !== 1 && (
         <div className="ml-1 flex items-center">

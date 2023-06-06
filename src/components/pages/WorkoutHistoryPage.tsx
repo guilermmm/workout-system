@@ -209,9 +209,9 @@ const Calendar = ({ finishedWorkouts, onClickOnWorkout }: CalendarProps) => {
                 >
                   {date.day}
                 </div>
-                <div className="flex h-3/5 items-center justify-center">
+                <div className="flex h-3/5 min-w-0 max-w-full items-center justify-center">
                   {workout ? (
-                    <div className="font-medium">{workout?.name}</div>
+                    <div className="truncate font-medium">{workout?.name}</div>
                   ) : (
                     <div className="text-slate-800/50">-</div>
                   )}

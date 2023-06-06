@@ -80,7 +80,7 @@ model Profile {
     id                String            @id @default(cuid())
     email             String            @unique
     birthdate         DateTime?
-    user              User?             @relation(fields: [userId], references: [id])
+    user              User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
     userId            String?           @unique
     isActive          Boolean           @default(true)
     workouts          Workout[]         @relation("workouts")
@@ -96,7 +96,7 @@ model AdminProfile {
     id     String  @id @default(cuid())
     name   String?
     email  String  @unique
-    user   User?   @relation(fields: [userId], references: [id])
+    user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String? @unique
 
     createdAt DateTime @default(now())
@@ -160,6 +160,13 @@ model FinishedWorkout {
 //
 
 // Necessary for Next auth
+
+model Credentials {
+    id       String @id
+    password String
+    user     User?
+}
+
 model Account {
     id                String  @id @default(cuid())
     userId            String
@@ -195,7 +202,9 @@ model User {
     accounts      Account[]
     sessions      Session[]
     profile       Profile?
-    AdminProfile  AdminProfile?
+    adminProfile  AdminProfile?
+    credentialsId String?       @unique
+    credentials   Credentials?  @relation(fields: [credentialsId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {

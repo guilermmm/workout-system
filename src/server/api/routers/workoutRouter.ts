@@ -42,14 +42,21 @@ export const workoutRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const workouts = await ctx.prisma.workout.findMany({
         where: { profileId: input.profileId },
-        include: { exercises: { include: { exercise: true } } },
+        include: { exercises: { include: { exercise: { select: { category: true } } } } },
+        orderBy: { createdAt: "asc" },
       });
+
       const mappedWorkouts = workouts.map(workout => ({
-        ...workout,
+        id: workout.id,
+        profileId: workout.profileId,
+        name: workout.name,
+        days: workout.days,
+        createdAt: workout.createdAt,
+        updatedAt: workout.updatedAt,
         categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
       }));
 
-      return mappedWorkouts as unknown as ParseJsonValues<typeof mappedWorkouts>;
+      return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
     }),
 
   getById: adminProcedure.input(z.string()).query(async ({ ctx, input }) => {
@@ -65,20 +72,27 @@ export const workoutRouter = createTRPCRouter({
 
     workout.exercises.sort((a, b) => a.index - b.index);
 
-    return workout as unknown as ParseJsonValues<typeof workout>;
+    return workout as ParseJsonValues<typeof workout>;
   }),
 
   getManyBySession: userProcedure.query(async ({ ctx }) => {
     const workouts = await ctx.prisma.workout.findMany({
       where: { profile: { userId: ctx.session.user.id } },
       include: { exercises: { include: { exercise: true } } },
+      orderBy: { createdAt: "asc" },
     });
+
     const mappedWorkouts = workouts.map(workout => ({
-      ...workout,
+      id: workout.id,
+      profileId: workout.profileId,
+      name: workout.name,
+      days: workout.days,
+      createdAt: workout.createdAt,
+      updatedAt: workout.updatedAt,
       categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
     }));
 
-    return mappedWorkouts as unknown as ParseJsonValues<typeof mappedWorkouts>;
+    return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
   }),
 
   getByIdBySession: userProcedure.input(z.string()).query(async ({ ctx, input }) => {
@@ -93,7 +107,29 @@ export const workoutRouter = createTRPCRouter({
 
     workout.exercises.sort((a, b) => a.index - b.index);
 
-    return workout as unknown as ParseJsonValues<typeof workout>;
+    return workout as ParseJsonValues<typeof workout>;
+  }),
+
+  getManyWithExercises: adminProcedure
+    .input(z.object({ profileId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const workouts = await ctx.prisma.workout.findMany({
+        where: { profileId: input.profileId },
+        include: { exercises: { include: { exercise: true } } },
+        orderBy: { createdAt: "asc" },
+      });
+
+      return workouts as ParseJsonValues<typeof workouts>;
+    }),
+
+  getManyWithExercisesBySession: userProcedure.query(async ({ ctx }) => {
+    const workouts = await ctx.prisma.workout.findMany({
+      where: { profile: { userId: ctx.session.user.id } },
+      include: { exercises: { include: { exercise: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return workouts as ParseJsonValues<typeof workouts>;
   }),
 
   create: adminProcedure
@@ -251,7 +287,7 @@ export const workoutRouter = createTRPCRouter({
         where: { id: workoutId, profile: { userId: ctx.session.user.id } },
         include: { exercises: true },
       });
-      const workout = unsafeWorkout as unknown as ParseJsonValues<typeof unsafeWorkout>;
+      const workout = unsafeWorkout as ParseJsonValues<typeof unsafeWorkout>;
 
       const isValid = exercises.every(({ id: exerciseId, sets }) =>
         workout.exercises.some(

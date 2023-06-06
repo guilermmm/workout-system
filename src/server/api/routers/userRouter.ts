@@ -1,3 +1,5 @@
+import { TRPCError } from "@trpc/server";
+import { hash, verify } from "argon2";
 import { z } from "zod";
 import { adminProcedure, createTRPCRouter, superAdminProcedure, userProcedure } from "../trpc";
 
@@ -7,16 +9,6 @@ export const userRouter = createTRPCRouter({
       where: { email: ctx.session.user.email! },
       include: { user: true },
     });
-
-    if (profile.userId == null) {
-      const updatedProfile = await ctx.prisma.profile.update({
-        where: { email: profile.email },
-        data: { userId: ctx.session.user.id },
-        include: { user: true },
-      });
-
-      return updatedProfile;
-    }
 
     return profile;
   }),
@@ -30,7 +22,7 @@ export const userRouter = createTRPCRouter({
     if (profile.userId == null) {
       await ctx.prisma.adminProfile.update({
         where: { email: profile.email },
-        data: { userId: ctx.session.user.id, name: ctx.session.user.name! },
+        data: { user: { connect: { email: profile.email } } },
         include: { user: true },
       });
     }
@@ -50,10 +42,6 @@ export const userRouter = createTRPCRouter({
         include: { user: true },
       });
     }),
-
-  deleteAdminProfile: superAdminProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
-    await ctx.prisma.adminProfile.delete({ where: { id: input } });
-  }),
 
   getProfileById: adminProcedure.input(z.string()).query(({ ctx, input }) => {
     return ctx.prisma.profile.findUniqueOrThrow({
@@ -108,19 +96,28 @@ export const userRouter = createTRPCRouter({
         id: z.string(),
         email: z.string().email(),
         birthdate: z.date(),
+        name: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const user = await ctx.prisma.profile.findUnique({
+        where: { id: input.id },
+        select: { userId: true },
+      });
+
+      if (user !== null && user.userId !== null) {
+        await ctx.prisma.user.update({
+          where: { id: user.userId },
+          data: { email: input.email, name: input.name },
+        });
+      }
+
+      const birthdate = new Date(input.birthdate);
+      birthdate.setUTCHours(0, 0, 0, 0);
       await ctx.prisma.profile.update({
         where: { id: input.id },
-        data: { email: input.email, birthdate: input.birthdate },
+        data: { email: input.email, birthdate },
       });
-    }),
-
-  deleteAdminProfileByEmail: superAdminProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      await ctx.prisma.adminProfile.delete({ where: { id: input.id } });
     }),
 
   deactivate: adminProcedure
@@ -135,6 +132,27 @@ export const userRouter = createTRPCRouter({
       await ctx.prisma.profile.update({ where: { id: profileId }, data: { isActive: true } });
     }),
 
+  deleteProfile: adminProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
+    const profile = await ctx.prisma.profile.findUniqueOrThrow({
+      where: { id: input },
+      select: { user: true },
+    });
+
+    if (profile.user !== null) {
+      if (profile?.user?.credentialsId) {
+        await ctx.prisma.credentials.delete({ where: { id: profile.user.credentialsId } });
+      } else {
+        await ctx.prisma.user.delete({ where: { id: profile.user.id } });
+      }
+    }
+
+    await ctx.prisma.profile.delete({ where: { id: input } });
+  }),
+
+  deleteAdminProfile: superAdminProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
+    await ctx.prisma.adminProfile.delete({ where: { id: input } });
+  }),
+
   updateWorkoutDate: adminProcedure
     .input(
       z.object({
@@ -145,6 +163,103 @@ export const userRouter = createTRPCRouter({
       await ctx.prisma.profile.update({
         where: { id: profileId },
         data: { workoutUpdateDate: new Date() },
+      });
+    }),
+
+  createUser: adminProcedure
+    .input(
+      z.object({
+        profileId: z.string(),
+        name: z.string(),
+        password: z.string().min(6),
+        image: z.string().nullish(),
+      }),
+    )
+    .mutation(async ({ ctx, input: { profileId, name, password, image } }) => {
+      const profile = await ctx.prisma.profile.findUnique({ where: { id: profileId } });
+      if (!profile) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Profile not found" });
+      }
+
+      if (profile.userId) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "User already exists" });
+      }
+
+      const user = await ctx.prisma.user.create({
+        data: {
+          name,
+          email: profile.email,
+          image,
+          profile: { connect: { id: profileId } },
+        },
+        select: { id: true },
+      });
+
+      const hashedPassword = await hash(password);
+
+      await ctx.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          credentials: {
+            create: {
+              id: user.id,
+              password: hashedPassword,
+            },
+          },
+        },
+      });
+    }),
+
+  updatePassword: userProcedure
+    .input(z.object({ oldPassword: z.string(), newPassword: z.string().min(6) }))
+    .mutation(async ({ ctx, input: { oldPassword, newPassword } }) => {
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: ctx.session.user.id },
+        include: { credentials: true },
+      });
+
+      if (!user) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      }
+
+      if (!user.credentials) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "User has no credentials" });
+      }
+
+      const isValid = await verify(user.credentials.password, oldPassword);
+      if (!isValid) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid password" });
+      }
+
+      const password = await hash(newPassword);
+
+      await ctx.prisma.user.update({
+        where: { id: user.id },
+        data: { credentials: { update: { password } } },
+      });
+    }),
+
+  updateUserPassword: adminProcedure
+    .input(z.object({ userId: z.string(), newPassword: z.string().min(6) }))
+    .mutation(async ({ ctx, input: { userId, newPassword } }) => {
+      const user = await ctx.prisma.user.findUnique({
+        where: { id: userId },
+        include: { credentials: true },
+      });
+
+      if (!user) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      }
+
+      if (!user.credentials) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "User has no credentials" });
+      }
+
+      const password = await hash(newPassword);
+
+      await ctx.prisma.user.update({
+        where: { id: user.id },
+        data: { credentials: { update: { password } } },
       });
     }),
 });

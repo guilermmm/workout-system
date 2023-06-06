@@ -55,7 +55,7 @@ const Home = () => {
       <div className="grow overflow-y-auto">
         <div className="flex h-full grow flex-col items-center">
           {profile.data?.workoutUpdateDate && (
-            <h3 className="text-md pt-4">
+            <h3 className="text-md pt-2 font-light text-slate-600">
               Última atualização: {profile.data?.workoutUpdateDate?.toLocaleDateString("pt-BR")}
             </h3>
           )}
@@ -64,7 +64,7 @@ const Home = () => {
               <Spinner className="h-48 w-48 fill-blue-600 text-gray-200" />
             </div>
           ) : (
-            <div className="grid w-full max-w-[32rem] grid-cols-[auto_1fr] gap-y-1 px-2 py-4">
+            <div className="grid w-full max-w-[32rem] grid-cols-[auto_1fr] gap-y-1 px-2 pb-4 pt-2">
               {weekDayWorkouts?.map(
                 ([day, workouts]) =>
                   workouts.length !== 0 && (

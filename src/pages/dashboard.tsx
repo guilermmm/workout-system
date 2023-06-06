@@ -24,8 +24,6 @@ import { api } from "../utils/api";
 const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const { data: session } = useSession();
 
-  api.user.getAdminProfileBySession.useQuery();
-
   const [searchInput, setSearchInput] = useState("");
 
   const [debouncedInput] = useDebounce(searchInput, 150);
@@ -57,7 +55,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
 
   const [email, setEmail] = useState("");
 
-  const emailProps = useFormValidation(
+  const [emailProps] = useFormValidation(
     email,
     v => {
       if (!validateEmail(v)) {
@@ -205,7 +203,7 @@ const UserCard = ({ profile }: { profile: Profile & { user: User | null } }) => 
         </div>
       </div>
       <div
-        className={classList("h-full w-3 rounded-r-md", {
+        className={classList("h-full w-3 flex-none rounded-r-md", {
           "bg-green-500": profile.isActive,
           "bg-red-500": !profile.isActive,
         })}
