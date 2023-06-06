@@ -1,4 +1,17 @@
+import { useEffect, useState } from "react";
 import { classList } from "../utils";
+
+const stringify = (value: Date | null) => {
+  if (!value) {
+    return "";
+  }
+
+  if (isNaN(value.getDate())) {
+    return "";
+  }
+
+  return value.toISOString().split("T")[0];
+};
 
 type Props = {
   label: string;
@@ -6,7 +19,7 @@ type Props = {
   model?: "outline" | "floor";
   error?: string;
   value: Date | null;
-  onChange: (e: Date) => void;
+  onChange: (e: Date | null) => void;
   onFocus?: () => void;
   onBlur?: () => void;
   disabled?: boolean;
@@ -20,8 +33,38 @@ const DatePicker = ({
   className,
   model = "outline",
   error,
+  onBlur,
   ...props
 }: Props) => {
+  const [dateValue, setDateValue] = useState(stringify(value));
+
+  useEffect(() => {
+    const dateString = stringify(value);
+    if (dateString !== "") {
+      setDateValue(dateString);
+    }
+  }, [value]);
+
+  const handleBlur: React.FocusEventHandler<HTMLInputElement> = e => {
+    const dateString = e.target.value;
+    const date = new Date(dateString);
+    if (isNaN(date.getDate())) {
+      onChange(null);
+    }
+    if (onBlur) {
+      onBlur();
+    }
+  };
+
+  const handleChange: React.ChangeEventHandler<HTMLInputElement> = e => {
+    const dateString = e.target.value;
+    const date = new Date(dateString);
+    setDateValue(dateString);
+    if (!isNaN(date.getDate())) {
+      onChange(date);
+    }
+  };
+
   return (
     <div className={className}>
       <div className="relative h-full w-full bg-inherit">
@@ -36,8 +79,9 @@ const DatePicker = ({
             },
           )}
           placeholder=" "
-          value={value ? value.toISOString().split("T")[0] : undefined}
-          onChange={e => onChange(new Date(e.target.value))}
+          value={dateValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
           {...props}
         />
         <label

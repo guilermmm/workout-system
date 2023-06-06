@@ -395,7 +395,7 @@ const Manage = () => {
           title="Confirmar Exclusão"
           text={`Tem certeza que deseja excluir o usuário ${
             profile.data?.user?.name ?? profile.data!.email
-          }?`}
+          }? Todos os dados serão perdidos.`}
           onClickOutside={() => setShowMutateProfileDeleteAlert(false)}
         >
           <button
@@ -560,7 +560,9 @@ const Manage = () => {
                 <span>
                   {`${getAge(
                     profile.data.birthdate,
-                  )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR")}`}
+                  )} anos - ${profile.data.birthdate.toLocaleDateString("pt-BR", {
+                    timeZone: "UTC",
+                  })}`}
                 </span>
               </h1>
             )}
