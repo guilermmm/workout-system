@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import type { ParseJsonValues, Sets } from "../../../utils/types";
 import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
+import { sleep } from "../../../utils";
 
 const validateIndexes = (workout: { exercises: { index: number }[] }) => {
   const indexes = workout.exercises.map(exercise => exercise.index);
@@ -43,7 +44,7 @@ export const workoutRouter = createTRPCRouter({
       const workouts = await ctx.prisma.workout.findMany({
         where: { profileId: input.profileId },
         include: { exercises: { include: { exercise: { select: { category: true } } } } },
-        orderBy: { createdAt: "asc" },
+        orderBy: { name: "asc" },
       });
 
       const mappedWorkouts = workouts.map(workout => ({
@@ -79,7 +80,7 @@ export const workoutRouter = createTRPCRouter({
     const workouts = await ctx.prisma.workout.findMany({
       where: { profile: { userId: ctx.session.user.id } },
       include: { exercises: { include: { exercise: true } } },
-      orderBy: { createdAt: "asc" },
+      orderBy: { name: "asc" },
     });
 
     const mappedWorkouts = workouts.map(workout => ({
@@ -116,7 +117,7 @@ export const workoutRouter = createTRPCRouter({
       const workouts = await ctx.prisma.workout.findMany({
         where: { profileId: input.profileId },
         include: { exercises: { include: { exercise: true } } },
-        orderBy: { createdAt: "asc" },
+        orderBy: { name: "asc" },
       });
 
       return workouts as ParseJsonValues<typeof workouts>;
@@ -126,7 +127,7 @@ export const workoutRouter = createTRPCRouter({
     const workouts = await ctx.prisma.workout.findMany({
       where: { profile: { userId: ctx.session.user.id } },
       include: { exercises: { include: { exercise: true } } },
-      orderBy: { createdAt: "asc" },
+      orderBy: { name: "asc" },
     });
 
     return workouts as ParseJsonValues<typeof workouts>;

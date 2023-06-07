@@ -81,6 +81,10 @@ export const userRouter = createTRPCRouter({
   createProfile: adminProcedure
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ ctx, input }) => {
+      const profile = await ctx.prisma.profile.findUnique({ where: { email: input.email } });
+      if (profile !== null) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Profile already exists" });
+      }
       await ctx.prisma.profile.create({ data: { email: input.email } });
     }),
 
@@ -105,38 +109,56 @@ export const userRouter = createTRPCRouter({
         include: { user: { select: { credentialsId: true, id: true } } },
       });
 
-      if (profile === null || profile.user === null) {
+      if (profile === null) {
         throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      if (profile.email !== input.email) {
+        const existingProfile = await ctx.prisma.profile.findUnique({
+          where: { email: input.email },
+        });
+        if (existingProfile !== null) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Profile already exists" });
+        }
       }
 
       const birthdate = input.birthdate && new Date(input.birthdate);
       birthdate?.setUTCHours(0, 0, 0, 0);
-
-      if (profile.user.credentialsId !== null) {
-        await ctx.prisma.profile.update({
-          where: { id: input.id },
-          data: {
-            email: input.email,
-            birthdate,
-          },
-        });
-        await ctx.prisma.user.update({
-          where: { id: profile.user.id },
-          data: {
-            email: input.email,
-            name: input.name,
-          },
-        });
+      if (profile.user !== null) {
+        if (profile.user.credentialsId !== null) {
+          await ctx.prisma.profile.update({
+            where: { id: input.id },
+            data: {
+              email: input.email,
+              birthdate,
+            },
+          });
+          await ctx.prisma.user.update({
+            where: { id: profile.user.id },
+            data: {
+              email: input.email,
+              name: input.name,
+            },
+          });
+        } else {
+          await ctx.prisma.profile.update({
+            where: { id: profile.id },
+            data: {
+              birthdate,
+              email: input.email,
+              user: { disconnect: true },
+            },
+          });
+          await ctx.prisma.user.delete({ where: { id: profile.user.id } });
+        }
       } else {
         await ctx.prisma.profile.update({
           where: { id: profile.id },
           data: {
             birthdate,
             email: input.email,
-            user: { disconnect: true },
           },
         });
-        await ctx.prisma.user.delete({ where: { id: profile.user.id } });
       }
     }),
 

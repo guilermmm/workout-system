@@ -18,9 +18,18 @@ import { getServerAuthSession } from "../../server/auth";
 import { getAge, useFormValidation } from "../../utils";
 import { api } from "../../utils/api";
 import { dataSheetTranslation, dataSheetUnit, datasheetLayout } from "../../utils/consts";
+import WorkoutDocument from "../../utils/pdf";
+import DownloadPDFButton from "../../components/DownloadPDFButton";
 
 const Profile = () => {
-  const profile = api.user.getProfileBySession.useQuery();
+  const profile = api.user.getProfileBySession.useQuery(undefined, {
+    onSuccess: () => {
+      void workoutsWithExercises.refetch();
+    },
+  });
+  const workoutsWithExercises = api.workout.getManyWithExercisesBySession.useQuery(undefined, {
+    enabled: false,
+  });
 
   const latestDataSheet = api.datasheet.getLatestBySession.useQuery();
 
@@ -303,12 +312,24 @@ const Profile = () => {
               >
                 <div>Histórico de treinos</div>
               </Link>
-              <Link
-                href={`profile/pdf`}
-                className="flex h-full w-full items-center justify-center rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-              >
-                Baixar Treinos
-              </Link>
+              {workoutsWithExercises.isLoading ? (
+                <div className="flex h-full w-full items-center justify-center rounded-md bg-slate-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors ">
+                  Gerando pdf...
+                </div>
+              ) : (
+                <DownloadPDFButton
+                  fileName={`Treinos - ${profile.data?.user?.name ?? profile.data?.email ?? ""}`}
+                  document={
+                    <WorkoutDocument
+                      profile={profile.data!}
+                      workouts={workoutsWithExercises.data!}
+                    />
+                  }
+                  className="flex h-full w-full items-center justify-center rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                >
+                  Baixar Treinos
+                </DownloadPDFButton>
+              )}
             </div>
             <div className="flex w-full grow flex-col justify-center gap-2 p-2">
               {latestDataSheet.isLoading ? (

@@ -27,6 +27,8 @@ import {
 } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
+import DownloadPDFButton from "../../../components/DownloadPDFButton";
+import WorkoutDocument from "../../../utils/pdf";
 
 type Workout = RouterOutputs["workout"]["getMany"][number];
 
@@ -43,7 +45,20 @@ const Manage = () => {
       if (data.user !== null) setUser({ ...user, name: data.user.name ?? "" });
     },
   });
-  const workouts = api.workout.getMany.useQuery({ profileId });
+
+  const workouts = api.workout.getMany.useQuery(
+    { profileId },
+    {
+      onSuccess: () => {
+        void workoutsWithExercises.refetch();
+      },
+    },
+  );
+
+  const workoutsWithExercises = api.workout.getManyWithExercises.useQuery(
+    { profileId },
+    { enabled: false },
+  );
 
   const changeStatus = (
     profile.data?.isActive ? api.user.deactivate.useMutation : api.user.activate.useMutation
@@ -61,11 +76,12 @@ const Manage = () => {
   const [showMutateProfileDeleteAlert, setShowMutateProfileDeleteAlert] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showMutatePasswordAlert, setShowMutatePasswordAlert] = useState(false);
+  const [showMutateProfileErrorAlert, setShowMutateProfileErrorAlert] = useState(false);
 
   const [email, setEmail] = useState(profile.data?.email ?? "");
   const [birthdate, setBirthdate] = useState<Date | null>(profile.data?.birthdate ?? null);
 
-  const [emailProps] = useFormValidation(
+  const [emailProps, { resetError: resetEmailError }] = useFormValidation(
     email,
     v => {
       if (!validateEmail(v)) {
@@ -79,6 +95,13 @@ const Manage = () => {
     onSuccess: () => {
       void profile.refetch();
       setShowMutateProfileConfirmAlert(false);
+      setShowMutateProfileModal(false);
+    },
+    onError: e => {
+      if (e.data?.code === "FORBIDDEN") {
+        setShowMutateProfileConfirmAlert(false);
+        setShowMutateProfileErrorAlert(true);
+      }
     },
   });
 
@@ -118,15 +141,16 @@ const Manage = () => {
 
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
 
-  const [passwordProps, { error: passwordError }] = useFormValidation(
-    user.password,
-    v => {
-      if (v.length < 6) {
-        return "Senha deve ter no mínimo 6 caracteres";
-      }
-    },
-    false,
-  );
+  const [passwordProps, { error: passwordError, resetError: resetPasswordError }] =
+    useFormValidation(
+      user.password,
+      v => {
+        if (v.length < 6) {
+          return "Senha deve ter no mínimo 6 caracteres";
+        }
+      },
+      false,
+    );
 
   const updatePassword = api.user.updateUserPassword.useMutation({
     onSuccess: () => {
@@ -136,7 +160,10 @@ const Manage = () => {
     },
   });
 
-  const [confirmPasswordProps, { error: confirmPasswordError }] = useFormValidation(
+  const [
+    confirmPasswordProps,
+    { error: confirmPasswordError, resetError: resetConfirmPasswordError },
+  ] = useFormValidation(
     user.confirmPassword,
     v => {
       if (v !== user.password) {
@@ -145,6 +172,21 @@ const Manage = () => {
     },
     false,
   );
+
+  const resetInputs = () => {
+    resetEmailError();
+    resetPasswordError();
+    resetConfirmPasswordError();
+
+    setEmail(profile.data?.email ?? "");
+    setBirthdate(profile.data?.birthdate ?? null);
+    setUser({
+      name: profile.data?.user?.name ?? "",
+      password: "",
+      confirmPassword: "",
+      image: "" as string | null,
+    });
+  };
 
   return (
     <FullPage>
@@ -226,7 +268,10 @@ const Manage = () => {
       )}
       {showMutateProfileModal && (
         <Modal
-          onClickOutside={() => setShowMutateProfileModal(false)}
+          onClickOutside={() => {
+            setShowMutateProfileModal(false);
+            resetInputs();
+          }}
           buttons={
             <>
               <button
@@ -239,7 +284,10 @@ const Manage = () => {
 
               <button
                 className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-                onClick={() => setShowMutateProfileModal(false)}
+                onClick={() => {
+                  setShowMutateProfileModal(false);
+                  resetInputs();
+                }}
               >
                 Cancelar
               </button>
@@ -261,7 +309,7 @@ const Manage = () => {
             label="Email"
             className="rounded-md bg-slate-50"
             value={email}
-            onChange={setEmail}
+            onChange={v => setEmail(v.toLowerCase())}
             {...emailProps}
           />
           {emailProps.error && <span className="text-xs text-red-500">{emailProps.error}</span>}
@@ -284,9 +332,6 @@ const Manage = () => {
             className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             onClick={() => {
               updateProfile.mutate({ id: profileId, email, birthdate, name: user.name });
-              setEmail("");
-              setBirthdate(null);
-              setShowMutateProfileModal(false);
             }}
           >
             {updateProfile.isLoading ? (
@@ -423,7 +468,10 @@ const Manage = () => {
       )}
       {showChangePasswordModal && (
         <Modal
-          onClickOutside={() => setShowChangePasswordModal(false)}
+          onClickOutside={() => {
+            resetInputs();
+            setShowChangePasswordModal(false);
+          }}
           buttons={
             <>
               <button
@@ -444,11 +492,7 @@ const Manage = () => {
                 className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
                 onClick={() => {
                   setShowChangePasswordModal(false);
-                  setUser({
-                    ...user,
-                    password: "",
-                    confirmPassword: "",
-                  });
+                  resetInputs();
                 }}
               >
                 Cancelar
@@ -526,11 +570,28 @@ const Manage = () => {
           )}
         </Alert>
       )}
+      {showMutateProfileErrorAlert && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-600" />}
+          title="Erro ao atualizar"
+          text={`O e-mail inserido já está em uso.`}
+          onClickOutside={() => setShowMutateProfileErrorAlert(false)}
+        >
+          <button
+            className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => {
+              setShowMutateProfileErrorAlert(false);
+            }}
+          >
+            Ok
+          </button>
+        </Alert>
+      )}
       <div className="relative flex h-full flex-col overflow-y-auto">
         <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
           <div className="absolute left-0 top-0 right-0 h-20 bg-gold-500" />
           <Link
-            href="/home"
+            href="/dashboard"
             className="z-10 rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
           >
             <ArrowUturnLeftIcon className="h-6 w-6" />
@@ -659,12 +720,26 @@ const Manage = () => {
                   >
                     Adicionar treino
                   </Link>
-                  <Link
-                    href={`${profileId}/pdf`}
-                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                  >
-                    Baixar Treinos
-                  </Link>
+                  {workoutsWithExercises.isLoading ? (
+                    <div className="w-full rounded-md bg-slate-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors ">
+                      Gerando pdf...
+                    </div>
+                  ) : (
+                    <DownloadPDFButton
+                      fileName={`Treinos - ${
+                        profile.data?.user?.name ?? profile.data?.email ?? ""
+                      }`}
+                      document={
+                        <WorkoutDocument
+                          profile={profile.data!}
+                          workouts={workoutsWithExercises.data!}
+                        />
+                      }
+                      className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                    >
+                      Baixar Treinos
+                    </DownloadPDFButton>
+                  )}
                 </div>
                 <div className="flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
                   <button
