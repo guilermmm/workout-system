@@ -27,6 +27,8 @@ import {
 } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
+import DownloadPDFButton from "../../../components/DownloadPDFButton";
+import WorkoutDocument from "../../../utils/pdf";
 
 type Workout = RouterOutputs["workout"]["getMany"][number];
 
@@ -43,7 +45,20 @@ const Manage = () => {
       if (data.user !== null) setUser({ ...user, name: data.user.name ?? "" });
     },
   });
-  const workouts = api.workout.getMany.useQuery({ profileId });
+
+  const workouts = api.workout.getMany.useQuery(
+    { profileId },
+    {
+      onSuccess: () => {
+        void workoutsWithExercises.refetch();
+      },
+    },
+  );
+
+  const workoutsWithExercises = api.workout.getManyWithExercises.useQuery(
+    { profileId },
+    { enabled: false },
+  );
 
   const changeStatus = (
     profile.data?.isActive ? api.user.deactivate.useMutation : api.user.activate.useMutation
@@ -705,12 +720,26 @@ const Manage = () => {
                   >
                     Adicionar treino
                   </Link>
-                  <Link
-                    href={`${profileId}/pdf`}
-                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                  >
-                    Baixar Treinos
-                  </Link>
+                  {workoutsWithExercises.isLoading ? (
+                    <div className="w-full rounded-md bg-slate-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600">
+                      Gerando pdf...
+                    </div>
+                  ) : (
+                    <DownloadPDFButton
+                      fileName={`Treinos - ${
+                        profile.data?.user?.name ?? profile.data?.email ?? ""
+                      }`}
+                      document={
+                        <WorkoutDocument
+                          profile={profile.data!}
+                          workouts={workoutsWithExercises.data!}
+                        />
+                      }
+                      className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                    >
+                      Baixar Treinos
+                    </DownloadPDFButton>
+                  )}
                 </div>
                 <div className="flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
                   <button
