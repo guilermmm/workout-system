@@ -48,6 +48,13 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
     onSuccess: () => {
       void profiles.refetch();
       setShowMutateAlert(false);
+      setShowModal(false);
+    },
+    onError: e => {
+      if (e.data?.code === "FORBIDDEN") {
+        setShowMutateAlert(false);
+        setShowErrorAlert(true);
+      }
     },
   });
 
@@ -71,13 +78,13 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
       {showErrorAlert && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
-          title="E-mail inválido"
-          text="Digite um e-mail válido para cadastrar um novo usuário."
+          title="Erro ao criar usuário"
+          text={`O e-mail inserido já está em uso.`}
           onClickOutside={() => setShowErrorAlert(false)}
         >
           <button
             className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={() => setShowMutateAlert(false)}
+            onClick={() => setShowErrorAlert(false)}
           >
             OK
           </button>
@@ -109,7 +116,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
             label="Email"
             className="rounded-md bg-white"
             value={email}
-            onChange={setEmail}
+            onChange={v => setEmail(v.toLowerCase())}
             {...emailProps}
           />
         </Modal>
@@ -126,7 +133,6 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
             onClick={() => {
               createProfile.mutate({ email });
               setEmail("");
-              setShowModal(false);
             }}
           >
             {createProfile.isLoading ? (

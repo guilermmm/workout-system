@@ -217,7 +217,7 @@ function WorkoutCard({ workout }: { workout: Workout }) {
             <Text>Peso</Text>
           </View>
           <View style={{ display: "flex", alignItems: "center", width: "20%" }}>
-            <Text>Descrição</Text>
+            <Text>Observação</Text>
           </View>
           <View style={{ display: "flex", alignItems: "center", width: "20%" }}>
             <Text>Método</Text>

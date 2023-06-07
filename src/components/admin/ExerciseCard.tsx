@@ -173,7 +173,7 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
               </div>
               <TextArea
                 className="h-full w-full rounded-lg bg-white"
-                label="Descrição"
+                label="Observação"
                 value={exercise.description ?? ""}
                 onChange={description => onEdit({ ...exercise, description })}
                 disabled={disabled}

@@ -61,11 +61,12 @@ const Manage = () => {
   const [showMutateProfileDeleteAlert, setShowMutateProfileDeleteAlert] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showMutatePasswordAlert, setShowMutatePasswordAlert] = useState(false);
+  const [showMutateProfileErrorAlert, setShowMutateProfileErrorAlert] = useState(false);
 
   const [email, setEmail] = useState(profile.data?.email ?? "");
   const [birthdate, setBirthdate] = useState<Date | null>(profile.data?.birthdate ?? null);
 
-  const [emailProps] = useFormValidation(
+  const [emailProps, { resetError: resetEmailError }] = useFormValidation(
     email,
     v => {
       if (!validateEmail(v)) {
@@ -79,6 +80,13 @@ const Manage = () => {
     onSuccess: () => {
       void profile.refetch();
       setShowMutateProfileConfirmAlert(false);
+      setShowMutateProfileModal(false);
+    },
+    onError: e => {
+      if (e.data?.code === "FORBIDDEN") {
+        setShowMutateProfileConfirmAlert(false);
+        setShowMutateProfileErrorAlert(true);
+      }
     },
   });
 
@@ -118,15 +126,16 @@ const Manage = () => {
 
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
 
-  const [passwordProps, { error: passwordError }] = useFormValidation(
-    user.password,
-    v => {
-      if (v.length < 6) {
-        return "Senha deve ter no mínimo 6 caracteres";
-      }
-    },
-    false,
-  );
+  const [passwordProps, { error: passwordError, resetError: resetPasswordError }] =
+    useFormValidation(
+      user.password,
+      v => {
+        if (v.length < 6) {
+          return "Senha deve ter no mínimo 6 caracteres";
+        }
+      },
+      false,
+    );
 
   const updatePassword = api.user.updateUserPassword.useMutation({
     onSuccess: () => {
@@ -136,7 +145,10 @@ const Manage = () => {
     },
   });
 
-  const [confirmPasswordProps, { error: confirmPasswordError }] = useFormValidation(
+  const [
+    confirmPasswordProps,
+    { error: confirmPasswordError, resetError: resetConfirmPasswordError },
+  ] = useFormValidation(
     user.confirmPassword,
     v => {
       if (v !== user.password) {
@@ -145,6 +157,21 @@ const Manage = () => {
     },
     false,
   );
+
+  const resetInputs = () => {
+    resetEmailError();
+    resetPasswordError();
+    resetConfirmPasswordError();
+
+    setEmail(profile.data?.email ?? "");
+    setBirthdate(profile.data?.birthdate ?? null);
+    setUser({
+      name: profile.data?.user?.name ?? "",
+      password: "",
+      confirmPassword: "",
+      image: "" as string | null,
+    });
+  };
 
   return (
     <FullPage>
@@ -226,7 +253,10 @@ const Manage = () => {
       )}
       {showMutateProfileModal && (
         <Modal
-          onClickOutside={() => setShowMutateProfileModal(false)}
+          onClickOutside={() => {
+            setShowMutateProfileModal(false);
+            resetInputs();
+          }}
           buttons={
             <>
               <button
@@ -239,7 +269,10 @@ const Manage = () => {
 
               <button
                 className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-                onClick={() => setShowMutateProfileModal(false)}
+                onClick={() => {
+                  setShowMutateProfileModal(false);
+                  resetInputs();
+                }}
               >
                 Cancelar
               </button>
@@ -261,7 +294,7 @@ const Manage = () => {
             label="Email"
             className="rounded-md bg-slate-50"
             value={email}
-            onChange={setEmail}
+            onChange={v => setEmail(v.toLowerCase())}
             {...emailProps}
           />
           {emailProps.error && <span className="text-xs text-red-500">{emailProps.error}</span>}
@@ -284,9 +317,6 @@ const Manage = () => {
             className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             onClick={() => {
               updateProfile.mutate({ id: profileId, email, birthdate, name: user.name });
-              setEmail("");
-              setBirthdate(null);
-              setShowMutateProfileModal(false);
             }}
           >
             {updateProfile.isLoading ? (
@@ -423,7 +453,10 @@ const Manage = () => {
       )}
       {showChangePasswordModal && (
         <Modal
-          onClickOutside={() => setShowChangePasswordModal(false)}
+          onClickOutside={() => {
+            resetInputs();
+            setShowChangePasswordModal(false);
+          }}
           buttons={
             <>
               <button
@@ -444,11 +477,7 @@ const Manage = () => {
                 className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
                 onClick={() => {
                   setShowChangePasswordModal(false);
-                  setUser({
-                    ...user,
-                    password: "",
-                    confirmPassword: "",
-                  });
+                  resetInputs();
                 }}
               >
                 Cancelar
@@ -524,6 +553,23 @@ const Manage = () => {
               Cancelar
             </button>
           )}
+        </Alert>
+      )}
+      {showMutateProfileErrorAlert && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-600" />}
+          title="Erro ao atualizar"
+          text={`O e-mail inserido já está em uso.`}
+          onClickOutside={() => setShowMutateProfileErrorAlert(false)}
+        >
+          <button
+            className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => {
+              setShowMutateProfileErrorAlert(false);
+            }}
+          >
+            Ok
+          </button>
         </Alert>
       )}
       <div className="relative flex h-full flex-col overflow-y-auto">
