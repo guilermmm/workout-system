@@ -721,7 +721,7 @@ const Manage = () => {
                     Adicionar treino
                   </Link>
                   {workoutsWithExercises.isLoading ? (
-                    <div className="w-full rounded-md bg-slate-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600">
+                    <div className="w-full rounded-md bg-slate-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors ">
                       Gerando pdf...
                     </div>
                   ) : (
