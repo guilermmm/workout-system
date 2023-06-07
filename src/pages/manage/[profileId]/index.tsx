@@ -576,7 +576,7 @@ const Manage = () => {
         <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
           <div className="absolute left-0 top-0 right-0 h-20 bg-gold-500" />
           <Link
-            href="/home"
+            href="/dashboard"
             className="z-10 rounded-full p-5 text-blue-700 transition-colors hover:bg-white"
           >
             <ArrowUturnLeftIcon className="h-6 w-6" />
