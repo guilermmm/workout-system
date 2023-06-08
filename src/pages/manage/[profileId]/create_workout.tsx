@@ -273,7 +273,11 @@ const CreateWorkout = () => {
     workout.name !== "" &&
     workout.days.length > 0 &&
     workout.exercises.length > 0 &&
-    workout.exercises.every(e => e.exerciseId !== "" && e.sets.every(s => s.reps > 0));
+    workout.exercises.every(
+      e =>
+        (e.exerciseId !== "" && e.sets.every(s => s.reps > 0)) ||
+        e.sets.every(s => s.time.seconds > 0 || s.time.minutes > 0),
+    );
 
   return (
     <FullPage>
