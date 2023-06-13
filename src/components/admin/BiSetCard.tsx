@@ -1,45 +1,38 @@
 import React, { useState } from "react";
 import { classList } from "../../utils";
 import type { RouterOutputs } from "../../utils/api";
+import type { Exercise, WorkoutActions } from "../../utils/workout";
 import ChevronDownIcon from "../icons/ChevronDownIcon";
 import ChevronUpIcon from "../icons/ChevronUpIcon";
 import XMarkIcon from "../icons/XMarkIcon";
-import type { ExerciseBase } from "./ExerciseCard";
 import ExerciseCard from "./ExerciseCard";
 
-type BiSetCardProps<Exercise extends ExerciseBase> = {
+type BiSetCardProps = {
   first: Exercise;
   second: Exercise;
-  separate: () => void;
-  setExercises: (fn: (exercises: Exercise[]) => Exercise[]) => void;
+  actions: WorkoutActions;
   categories: RouterOutputs["exercise"]["getGroups"];
   dragHandle: React.ReactNode;
   collapsed: boolean;
   disabled?: boolean;
 };
 
-const BiSetCard = <Exercise extends ExerciseBase>({
+const BiSetCard = ({
   first,
   second,
-  separate,
-  setExercises,
+  actions,
   categories,
   dragHandle,
   collapsed,
   disabled,
-}: BiSetCardProps<Exercise>) => {
+}: BiSetCardProps) => {
   const [hidden, setHidden] = useState(false);
 
   const isCollapsed = collapsed || hidden;
 
   const setCollapsed = (collapsed: boolean) => {
     setHidden(collapsed);
-    const collapseExercises = () =>
-      setExercises(exercises =>
-        exercises.map(e =>
-          e.id === first.id || e.id === second.id ? { ...e, hidden: collapsed } : e,
-        ),
-      );
+    const collapseExercises = () => actions.setBiSetHidden(first.id, collapsed);
 
     if (collapsed) {
       setTimeout(collapseExercises, 200);
@@ -92,7 +85,7 @@ const BiSetCard = <Exercise extends ExerciseBase>({
         <div className="mr-2 h-10 items-center justify-end pr-24 pl-16 pb-2">
           <button
             className="ml-auto flex justify-center rounded-full bg-slate-50 p-2 text-blue-500 transition-colors hover:bg-slate-200 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={separate}
+            onClick={() => actions.destroyBiSet(first.id)}
             disabled={disabled}
           >
             <XMarkIcon className="h-6 w-6" />
@@ -102,18 +95,16 @@ const BiSetCard = <Exercise extends ExerciseBase>({
           <ExerciseCard
             exercise={first}
             categories={categories}
-            onEdit={it =>
-              setExercises(exercises => exercises.map(e => (e.id === first.id ? it : e)))
-            }
+            actions={actions}
             disabled={disabled}
+            isOnBiSet
           />
           <ExerciseCard
             exercise={second}
             categories={categories}
-            onEdit={it =>
-              setExercises(exercises => exercises.map(e => (e.id === second.id ? it : e)))
-            }
+            actions={actions}
             disabled={disabled}
+            isOnBiSet
           />
         </div>
       </div>

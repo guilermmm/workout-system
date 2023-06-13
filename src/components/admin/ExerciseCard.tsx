@@ -2,6 +2,7 @@ import { Method } from "@prisma/client";
 import { classList, useFormValidation } from "../../utils";
 import type { RouterOutputs } from "../../utils/api";
 import { methodTranslation } from "../../utils/consts";
+import type { Exercise, Set, WorkoutActions } from "../../utils/workout";
 import Dropdown from "../Dropdown";
 import NumberInput from "../NumberInput";
 import Select from "../Select";
@@ -12,60 +13,31 @@ import PlusIcon from "../icons/PlusIcon";
 import TrashIcon from "../icons/TrashIcon";
 import XMarkIcon from "../icons/XMarkIcon";
 
-export type ExerciseBase = {
-  id: number | string;
-  exerciseId: string;
-  description: string | null;
-  method: Method;
-  type: "reps" | "time";
-  biSet: number | string | null;
-  sets: {
-    reps: number;
-    weightKg: number;
-    time: { minutes: number; seconds: number };
-  }[];
-  hidden: boolean;
-};
-
-type ExerciseCardProps<Exercise extends ExerciseBase> = {
+type ExerciseCardProps = {
   exercise: Exercise;
-  onEdit: (exercise: Exercise) => void;
-  onDelete?: () => void;
+  actions: WorkoutActions;
   categories: RouterOutputs["exercise"]["getGroups"];
   otherExercises?: Exercise[];
   dragHandle?: React.ReactNode;
   collapsed?: boolean;
   disabled?: boolean;
+  isOnBiSet?: boolean;
 };
 
-const ExerciseCard = <Exercise extends ExerciseBase>({
+const ExerciseCard = ({
   exercise,
-  onEdit,
-  onDelete,
+  actions,
   categories,
   otherExercises,
   dragHandle,
   collapsed,
   disabled,
-}: ExerciseCardProps<Exercise>) => {
+  isOnBiSet = false,
+}: ExerciseCardProps) => {
   const [exerciseIdProps] = useFormValidation(
     exercise.exerciseId,
     v => v === "" && "Selecione um exercício",
   );
-
-  const updateSets = (newSets: typeof exercise.sets) => {
-    if (newSets.length === 0) {
-      newSets = [{ reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } }];
-    }
-
-    onEdit({ ...exercise, sets: newSets });
-  };
-
-  const updateMethod = (newMethod: Method) => onEdit({ ...exercise, method: newMethod });
-
-  const updateType = (newType: typeof exercise.type) => onEdit({ ...exercise, type: newType });
-
-  const setHidden = (hidden: boolean) => onEdit({ ...exercise, hidden });
 
   const handleSelectExercise: React.ChangeEventHandler<HTMLSelectElement> = e => {
     const newExercise = categories
@@ -73,11 +45,9 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
       .find(exercise => exercise.id === e.target.value);
 
     if (newExercise) {
-      onEdit({ ...exercise, exerciseId: newExercise.id });
+      actions.setExerciseId(exercise.id, newExercise.id);
     }
   };
-
-  const setBiSet = (biSet: NonNullable<Exercise["biSet"]>) => onEdit({ ...exercise, biSet });
 
   const isCollapsed = collapsed || exercise.hidden;
 
@@ -88,12 +58,12 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
         className={classList(
           "absolute rounded-full bg-white p-2 text-gray-400 shadow-md transition-all hover:bg-gray-300 hover:text-white",
           {
-            "right-2 top-14 sm:right-14 sm:top-2": !!onDelete && !isCollapsed,
-            "right-14 top-2": !!onDelete && isCollapsed,
-            "right-2 top-2": !onDelete,
+            "right-2 top-14 sm:right-14 sm:top-2": !isOnBiSet && !isCollapsed,
+            "right-14 top-2": !isOnBiSet && isCollapsed,
+            "right-2 top-2": isOnBiSet,
           },
         )}
-        onClick={() => setHidden(!isCollapsed)}
+        onClick={() => actions.setExerciseHidden(exercise.id, !isCollapsed)}
       >
         {isCollapsed ? (
           <ChevronDownIcon className="h-6 w-6" />
@@ -160,7 +130,7 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
                 <Select
                   className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
                   value={exercise.method}
-                  onChange={e => updateMethod(e.target.value as Method)}
+                  onChange={e => actions.setExerciseMethod(exercise.id, e.target.value as Method)}
                   label="Método"
                   disabled={disabled}
                 >
@@ -175,15 +145,15 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
                 className="h-full w-full rounded-lg bg-white"
                 label="Observação"
                 value={exercise.description ?? ""}
-                onChange={description => onEdit({ ...exercise, description })}
+                onChange={d => actions.setExerciseDescription( exercise.id, d)}
                 disabled={disabled}
               />
             </div>
-            {onDelete && !disabled ? (
+            {!isOnBiSet && !disabled ? (
               <div className="mt-24 ml-2 mr-0 flex flex-col items-start gap-2 sm:mr-24 sm:mt-0 sm:flex-row-reverse">
                 <button
                   className="rounded-full bg-white p-2 text-red-400 shadow-md transition-colors hover:bg-red-500 hover:text-white"
-                  onClick={onDelete}
+                  onClick={() => actions.removeExercise(exercise.id)}
                 >
                   <TrashIcon className="h-6 w-6" />
                 </button>
@@ -198,8 +168,8 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
             <div className="flex w-full grow flex-row items-center justify-center gap-1 sm:flex-col">
               <span
                 className={classList("text-xs font-medium leading-none", {
-                  "text-gray-900": exercise.type === "reps",
-                  "text-gray-500": exercise.type !== "reps",
+                  "text-gray-900": exercise.type === "REPS",
+                  "text-gray-500": exercise.type !== "REPS",
                 })}
               >
                 Repetições
@@ -208,8 +178,8 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
                 <label className="relative cursor-pointer items-center">
                   <input
                     type="checkbox"
-                    checked={exercise.type === "time"}
-                    onChange={e => updateType(e.target.checked ? "time" : "reps")}
+                    checked={exercise.type === "TIME"}
+                    onChange={e => actions.setExerciseType(exercise.id, e.target.checked ? "TIME" : "REPS")}
                     className="peer sr-only"
                     disabled={disabled}
                   />
@@ -226,8 +196,8 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
               </div>
               <span
                 className={classList("text-xs font-medium leading-none", {
-                  "text-gray-900": exercise.type === "time",
-                  "text-gray-500": exercise.type !== "time",
+                  "text-gray-900": exercise.type === "TIME",
+                  "text-gray-500": exercise.type !== "TIME",
                 })}
               >
                 Tempo
@@ -239,7 +209,7 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
                   <Dropdown
                     className="flex items-center justify-center"
                     options={otherExercises}
-                    onSelect={e => setBiSet(e.id)}
+                    onSelect={e => actions.createBiSet(exercise.id, e.id)}
                     itemToKey={e => e.id.toString()}
                     itemToString={exercise =>
                       categories
@@ -268,29 +238,16 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
                 <SetCard
                   key={index}
                   exercise={exercise}
+                  set={set}
                   index={index}
-                  updateSets={updateSets}
+                  actions={actions}
                   disabled={disabled}
                 />
               ))}
               <div className="m-0.5 w-full">
                 <button
                   className="flex w-full items-center justify-center rounded border-1 bg-white p-1.5 shadow-md hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  onClick={() => {
-                    const lastSet = exercise.sets.at(-1);
-                    if (lastSet) {
-                      updateSets([
-                        ...exercise.sets,
-                        {
-                          reps: lastSet.reps,
-                          weightKg: lastSet.weightKg,
-                          time: { minutes: lastSet.time.minutes, seconds: lastSet.time.seconds },
-                        },
-                      ]);
-                    } else {
-                      updateSets([{ reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } }]);
-                    }
-                  }}
+                  onClick={() => actions.addSet(exercise.id)}
                   disabled={disabled}
                 >
                   <PlusIcon className="h-5 w-5" />
@@ -304,27 +261,27 @@ const ExerciseCard = <Exercise extends ExerciseBase>({
   );
 };
 
-type SetProps<E extends ExerciseBase> = {
-  exercise: E;
+type SetProps = {
+  exercise: Exercise;
+  set: Set;
   index: number;
-  updateSets: (sets: E["sets"]) => void;
+  actions: WorkoutActions;
   disabled?: boolean;
 };
 
-const SetCard = <E extends ExerciseBase>({
+const SetCard = ({
   exercise,
+  set,
   index,
-  updateSets,
+  actions,
   disabled,
-}: SetProps<E>) => {
-  const set = exercise.sets[index]!;
-
+}: SetProps) => {
   const [repsProps] = useFormValidation(set.reps, n => {
     if (n < 1) return "Número de repetições deve ser maior que 0";
     if (n % 1 !== 0) return "Número de repetições deve ser inteiro";
   });
 
-  const [weightProps] = useFormValidation(set.weightKg, n => {
+  const [weightProps] = useFormValidation(set.weight, n => {
     if (n < 0) return "Peso deve ser maior ou igual a 0";
     if (n % 0.5 !== 0) return "Peso deve ser múltiplo de 0,5";
   });
@@ -345,17 +302,15 @@ const SetCard = <E extends ExerciseBase>({
       key={index}
     >
       <div className="flex grow flex-row gap-1">
-        {exercise.type === "reps" ? (
+        {exercise.type === "REPS" ? (
           <div className="flex grow flex-col gap-1">
             <NumberInput
               label="Repetições"
               className="w-full bg-white"
               value={set.reps}
-              onChange={n => {
-                const newSets = [...exercise.sets];
-                newSets[index]!.reps = n;
-                updateSets(newSets);
-              }}
+              onChange={n =>
+                actions.setSetReps(exercise.id, index, n)
+              }
               min={0}
               max={100}
               disabled={disabled}
@@ -370,11 +325,9 @@ const SetCard = <E extends ExerciseBase>({
                 label="Minutos"
                 className="w-full bg-white"
                 value={set.time.minutes}
-                onChange={n => {
-                  const newSets = [...exercise.sets];
-                  newSets[index]!.time.minutes = n;
-                  updateSets(newSets);
-                }}
+                onChange={n =>
+                  actions.setSetTime(exercise.id, index, { ...set.time, minutes: n })
+                }
                 min={0}
                 max={1000}
                 disabled={disabled}
@@ -389,11 +342,9 @@ const SetCard = <E extends ExerciseBase>({
                 label="Segundos"
                 className="w-full bg-white"
                 value={set.time.seconds}
-                onChange={n => {
-                  const newSets = [...exercise.sets];
-                  newSets[index]!.time.seconds = n;
-                  updateSets(newSets);
-                }}
+                onChange={n =>
+                  actions.setSetTime(exercise.id, index, { ...set.time, seconds: n })
+                }
                 min={0}
                 max={59}
                 disabled={disabled}
@@ -409,12 +360,10 @@ const SetCard = <E extends ExerciseBase>({
           <NumberInput
             label="Peso (kg)"
             className="w-full bg-white"
-            value={set.weightKg}
-            onChange={n => {
-              const newSets = [...exercise.sets];
-              newSets[index]!.weightKg = n;
-              updateSets(newSets);
-            }}
+            value={set.weight}
+            onChange={n =>
+              actions.setSetWeight(exercise.id, index, n)
+            }
             min={0}
             step={0.5}
             max={1000}
@@ -428,11 +377,9 @@ const SetCard = <E extends ExerciseBase>({
         <div className="ml-1 flex items-center">
           <button
             className="rounded-full border-1 border-gray-300 p-1 text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              const newSets = [...exercise.sets];
-              newSets.splice(index, 1);
-              updateSets(newSets);
-            }}
+            onClick={() =>
+              actions.removeSet(exercise.id, index)
+            }
             disabled={disabled}
           >
             <XMarkIcon className="h-4 w-4" />

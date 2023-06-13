@@ -3,33 +3,23 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import type { ParseJsonValues, Sets } from "../../../utils/types";
 import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
-import { sleep } from "../../../utils";
 
-const validateIndexes = (workout: { exercises: { index: number }[] }) => {
-  const indexes = workout.exercises.map(exercise => exercise.index);
-  return indexes.length === new Set(indexes).size;
-};
-
-const validateBiSets = (workout: {
-  biSets: [number, number][];
-  exercises: { index: number }[];
-}) => {
+const validateBiSets = (workout: { biSets: [number, number][]; exercises: unknown[] }) => {
   const biSets = workout.biSets.flat();
-  const indexes = workout.exercises.map(exercise => exercise.index);
   const isUnique = biSets.length === new Set(biSets).size;
-  const isValid = biSets.every(index => indexes.includes(index));
+  const isValid = biSets.every(index => workout.exercises.length > index);
   return isUnique && isValid;
 };
 
 const validateBiSetsSets = (workout: {
   biSets: [number, number][];
-  exercises: { index: number; sets: unknown[] }[];
+  exercises: { sets: unknown[] }[];
 }) => {
   const biSets = workout.biSets.map(
     ([index1, index2]) =>
       [
-        workout.exercises.find(exercise => exercise.index === index1)!,
-        workout.exercises.find(exercise => exercise.index === index2)!,
+        workout.exercises.find((_, i) => i === index1)!,
+        workout.exercises.find((_, i) => i === index2)!,
       ] as const,
   );
   return biSets.every(
@@ -150,13 +140,11 @@ export const workoutRouter = createTRPCRouter({
                 ]),
                 description: z.string().nullish(),
                 method: z.nativeEnum(Method),
-                index: z.number().min(0),
               }),
             )
             .min(1),
           biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
         })
-        .refine(validateIndexes, "Exercise indexes must be unique")
         .refine(validateBiSets, "BiSets must be unique and refer to valid exercises")
         .refine(validateBiSetsSets, "BiSets must refer to exercises with the same number of sets"),
     )
@@ -168,7 +156,7 @@ export const workoutRouter = createTRPCRouter({
             days,
             biSets: [],
             profile: { connect: { id: profileId } },
-            exercises: { createMany: { data: exercises } },
+            exercises: { createMany: { data: exercises.map((e, index) => ({ ...e, index })) } },
           },
           include: { exercises: true },
         });
@@ -200,13 +188,11 @@ export const workoutRouter = createTRPCRouter({
                 ]),
                 description: z.string().nullish(),
                 method: z.nativeEnum(Method),
-                index: z.number().min(0),
               }),
             )
             .min(1),
           biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
         })
-        .refine(validateIndexes, "Exercise indexes must be unique")
         .refine(validateBiSets, "BiSets must be unique and refer to valid exercises")
         .refine(validateBiSetsSets, "BiSets must refer to exercises with the same number of sets"),
     )
@@ -227,7 +213,11 @@ export const workoutRouter = createTRPCRouter({
         const exercisesToCreate = exercises.filter(exercise => typeof exercise.id !== "string");
 
         await tx.exerciseInWorkout.createMany({
-          data: exercisesToCreate.map(({ id: _, ...exercise }) => ({ workoutId, ...exercise })),
+          data: exercisesToCreate.map(({ id: _, ...exercise }, index) => ({
+            workoutId,
+            ...exercise,
+            index,
+          })),
         });
 
         const exercisesToUpdate = exercises.filter(exercise =>
