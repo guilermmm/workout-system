@@ -70,15 +70,19 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="E-mail inválido"
-          text="Digite um e-mail válido para cadastrar um novo administrador."
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => setShowMutateAlert(false)}
+              >
+                OK
+              </button>
+            </>
+          }
           onClickOutside={() => setShowErrorAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={() => setShowMutateAlert(false)}
-          >
-            OK
-          </button>
+          Digite um e-mail válido para cadastrar um novo administrador.
         </Alert>
       )}
       {showModal && (
@@ -117,67 +121,75 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
         <Alert
           icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
           title="Confirmar cadastro"
-          text={`Tem certeza que deseja cadastrar o novo administrador ${email}?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  createAdminProfile.mutate({ email });
+                  setEmail("");
+                  setShowModal(false);
+                }}
+              >
+                {createAdminProfile.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!createAdminProfile.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutateAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowMutateAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              createAdminProfile.mutate({ email });
-              setEmail("");
-              setShowModal(false);
-            }}
-          >
-            {createAdminProfile.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!createAdminProfile.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutateAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Tem certeza que deseja cadastrar o novo administrador ${email}?`}
         </Alert>
       )}
       {toRemove && (
         <Alert
           icon={<TrashIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Confirmar exclusão"
-          text={`Tem certeza que deseja excluir o administrador ${
-            toRemove.user?.name ?? toRemove.email
-          }?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  deleteAdminProfile.mutate(toRemove.id);
+                }}
+              >
+                {deleteAdminProfile.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+
+              {!deleteAdminProfile.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setToRemove(null)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setToRemove(null)}
         >
-          <button
-            className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              deleteAdminProfile.mutate(toRemove.id);
-            }}
-          >
-            {deleteAdminProfile.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-
-          {!deleteAdminProfile.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setToRemove(null)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Tem certeza que deseja excluir o administrador ${
+            toRemove.user?.name ?? toRemove.email
+          }?`}
         </Alert>
       )}
       <Header user={session?.user} />

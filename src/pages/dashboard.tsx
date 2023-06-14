@@ -79,15 +79,19 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Erro ao criar usuário"
-          text={`O e-mail inserido já está em uso.`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => setShowErrorAlert(false)}
+              >
+                OK
+              </button>
+            </>
+          }
           onClickOutside={() => setShowErrorAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={() => setShowErrorAlert(false)}
-          >
-            OK
-          </button>
+          O e-mail inserido já está em uso.
         </Alert>
       )}
       {showModal && (
@@ -125,32 +129,36 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
         <Alert
           icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
           title="Confirmar cadastro"
-          text={`Tem certeza que deseja cadastrar o novo usuário ${email}?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  createProfile.mutate({ email });
+                  setEmail("");
+                }}
+              >
+                {createProfile.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!createProfile.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutateAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowMutateAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              createProfile.mutate({ email });
-              setEmail("");
-            }}
-          >
-            {createProfile.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!createProfile.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutateAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Tem certeza que deseja cadastrar o novo usuário ${email}?`}
         </Alert>
       )}
       <Header user={session?.user} />

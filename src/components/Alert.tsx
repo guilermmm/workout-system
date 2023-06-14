@@ -3,12 +3,12 @@ import { useModal } from "./ModalContext";
 type Props = {
   icon: React.ReactNode;
   title: string;
-  text: string;
-  onClickOutside?: React.MouseEventHandler;
   children: React.ReactNode;
+  onClickOutside?: React.MouseEventHandler;
+  footer?: React.ReactNode;
 };
 
-function Alert({ icon, title, text, onClickOutside, children }: Props) {
+function Alert({ icon, title, children, onClickOutside, footer }: Props) {
   const [ShowPrimaryModal] = useModal();
 
   return (
@@ -18,12 +18,14 @@ function Alert({ icon, title, text, onClickOutside, children }: Props) {
           <div className="self-center sm:self-auto">{icon}</div>
           <div className="flex flex-col gap-2">
             <h1 className="self-center font-medium sm:self-auto">{title}</h1>
-            <p className="text-gray-700">{text}</p>
+            {children}
           </div>
         </div>
-        <div className="flex flex-col items-stretch justify-start gap-2 sm:flex-row-reverse">
-          {children}
-        </div>
+        {footer && (
+          <div className="flex flex-col items-stretch justify-start gap-2 sm:flex-row-reverse">
+            {footer}
+          </div>
+        )}
       </div>
     </ShowPrimaryModal>
   );

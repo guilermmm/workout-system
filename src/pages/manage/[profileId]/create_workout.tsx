@@ -113,15 +113,20 @@ const CreateWorkout = () => {
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Não foi possível criar o treino"
-          text="Não foi possível buscar os dados necessários para acessar esta página, verifique sua conexão e tente novamente"
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={createWorkout.reset}
+              >
+                OK
+              </button>
+            </>
+          }
           onClickOutside={() => createWorkout.reset()}
         >
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={createWorkout.reset}
-          >
-            OK
-          </button>
+          Não foi possível buscar os dados necessários para acessar esta página, verifique sua
+          conexão e tente novamente
         </Alert>
       )}
       {isConfirmationAlertOpen && (
@@ -130,30 +135,34 @@ const CreateWorkout = () => {
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-700" />
           }
           title="Criar treino"
-          text={`Tem certeza que deseja salvar o treino ${workout.name} criado para ${
-            profile.data!.user?.name ?? profile.data!.email
-          }?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={handleSave}
+                disabled={!canSubmit || saving}
+              >
+                {saving ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Salvar treino"
+                )}
+              </button>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => setConfirmationAlertOpen(false)}
+              >
+                Cancelar
+              </button>
+            </>
+          }
           onClickOutside={() => setConfirmationAlertOpen(false)}
         >
-          <button
-            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={handleSave}
-            disabled={!canSubmit || saving}
-          >
-            {saving ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Salvar treino"
-            )}
-          </button>
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={() => setConfirmationAlertOpen(false)}
-          >
-            Cancelar
-          </button>
+          {`Tem certeza que deseja salvar o treino ${workout.name} criado para ${
+            profile.data!.user?.name ?? profile.data!.email
+          }?`}
         </Alert>
       )}
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">

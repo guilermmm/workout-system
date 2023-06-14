@@ -66,15 +66,18 @@ const AdminUpdateDatasheet = ({
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Erro ao criar ficha"
-          text="Ocorreu um erro ao criar a ficha de dados. Verifique se os dados estão corretos e tente novamente."
+          footer={
+            <button
+              className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
+              onClick={() => void createDataSheet.reset()}
+            >
+              Entendi
+            </button>
+          }
           onClickOutside={() => void createDataSheet.reset()}
         >
-          <button
-            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
-            onClick={() => void createDataSheet.reset()}
-          >
-            Entendi
-          </button>
+          Ocorreu um erro ao criar a ficha de dados. Verifique se os dados estão corretos e tente
+          novamente.
         </Alert>
       )}
       <CreateDatasheetPage

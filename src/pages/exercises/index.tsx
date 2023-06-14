@@ -227,45 +227,53 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
             <ArrowDownTrayIcon className="h-10 w-10 rounded-full bg-green-200 p-2 text-green-600" />
           }
           title="Adicionar exercício"
-          text={`Tem certeza que deseja adicionar ${newExercise.name} como exercício na categoria ${newExercise.category}?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => addExercise.mutate(newExercise)}
+                disabled={addExercise.isLoading}
+              >
+                {addExercise.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!addExercise.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowAddConfirmation(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowAddConfirmation(false)}
         >
-          <button
-            className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => addExercise.mutate(newExercise)}
-            disabled={addExercise.isLoading}
-          >
-            {addExercise.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!addExercise.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowAddConfirmation(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Tem certeza que deseja adicionar ${newExercise.name} como exercício na categoria ${newExercise.category}?`}
         </Alert>
       )}
       {addExercise.error && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Não foi possível criar o exercício"
-          text="Não foi possível criar o exercício, tente novamente mais tarde"
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={addExercise.reset}
+              >
+                OK
+              </button>
+            </>
+          }
           onClickOutside={() => addExercise.reset()}
         >
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={addExercise.reset}
-          >
-            OK
-          </button>
+          Não foi possível criar o exercício, tente novamente mais tarde
         </Alert>
       )}
 
@@ -393,45 +401,54 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-700" />
           }
           title="Alterar exercício"
-          text={`Tem certeza que deseja alterar ${editedExercise.name} como exercício na categoria ${editedExercise.category}?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-slate-50 shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => editExercise.mutate(editedExercise)}
+                disabled={editExercise.isLoading}
+              >
+                {editExercise.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!editExercise.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowEditConfirmation(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowEditConfirmation(false)}
         >
-          <button
-            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-slate-50 shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => editExercise.mutate(editedExercise)}
-            disabled={editExercise.isLoading}
-          >
-            {editExercise.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!editExercise.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowEditConfirmation(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Tem certeza que deseja alterar ${editedExercise.name} como exercício na categoria ${editedExercise.category}?`}
         </Alert>
       )}
       {editExercise.error && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Não foi possível editar o exercício"
-          text="Não foi possível editar o exercício, tente novamente mais tarde"
+          footer={
+            <>
+              {" "}
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={editExercise.reset}
+              >
+                OK
+              </button>
+            </>
+          }
           onClickOutside={() => editExercise.reset()}
         >
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={editExercise.reset}
-          >
-            OK
-          </button>
+          Não foi possível editar o exercício, tente novamente mais tarde
         </Alert>
       )}
 
@@ -439,45 +456,53 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title={`Tem certeza que deseja remover ${toBeRemoved.name}?`}
-          text={`Todos os treinos que contém ${toBeRemoved.name} serão afetados, e não será possível desfazer esta ação`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => removeExercise.mutate({ id: toBeRemoved.id })}
+                disabled={removeExercise.isLoading}
+              >
+                {removeExercise.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!removeExercise.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setToBeRemoved(undefined)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setToBeRemoved(undefined)}
         >
-          <button
-            className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => removeExercise.mutate({ id: toBeRemoved.id })}
-            disabled={removeExercise.isLoading}
-          >
-            {removeExercise.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!removeExercise.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setToBeRemoved(undefined)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Todos os treinos que contém ${toBeRemoved.name} serão afetados, e não será possível desfazer esta ação`}
         </Alert>
       )}
       {removeExercise.error && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Não foi possível remover o exercício"
-          text="Não foi possível remover o exercício, tente novamente mais tarde"
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={removeExercise.reset}
+              >
+                OK
+              </button>
+            </>
+          }
           onClickOutside={() => removeExercise.reset()}
         >
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={removeExercise.reset}
-          >
-            OK
-          </button>
+          Não foi possível remover o exercício, tente novamente mais tarde
         </Alert>
       )}
 

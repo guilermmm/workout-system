@@ -402,15 +402,17 @@ const ExerciseCard = ({
             <InformationIcon className="h-10 w-10 rounded-full bg-blue-200 p-2 text-blue-600" />
           }
           title={methodTranslation[exercise.method]}
-          text={methodExplanation[exercise.method]}
+          footer={
+            <button
+              className="rounded-md bg-gold-400 py-2 px-4 font-medium shadow-md"
+              onClick={() => setShowAlert(false)}
+            >
+              Entendi
+            </button>
+          }
           onClickOutside={() => setShowAlert(false)}
         >
-          <button
-            className="rounded-md bg-gold-400 py-2 px-4 font-medium shadow-md"
-            onClick={() => setShowAlert(false)}
-          >
-            Entendi
-          </button>
+          {methodExplanation[exercise.method]}
         </Alert>
       )}
       <div
@@ -833,41 +835,45 @@ const Footer = ({
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-600" />
           }
           title="Finalizar treino"
-          text={`Tem certeza que deseja finalizar o treino?${
-            updateChanges ? " Há alterações nos pesos dos exercícios que não foram salvas." : ""
-          }`}
-        >
-          {updateChanges ? (
+          footer={
             <>
+              {updateChanges ? (
+                <>
+                  <button
+                    className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
+                    onClick={() => {
+                      void updateChanges().then(() => finishWorkout.mutate(workout));
+                    }}
+                  >
+                    Salvar e finalizar
+                  </button>
+                  <button
+                    className="rounded-md border-1 border-red-500 bg-red-500 py-2 px-4 text-white shadow-md"
+                    onClick={() => finishWorkout.mutate(workout)}
+                  >
+                    Finalizar sem salvar
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
+                  onClick={() => finishWorkout.mutate(workout)}
+                >
+                  Confirmar
+                </button>
+              )}
               <button
-                className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
-                onClick={() => {
-                  void updateChanges().then(() => finishWorkout.mutate(workout));
-                }}
+                className="rounded-md border-1 py-2 px-4 shadow-md"
+                onClick={() => setShowFinishAlert(false)}
               >
-                Salvar e finalizar
-              </button>
-              <button
-                className="rounded-md border-1 border-red-500 bg-red-500 py-2 px-4 text-white shadow-md"
-                onClick={() => finishWorkout.mutate(workout)}
-              >
-                Finalizar sem salvar
+                Cancelar
               </button>
             </>
-          ) : (
-            <button
-              className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
-              onClick={() => finishWorkout.mutate(workout)}
-            >
-              Confirmar
-            </button>
-          )}
-          <button
-            className="rounded-md border-1 py-2 px-4 shadow-md"
-            onClick={() => setShowFinishAlert(false)}
-          >
-            Cancelar
-          </button>
+          }
+        >
+          {`Tem certeza que deseja finalizar o treino?${
+            updateChanges ? " Há alterações nos pesos dos exercícios que não foram salvas." : ""
+          }`}
         </Alert>
       )}
       {updateChanges && showUpdateAlert && (
@@ -876,22 +882,26 @@ const Footer = ({
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-600" />
           }
           title="Salvar alterações"
-          text="Tem certeza que deseja salvar as alterações nos pesos dos exercícios?"
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
+                onClick={() => {
+                  void updateChanges().then(() => setShowUpdateAlert(false));
+                }}
+              >
+                Confirmar
+              </button>
+              <button
+                className="rounded-md border-1 py-2 px-4 shadow-md"
+                onClick={() => setShowUpdateAlert(false)}
+              >
+                Cancelar
+              </button>
+            </>
+          }
         >
-          <button
-            className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
-            onClick={() => {
-              void updateChanges().then(() => setShowUpdateAlert(false));
-            }}
-          >
-            Confirmar
-          </button>
-          <button
-            className="rounded-md border-1 py-2 px-4 shadow-md"
-            onClick={() => setShowUpdateAlert(false)}
-          >
-            Cancelar
-          </button>
+          Tem certeza que deseja salvar as alterações nos pesos dos exercícios?
         </Alert>
       )}
     </div>

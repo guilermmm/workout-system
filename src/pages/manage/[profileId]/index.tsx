@@ -202,68 +202,76 @@ const Manage = () => {
             />
           }
           title={profile.data?.isActive ? "Desativar usuário" : "Ativar usuário"}
-          text={`Tem certeza que deseja ${
-            profile.data.isActive ? "desativar" : "ativar"
-          } o usuário ${profile.data.user?.name ?? profile.data.email}?`}
+          footer={
+            <>
+              <button
+                className={classList(
+                  "rounded-md border-1 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                  {
+                    "border-green-600 bg-green-600": !profile.data.isActive,
+                    "border-red-600 bg-red-600": profile.data.isActive,
+                  },
+                )}
+                onClick={() => changeStatus.mutate({ profileId: profile.data.id })}
+                disabled={changeStatus.isLoading}
+              >
+                {changeStatus.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!changeStatus.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutateAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowMutateAlert(false)}
         >
-          <button
-            className={classList(
-              "rounded-md border-1 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50",
-              {
-                "border-green-600 bg-green-600": !profile.data.isActive,
-                "border-red-600 bg-red-600": profile.data.isActive,
-              },
-            )}
-            onClick={() => changeStatus.mutate({ profileId: profile.data.id })}
-            disabled={changeStatus.isLoading}
-          >
-            {changeStatus.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!changeStatus.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutateAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Tem certeza que deseja ${profile.data.isActive ? "desativar" : "ativar"} o usuário ${
+            profile.data.user?.name ?? profile.data.email
+          }?`}
         </Alert>
       )}
       {profile.data && toRemove && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-200 p-2 text-red-500" />}
           title="Excluir treino"
-          text={`Tem certeza que deseja excluir o treino ${toRemove.name} do usuário ${
-            profile.data.user?.name ?? profile.data.email
-          }?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => deleteWorkout.mutate({ id: toRemove.id })}
+                disabled={deleteWorkout.isLoading}
+              >
+                {deleteWorkout.isLoading ? (
+                  <Spinner className="h-6 w-6 fill-red-600 text-gray-200" />
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!deleteWorkout.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setToRemove(null)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setToRemove(null)}
         >
-          <button
-            className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => deleteWorkout.mutate({ id: toRemove.id })}
-            disabled={deleteWorkout.isLoading}
-          >
-            {deleteWorkout.isLoading ? (
-              <Spinner className="h-6 w-6 fill-red-600 text-gray-200" />
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!deleteWorkout.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setToRemove(null)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Tem certeza que deseja excluir o treino ${toRemove.name} do usuário ${
+            profile.data.user?.name ?? profile.data.email
+          }?`}
         </Alert>
       )}
       {showMutateProfileModal && (
@@ -325,31 +333,35 @@ const Manage = () => {
         <Alert
           icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
           title="Confirmar Atualização"
-          text={`Tem certeza que deseja realizar essas alterações?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  updateProfile.mutate({ id: profileId, email, birthdate, name: user.name });
+                }}
+              >
+                {updateProfile.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!updateProfile.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutateProfileConfirmAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowMutateProfileConfirmAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              updateProfile.mutate({ id: profileId, email, birthdate, name: user.name });
-            }}
-          >
-            {updateProfile.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!updateProfile.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutateProfileConfirmAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          Tem certeza que deseja realizar essas alterações?
         </Alert>
       )}
       {showCreateUserModal && (
@@ -437,33 +449,37 @@ const Manage = () => {
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-600" />}
           title="Confirmar Exclusão"
-          text={`Tem certeza que deseja excluir o usuário ${
-            profile.data?.user?.name ?? profile.data!.email
-          }? Todos os dados serão perdidos.`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  deleteProfile.mutate(profileId);
+                }}
+              >
+                {deleteProfile.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Excluir"
+                )}
+              </button>
+              {!deleteProfile.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutateProfileDeleteAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowMutateProfileDeleteAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              deleteProfile.mutate(profileId);
-            }}
-          >
-            {deleteProfile.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Excluir"
-            )}
-          </button>
-          {!deleteProfile.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutateProfileDeleteAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Tem certeza que deseja excluir o usuário ${
+            profile.data?.user?.name ?? profile.data!.email
+          }? Todos os dados serão perdidos.`}
         </Alert>
       )}
       {showChangePasswordModal && (
@@ -532,59 +548,67 @@ const Manage = () => {
         <Alert
           icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
           title="Confirmar Atualização"
-          text={`Tem certeza que deseja alterar a senha do usuário?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  if (
+                    !user.password ||
+                    !user.confirmPassword ||
+                    passwordError() ||
+                    confirmPasswordError()
+                  )
+                    return;
+
+                  updatePassword.mutate({
+                    userId: profile.data?.userId ?? "",
+                    newPassword: user.password,
+                  });
+                }}
+              >
+                {updateProfile.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!updateProfile.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutatePasswordAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowMutatePasswordAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              if (
-                !user.password ||
-                !user.confirmPassword ||
-                passwordError() ||
-                confirmPasswordError()
-              )
-                return;
-
-              updatePassword.mutate({
-                userId: profile.data?.userId ?? "",
-                newPassword: user.password,
-              });
-            }}
-          >
-            {updateProfile.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!updateProfile.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutatePasswordAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          Tem certeza que deseja alterar a senha do usuário?
         </Alert>
       )}
       {showMutateProfileErrorAlert && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-600" />}
           title="Erro ao atualizar"
-          text={`O e-mail inserido já está em uso.`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  setShowMutateProfileErrorAlert(false);
+                }}
+              >
+                Ok
+              </button>
+            </>
+          }
           onClickOutside={() => setShowMutateProfileErrorAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              setShowMutateProfileErrorAlert(false);
-            }}
-          >
-            Ok
-          </button>
+          O e-mail inserido já está em uso.
         </Alert>
       )}
       <div className="relative flex h-full flex-col overflow-y-auto">

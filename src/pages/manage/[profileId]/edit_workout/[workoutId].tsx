@@ -171,23 +171,27 @@ const EditWorkout = () => {
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-700" />
           }
           title="Salvar alterações"
-          text={`Tem certeza que deseja salvar as alterações feitas ao treino ${
-            originalWorkout.data!.name
-          } de ${profile.data!.user?.name ?? profile.data!.email}?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
+                onClick={handleSave}
+              >
+                Salvar alterações
+              </button>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => setConfirmationAlertOpen(false)}
+              >
+                Cancelar
+              </button>
+            </>
+          }
           onClickOutside={() => setConfirmationAlertOpen(false)}
         >
-          <button
-            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md"
-            onClick={handleSave}
-          >
-            Salvar alterações
-          </button>
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={() => setConfirmationAlertOpen(false)}
-          >
-            Cancelar
-          </button>
+          {`Tem certeza que deseja salvar as alterações feitas ao treino ${
+            originalWorkout.data!.name
+          } de ${profile.data!.user?.name ?? profile.data!.email}?`}
         </Alert>
       )}
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">

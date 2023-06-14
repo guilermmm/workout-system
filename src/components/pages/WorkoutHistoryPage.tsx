@@ -250,15 +250,19 @@ const ExerciseCard = ({ exercise }: { exercise: FinishedExercise }) => {
             <InformationIcon className="h-10 w-10 rounded-full bg-blue-200 p-2 text-blue-600" />
           }
           title={methodTranslation[exercise.method]}
-          text={methodExplanation[exercise.method]}
+          footer={
+            <>
+              <button
+                className="rounded-md bg-gold-400 py-2 px-4 font-medium shadow-md"
+                onClick={() => setShowAlert(false)}
+              >
+                Entendi
+              </button>
+            </>
+          }
           onClickOutside={() => setShowAlert(false)}
         >
-          <button
-            className="rounded-md bg-gold-400 py-2 px-4 font-medium shadow-md"
-            onClick={() => setShowAlert(false)}
-          >
-            Entendi
-          </button>
+          {methodExplanation[exercise.method]}
         </Alert>
       )}
       {showImageModal && (

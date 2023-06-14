@@ -104,21 +104,25 @@ const Profile = () => {
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-700" />
           }
           title="Sair"
-          text="Tem certeza que deseja sair?"
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md"
+                onClick={() => void signOut()}
+              >
+                Sair
+              </button>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => setShowAlert(false)}
+              >
+                Cancelar
+              </button>
+            </>
+          }
           onClickOutside={() => setShowAlert(false)}
         >
-          <button
-            className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md"
-            onClick={() => void signOut()}
-          >
-            Sair
-          </button>
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={() => setShowAlert(false)}
-          >
-            Cancelar
-          </button>
+          Tem certeza que deseja sair?
         </Alert>
       )}
       {showChangePasswordModal && (
@@ -222,44 +226,48 @@ const Profile = () => {
         <Alert
           icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
           title="Confirmar Atualização"
-          text={`Tem certeza que deseja alterar a senha do usuário?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  if (
+                    !user.password ||
+                    !user.confirmPassword ||
+                    !user.oldPassword ||
+                    oldPasswordError() ||
+                    passwordError() ||
+                    confirmPasswordError()
+                  )
+                    return;
+
+                  updatePassword.mutate({
+                    oldPassword: user.oldPassword,
+                    newPassword: user.password,
+                  });
+                }}
+              >
+                {updatePassword.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!updatePassword.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutatePasswordAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowMutatePasswordAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              if (
-                !user.password ||
-                !user.confirmPassword ||
-                !user.oldPassword ||
-                oldPasswordError() ||
-                passwordError() ||
-                confirmPasswordError()
-              )
-                return;
-
-              updatePassword.mutate({
-                oldPassword: user.oldPassword,
-                newPassword: user.password,
-              });
-            }}
-          >
-            {updatePassword.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!updatePassword.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutatePasswordAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          Tem certeza que deseja alterar a senha do usuário?
         </Alert>
       )}
       <div className="relative flex h-full flex-col overflow-y-auto">
