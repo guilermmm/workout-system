@@ -1,14 +1,18 @@
 import { Method } from "@prisma/client";
+import Image from "next/image";
+import { useState } from "react";
 import { classList, useFormValidation } from "../../utils";
-import type { RouterOutputs } from "../../utils/api";
+import { api, type RouterOutputs } from "../../utils/api";
 import { methodTranslation } from "../../utils/consts";
 import type { Exercise, Set, WorkoutActions } from "../../utils/workout";
 import Dropdown from "../Dropdown";
+import Modal from "../Modal";
 import NumberInput from "../NumberInput";
 import Select from "../Select";
 import TextArea from "../TextArea";
 import ChevronDownIcon from "../icons/ChevronDownIcon";
 import ChevronUpIcon from "../icons/ChevronUpIcon";
+import PhotoIcon from "../icons/PhotoIcon";
 import PlusIcon from "../icons/PlusIcon";
 import TrashIcon from "../icons/TrashIcon";
 import XMarkIcon from "../icons/XMarkIcon";
@@ -49,10 +53,48 @@ const ExerciseCard = ({
     }
   };
 
+  const exerciseExercise = categories
+    .flatMap(group => group.exercises)
+    .find(e => e.id === exercise.exerciseId);
+
+  const [showImageModal, setShowImageModal] = useState(false);
+
+  const selectedExerciseImage = api.exercise.getExerciseImageById.useQuery(
+    { id: exerciseExercise?.id ?? "" },
+    { enabled: !!showImageModal },
+  );
+
   const isCollapsed = collapsed || exercise.hidden;
 
   return (
     <div className="relative m-2 flex flex-col justify-between rounded-lg bg-white p-2 shadow-md">
+      {showImageModal && exerciseExercise && (
+        <Modal
+          onClickOutside={() => setShowImageModal(false)}
+          buttons={
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Fechar
+            </button>
+          }
+        >
+          <h1 className="self-center font-medium">{exerciseExercise.name}</h1>
+          {selectedExerciseImage.data ? (
+            <div className="relative h-72 w-72">
+              <Image
+                src={selectedExerciseImage.data}
+                className="h-full w-full rounded-md object-cover"
+                alt={exerciseExercise.name}
+                fill
+              />
+            </div>
+          ) : (
+            <h2>Não há imagem para {exerciseExercise.name}.</h2>
+          )}
+        </Modal>
+      )}
       <div className="absolute right-2 top-2">{dragHandle}</div>
       <button
         className={classList(
@@ -102,44 +144,53 @@ const ExerciseCard = ({
           <div className="flex">
             <div className="flex grow flex-col gap-2">
               <div className="flex grow flex-col gap-2 bg-white py-1 sm:flex-row">
-                <Select
-                  className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
-                  value={exercise.exerciseId}
-                  onChange={handleSelectExercise}
-                  label="Exercício"
-                  disabled={disabled}
-                  {...exerciseIdProps}
-                >
-                  <option value="" className="text-slate-600" disabled>
-                    Selecione um exercício
-                  </option>
-                  {categories.map(group => (
-                    <optgroup
-                      label={group.category}
-                      key={group.category}
-                      className="my-2 block text-sm text-slate-700/70"
-                    >
-                      {group.exercises.map(e => (
-                        <option key={e.id} className="text-blue-600" value={e.id}>
-                          {e.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </Select>
-                <Select
-                  className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
-                  value={exercise.method}
-                  onChange={e => actions.setExerciseMethod(exercise.id, e.target.value as Method)}
-                  label="Método"
-                  disabled={disabled}
-                >
-                  {Object.values(Method).map(method => (
-                    <option key={method} value={method} className="text-sm">
-                      {methodTranslation[method]}
+                <div className="flex grow-2 flex-row gap-2">
+                  <Select
+                    className="min-h-[3rem] grow rounded-lg bg-white font-medium sm:w-1/2"
+                    value={exercise.exerciseId}
+                    onChange={handleSelectExercise}
+                    label="Exercício"
+                    disabled={disabled}
+                    {...exerciseIdProps}
+                  >
+                    <option value="" className="text-slate-600" disabled>
+                      Selecione um exercício
                     </option>
-                  ))}
-                </Select>
+                    {categories.map(group => (
+                      <optgroup
+                        label={group.category}
+                        key={group.category}
+                        className="my-2 block text-sm text-slate-700/70"
+                      >
+                        {group.exercises.map(e => (
+                          <option key={e.id} className="text-blue-600" value={e.id}>
+                            {e.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </Select>
+                  {exercise.exerciseId && (
+                    <button onClick={() => setShowImageModal(true)} className="px-2">
+                      <PhotoIcon className="h-6 w-6 text-black" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex grow flex-row">
+                  <Select
+                    className="min-h-[3rem] grow rounded-lg bg-white font-medium sm:w-1/2"
+                    value={exercise.method}
+                    onChange={e => actions.setExerciseMethod(exercise.id, e.target.value as Method)}
+                    label="Método"
+                    disabled={disabled}
+                  >
+                    {Object.values(Method).map(method => (
+                      <option key={method} value={method} className="text-sm">
+                        {methodTranslation[method]}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
               </div>
               <TextArea
                 className="h-full w-full rounded-lg bg-white"
