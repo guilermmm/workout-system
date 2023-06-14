@@ -19,16 +19,12 @@ import ChevronUpIcon from "../../../components/icons/ChevronUpIcon";
 import ClockIcon from "../../../components/icons/ClockIcon";
 import ExclamationTriangleIcon from "../../../components/icons/ExclamationTriangleIcon";
 import InformationIcon from "../../../components/icons/InformationIcon";
+import PhotoIcon from "../../../components/icons/PhotoIcon";
 import { getServerAuthSession } from "../../../server/auth";
 import { classList, useFormValidation, useLocalStorage } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
-import {
-  methodExplanation,
-  methodTranslation,
-  weekdaysAbbrv,
-  weekdaysTranslation,
-} from "../../../utils/consts";
+import { methodExplanation, methodTranslation } from "../../../utils/consts";
 
 const exerciseParser = z.object({
   id: z.string(),
@@ -394,9 +390,9 @@ const ExerciseCard = ({
 }: ExerciseCardProps) => {
   const [showAlert, setShowAlert] = useState(false);
 
-  const uncollapsable = setCollapsed === undefined;
+  const uncollapsible = setCollapsed === undefined;
 
-  const isCollapsed = exercise.collapsed && !uncollapsable;
+  const isCollapsed = exercise.collapsed && !uncollapsible;
 
   return (
     <div className="relative m-2 flex flex-col justify-between rounded-lg bg-white pt-2 shadow-md">
@@ -417,10 +413,15 @@ const ExerciseCard = ({
           </button>
         </Alert>
       )}
-      <div className="absolute left-4 top-4">
+      <div
+        className={classList("absolute left-4 text-sm transition-all", {
+          "top-4": isCollapsed,
+          "top-2": !isCollapsed,
+        })}
+      >
         <span className="font-medium text-blue-600">{exercise.exercise.name}</span>
       </div>
-      {!uncollapsable && (
+      {!uncollapsible && (
         <button
           className={classList(
             "absolute right-2 top-2 rounded-full bg-white p-2 text-gray-400 shadow-md hover:bg-gray-300 hover:text-white",
@@ -449,18 +450,20 @@ const ExerciseCard = ({
         })}
       >
         <div className="flex flex-col px-4">
-          <div className=" flex h-10 flex-row items-center justify-between">
-            <div className="flex flex-row flex-wrap items-center">
-              <div className="opacity-0">{exercise.exercise.name}</div>
-              <div className="ml-4 text-sm text-slate-600">{exercise.exercise.category}</div>
-              <button onClick={handleInfo(exercise.exercise)} className="pl-3">
-                <InformationIcon className="h-6 w-6 text-black" />
+          <div className="flex h-10 flex-row items-center justify-between">
+            <div className="flex flex-none flex-row flex-wrap items-center">
+              <div className="flex flex-col">
+                <div className="opacity-0">{exercise.exercise.name}</div>
+                <div className="text-xs text-slate-600">{exercise.exercise.category}</div>
+              </div>
+              <button onClick={handleInfo(exercise.exercise)} className="pl-1">
+                <PhotoIcon className="h-5 w-5 text-black" />
               </button>
             </div>
             {exercise.method !== "Standard" && (
-              <div className="mr-10 text-sm">
+              <div className={classList("text-xs", { "mr-10": !uncollapsible })}>
                 <button className="flex items-center gap-1" onClick={() => setShowAlert(true)}>
-                  {methodTranslation[exercise.method]}
+                  <span className="text-right">{methodTranslation[exercise.method]}</span>
                   <InformationIcon className="h-6 w-6" />
                 </button>
               </div>

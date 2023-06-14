@@ -145,7 +145,7 @@ const ExerciseCard = ({
                 className="h-full w-full rounded-lg bg-white"
                 label="Observação"
                 value={exercise.description ?? ""}
-                onChange={d => actions.setExerciseDescription( exercise.id, d)}
+                onChange={d => actions.setExerciseDescription(exercise.id, d)}
                 disabled={disabled}
               />
             </div>
@@ -179,7 +179,9 @@ const ExerciseCard = ({
                   <input
                     type="checkbox"
                     checked={exercise.type === "TIME"}
-                    onChange={e => actions.setExerciseType(exercise.id, e.target.checked ? "TIME" : "REPS")}
+                    onChange={e =>
+                      actions.setExerciseType(exercise.id, e.target.checked ? "TIME" : "REPS")
+                    }
                     className="peer sr-only"
                     disabled={disabled}
                   />
@@ -269,13 +271,7 @@ type SetProps = {
   disabled?: boolean;
 };
 
-const SetCard = ({
-  exercise,
-  set,
-  index,
-  actions,
-  disabled,
-}: SetProps) => {
+const SetCard = ({ exercise, set, index, actions, disabled }: SetProps) => {
   const [repsProps] = useFormValidation(set.reps, n => {
     if (n < 1) return "Número de repetições deve ser maior que 0";
     if (n % 1 !== 0) return "Número de repetições deve ser inteiro";
@@ -308,9 +304,7 @@ const SetCard = ({
               label="Repetições"
               className="w-full bg-white"
               value={set.reps}
-              onChange={n =>
-                actions.setSetReps(exercise.id, index, n)
-              }
+              onChange={n => actions.setSetReps(exercise.id, index, n)}
               min={0}
               max={100}
               disabled={disabled}
@@ -325,9 +319,7 @@ const SetCard = ({
                 label="Minutos"
                 className="w-full bg-white"
                 value={set.time.minutes}
-                onChange={n =>
-                  actions.setSetTime(exercise.id, index, { ...set.time, minutes: n })
-                }
+                onChange={n => actions.setSetTime(exercise.id, index, { ...set.time, minutes: n })}
                 min={0}
                 max={1000}
                 disabled={disabled}
@@ -342,9 +334,7 @@ const SetCard = ({
                 label="Segundos"
                 className="w-full bg-white"
                 value={set.time.seconds}
-                onChange={n =>
-                  actions.setSetTime(exercise.id, index, { ...set.time, seconds: n })
-                }
+                onChange={n => actions.setSetTime(exercise.id, index, { ...set.time, seconds: n })}
                 min={0}
                 max={59}
                 disabled={disabled}
@@ -361,9 +351,7 @@ const SetCard = ({
             label="Peso (kg)"
             className="w-full bg-white"
             value={set.weight}
-            onChange={n =>
-              actions.setSetWeight(exercise.id, index, n)
-            }
+            onChange={n => actions.setSetWeight(exercise.id, index, n)}
             min={0}
             step={0.5}
             max={1000}
@@ -377,9 +365,7 @@ const SetCard = ({
         <div className="ml-1 flex items-center">
           <button
             className="rounded-full border-1 border-gray-300 p-1 text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() =>
-              actions.removeSet(exercise.id, index)
-            }
+            onClick={() => actions.removeSet(exercise.id, index)}
             disabled={disabled}
           >
             <XMarkIcon className="h-4 w-4" />

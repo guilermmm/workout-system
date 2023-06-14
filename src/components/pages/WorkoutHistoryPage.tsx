@@ -1,16 +1,19 @@
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { capitalize, classList, getDateArrayFromDate } from "../../utils";
-import type { RouterOutputs } from "../../utils/api";
+import { api, type RouterOutputs } from "../../utils/api";
 import { methodExplanation, methodTranslation, weekdaysAbbrv } from "../../utils/consts";
 import type { FinishedExercise } from "../../utils/types";
 import Alert from "../Alert";
 import FullPage from "../FullPage";
+import Modal from "../Modal";
 import { useModal } from "../ModalContext";
 import Spinner from "../Spinner";
 import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
 import CheckIcon from "../icons/CheckIcon";
 import InformationIcon from "../icons/InformationIcon";
+import PhotoIcon from "../icons/PhotoIcon";
 import XMarkIcon from "../icons/XMarkIcon";
 
 type Workout = RouterOutputs["finishedWorkout"]["getManyByProfileId"][number];
@@ -53,16 +56,16 @@ const WorkoutHistoryPage = ({ finishedWorkouts, children }: PageProps) => {
           onClickOutside={() => setShowWorkout(undefined)}
         >
           <div className="flex max-h-full w-full max-w-xl flex-col gap-4 rounded-md bg-slate-50 p-4 shadow-md">
-            <div className="ml-2 flex justify-between font-medium">
+            <div className="ml-2 flex justify-between gap-2 text-center font-medium">
               <h2 className="font-medium">
                 Treino <b>{showWorkout.name}</b>
               </h2>
-              <div>
+              <div className="text-sm">
                 {showWorkout.startedAt.toLocaleString("pt-BR", {
                   dateStyle: "short",
                 })}
               </div>
-              <div>
+              <div className="text-sm">
                 {showWorkout.startedAt.toLocaleString("pt-BR", {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -228,6 +231,17 @@ const Calendar = ({ finishedWorkouts, onClickOnWorkout }: CalendarProps) => {
 const ExerciseCard = ({ exercise }: { exercise: FinishedExercise }) => {
   const [showAlert, setShowAlert] = useState(false);
 
+  const [showImageModal, setShowImageModal] = useState<FinishedExercise["exercise"] | null>(null);
+
+  const selectedExerciseImage = api.exercise.getExerciseImageById.useQuery(
+    { id: showImageModal?.id ?? "" },
+    { enabled: !!showImageModal },
+  );
+
+  const handleInfo = (exercise: FinishedExercise["exercise"]) => () => {
+    setShowImageModal(exercise);
+  };
+
   return (
     <div className="relative m-2 flex flex-col justify-between rounded-lg bg-white pt-2 shadow-md">
       {showAlert && (
@@ -247,20 +261,52 @@ const ExerciseCard = ({ exercise }: { exercise: FinishedExercise }) => {
           </button>
         </Alert>
       )}
-      <div className="absolute left-4 top-4">
+      {showImageModal && (
+        <Modal
+          onClickOutside={() => setShowImageModal(null)}
+          buttons={
+            <button
+              onClick={() => setShowImageModal(null)}
+              className="rounded-md bg-blue-500 px-3 py-2 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Fechar
+            </button>
+          }
+        >
+          <h1 className="self-center font-medium">{showImageModal.name}</h1>
+          {selectedExerciseImage.data ? (
+            <div className="relative h-72 w-72">
+              <Image
+                src={selectedExerciseImage.data}
+                className="h-full w-full rounded-md object-cover"
+                alt={showImageModal.name}
+                fill
+              />
+            </div>
+          ) : (
+            <h2>Não há imagem para {showImageModal.name}.</h2>
+          )}
+        </Modal>
+      )}
+      <div className="absolute left-4 top-2 text-sm">
         <span className="font-medium text-blue-600">{exercise.exercise.name}</span>
       </div>
       <div className={classList("flex flex-col transition-all duration-200")}>
         <div className="flex flex-col px-4">
-          <div className=" flex h-10 flex-row items-center justify-between">
-            <div className="flex flex-row flex-wrap items-center">
-              <div className="opacity-0">{exercise.exercise.name}</div>
-              <div className="ml-4 text-sm text-slate-600">{exercise.exercise.category}</div>
+          <div className="flex h-10 flex-row items-center justify-between">
+            <div className="flex flex-none flex-row flex-wrap items-center">
+              <div className="flex flex-col">
+                <div className="opacity-0">{exercise.exercise.name}</div>
+                <div className="text-xs text-slate-600">{exercise.exercise.category}</div>
+              </div>
+              <button onClick={handleInfo(exercise.exercise)} className="pl-1">
+                <PhotoIcon className="h-5 w-5 text-black" />
+              </button>
             </div>
             {exercise.method !== "Standard" && (
-              <div className="mr-10 text-sm">
+              <div className="shrink text-xs">
                 <button className="flex items-center gap-1" onClick={() => setShowAlert(true)}>
-                  {methodTranslation[exercise.method]}
+                  <span className="text-right">{methodTranslation[exercise.method]}</span>
                   <InformationIcon className="h-6 w-6" />
                 </button>
               </div>
@@ -298,7 +344,7 @@ const ExerciseCard = ({ exercise }: { exercise: FinishedExercise }) => {
                 </div>
               )}
               <div
-                className={classList("h-6 w-6 border-2 transition-all", {
+                className={classList("h-6 w-6 flex-none border-2 transition-all", {
                   "rounded-2xl border-red-400 text-red-400": !set.completed,
                   "rounded-2xl border-green-600 text-green-600": set.completed,
                 })}

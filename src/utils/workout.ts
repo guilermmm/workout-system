@@ -377,63 +377,33 @@ export const useWorkout = () => {
 
   const actions = useMemo(
     () => ({
-      setWorkout(workout: Workout) {
-        dispatch(["SET_WORKOUT", workout]);
-      },
-      setName(name: string) {
-        dispatch(["SET_NAME", name]);
-      },
-      setDays(days: Weekday[]) {
-        dispatch(["SET_DAYS", days]);
-      },
-      setExercises(exercises: Exercise[]) {
-        dispatch(["SET_EXERCISES", exercises]);
-      },
-      addExercise() {
-        dispatch(["ADD_EXERCISE", idGenerator.current++]);
-      },
-      removeExercise(id: Id) {
-        dispatch(["REMOVE_EXERCISE", id]);
-      },
-      setExerciseId(id: Id, exerciseId: string) {
-        dispatch(["SET_EXERCISE_ID", [id, exerciseId]]);
-      },
-      setExerciseDescription(id: Id, description: string) {
-        dispatch(["SET_EXERCISE_DESCRIPTION", [id, description]]);
-      },
-      setExerciseMethod(id: Id, method: Method) {
-        dispatch(["SET_EXERCISE_METHOD", [id, method]]);
-      },
-      setExerciseType(id: Id, type: "REPS" | "TIME") {
-        dispatch(["SET_EXERCISE_TYPE", [id, type]]);
-      },
-      setExerciseHidden(id: Id, hidden: boolean) {
-        dispatch(["SET_EXERCISE_HIDDEN", [id, hidden]]);
-      },
-      addSet(id: Id) {
-        dispatch(["ADD_SET", id]);
-      },
-      removeSet(id: Id, index: number) {
-        dispatch(["REMOVE_SET", [id, index]]);
-      },
-      setSetReps(id: Id, index: number, reps: number) {
-        dispatch(["SET_SET_REPS", [id, index, reps]]);
-      },
-      setSetWeight(id: Id, index: number, weight: number) {
-        dispatch(["SET_SET_WEIGHT", [id, index, weight]]);
-      },
-      setSetTime(id: Id, index: number, time: { minutes: number; seconds: number }) {
-        dispatch(["SET_SET_TIME", [id, index, time]]);
-      },
-      createBiSet(firstId: Id, secondId: Id) {
-        dispatch(["CREATE_BISET", [firstId, secondId]]);
-      },
-      destroyBiSet(id: Id) {
-        dispatch(["DESTROY_BISET", id]);
-      },
-      setBiSetHidden(id: Id, hidden: boolean) {
-        dispatch(["SET_BISET_HIDDEN", [id, hidden]]);
-      },
+      setWorkout: (workout: Workout) => dispatch(["SET_WORKOUT", workout]),
+      setName: (name: string) => dispatch(["SET_NAME", name]),
+      setDays: (days: Weekday[]) => dispatch(["SET_DAYS", days]),
+      setExercises: (exercises: Exercise[]) => dispatch(["SET_EXERCISES", exercises]),
+      addExercise: () => dispatch(["ADD_EXERCISE", idGenerator.current++]),
+      removeExercise: (id: Id) => dispatch(["REMOVE_EXERCISE", id]),
+      setExerciseId: (id: Id, exerciseId: string) =>
+        dispatch(["SET_EXERCISE_ID", [id, exerciseId]]),
+      setExerciseDescription: (id: Id, description: string) =>
+        dispatch(["SET_EXERCISE_DESCRIPTION", [id, description]]),
+      setExerciseMethod: (id: Id, method: Method) =>
+        dispatch(["SET_EXERCISE_METHOD", [id, method]]),
+      setExerciseType: (id: Id, type: "REPS" | "TIME") =>
+        dispatch(["SET_EXERCISE_TYPE", [id, type]]),
+      setExerciseHidden: (id: Id, hidden: boolean) =>
+        dispatch(["SET_EXERCISE_HIDDEN", [id, hidden]]),
+      addSet: (id: Id) => dispatch(["ADD_SET", id]),
+      removeSet: (id: Id, index: number) => dispatch(["REMOVE_SET", [id, index]]),
+      setSetReps: (id: Id, index: number, reps: number) =>
+        dispatch(["SET_SET_REPS", [id, index, reps]]),
+      setSetWeight: (id: Id, index: number, weight: number) =>
+        dispatch(["SET_SET_WEIGHT", [id, index, weight]]),
+      setSetTime: (id: Id, index: number, time: { minutes: number; seconds: number }) =>
+        dispatch(["SET_SET_TIME", [id, index, time]]),
+      createBiSet: (firstId: Id, secondId: Id) => dispatch(["CREATE_BISET", [firstId, secondId]]),
+      destroyBiSet: (id: Id) => dispatch(["DESTROY_BISET", id]),
+      setBiSetHidden: (id: Id, hidden: boolean) => dispatch(["SET_BISET_HIDDEN", [id, hidden]]),
     }),
     [],
   );
