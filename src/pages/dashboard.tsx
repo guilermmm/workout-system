@@ -120,7 +120,7 @@ const Dashboard = ({ isSuperUser }: InferGetServerSidePropsType<typeof getServer
             label="Email"
             className="rounded-md bg-white"
             value={email}
-            onChange={v => setEmail(v.toLowerCase())}
+            onChange={v => setEmail(v.toLowerCase().trim())}
             {...emailProps}
           />
         </Modal>

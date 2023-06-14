@@ -85,7 +85,7 @@ const Index = () => {
             label="Email"
             name="email"
             value={email}
-            onChange={v => setEmail(v.toLowerCase())}
+            onChange={v => setEmail(v.toLowerCase().trim())}
             {...emailProps}
           />
           {emailProps.error && <span className="text-xs text-red-500">{emailProps.error}</span>}
