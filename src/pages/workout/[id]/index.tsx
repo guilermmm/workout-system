@@ -886,7 +886,7 @@ const Footer = ({
           footer={
             <>
               <button
-                className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
+                className="mx-4 rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
                 onClick={() => setShowFinishedAlert(false)}
               >
                 Concluir
@@ -897,17 +897,19 @@ const Footer = ({
             </>
           }
         >
-          <>
-            <div className="mt-2 flex justify-center">
+          <div className="mx-4">
+            <div className="mt-2 text-center">
               {`O treino ${workout.name} foi finalizado com sucesso em ${fixTimer(
                 hours,
               )}h ${fixTimer(minutes)}min ${fixTimer(seconds)}s!
             `}
             </div>
-            <div className="mb-4 mt-2 italic">
-              - {motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)]}
+            <div className="mb-4 mt-2  text-center font-bold">
+              {`"${
+                motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)] ?? ""
+              }"`}
             </div>
-          </>
+          </div>
         </Alert>
       )}
       {updateChanges && showUpdateAlert && (
