@@ -121,3 +121,31 @@ export const methodExplanation = {
   PeakContraction:
     "Realize o exercício normalmente, mas segure a contração por 2 a 5 segundos em cada repetição.",
 } as const satisfies Record<Method, string>;
+
+export const motivationalPhrases = [
+  "O esforço de hoje será seu motivo de orgulho amanhã.",
+  "Acredite em você, você é capaz.",
+  "O projeto verão que dá certo é aquele que é feito todos os dias.",
+  "A disciplina é a mãe do êxito.",
+  "A persistência realiza o impossível.",
+  "A persistência é o caminho do êxito.",
+  "O cansaço de hoje é o orgulho de amanhã.",
+  "Por hoje está pago, mas amanhã tem mais.",
+  "Seja paciente, o resultado é certo.",
+
+  "Lembre-se de que cada treino é um passo em direção aos seus objetivos.",
+  "Acredite no seu potencial e nada poderá detê-lo.",
+  "Grandes conquistas começam com pequenos passos.",
+  "Nunca desista. O caminho para o sucesso está cheio de obstáculos, mas você é capaz de superá-los.",
+  "O treino de hoje é o resultado que você verá no espelho amanhã.",
+  "A dor que você sente hoje é a força que você sentirá amanhã.",
+  "A única maneira de alcançar seus objetivos é através da persistência.",
+  "Não pare quando estiver cansado, pare quando estiver satisfeito.",
+  "Acredite em si mesmo e todo o resto virá naturalmente.",
+  "Seja a versão melhorada de si mesmo a cada dia.",
+  "Cada repetição conta. Faça cada uma delas valer a pena.",
+  "Você é capaz de muito mais do que imagina. Acredite e conquiste.",
+  "Supere seus limites, um passo de cada vez.",
+  "O suor de hoje é a recompensa de amanhã.",
+  "Transforme o impossível em possível, um treino de cada vez.",
+] as const;

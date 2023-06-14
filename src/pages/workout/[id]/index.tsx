@@ -24,7 +24,7 @@ import { getServerAuthSession } from "../../../server/auth";
 import { classList, useFormValidation, useLocalStorage } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
-import { methodExplanation, methodTranslation } from "../../../utils/consts";
+import { methodExplanation, methodTranslation, motivationalPhrases } from "../../../utils/consts";
 
 const exerciseParser = z.object({
   id: z.string(),
@@ -725,6 +725,7 @@ const Footer = ({
   const [state, setState] = useState<"not-started" | "started" | "finished">("not-started");
 
   const [showFinishAlert, setShowFinishAlert] = useState(false);
+  const [showFinishedAlert, setShowFinishedAlert] = useState(false);
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
 
   const finishWorkout = api.finishedWorkout.create.useMutation({
@@ -736,6 +737,7 @@ const Footer = ({
         finishedAt: new Date().toISOString(),
       });
       setShowFinishAlert(false);
+      setShowFinishedAlert(true);
       resetStorage();
     },
   });
@@ -874,6 +876,38 @@ const Footer = ({
           {`Tem certeza que deseja finalizar o treino?${
             updateChanges ? " Há alterações nos pesos dos exercícios que não foram salvas." : ""
           }`}
+        </Alert>
+      )}
+      {showFinishedAlert && workout && (
+        <Alert
+          icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-200 p-2 text-green-600" />}
+          title="Parabéns!"
+          onClickOutside={() => setShowFinishedAlert(false)}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
+                onClick={() => setShowFinishedAlert(false)}
+              >
+                Concluir
+              </button>
+              <div className="mt-2 flex w-full items-center justify-center">
+                <Image src="/logo-full.png" width={100} height={100} alt="logo" />
+              </div>
+            </>
+          }
+        >
+          <>
+            <div className="mt-2 flex justify-center">
+              {`O treino ${workout.name} foi finalizado com sucesso em ${fixTimer(
+                hours,
+              )}h ${fixTimer(minutes)}min ${fixTimer(seconds)}s!
+            `}
+            </div>
+            <div className="mb-4 mt-2 italic">
+              - {motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)]}
+            </div>
+          </>
         </Alert>
       )}
       {updateChanges && showUpdateAlert && (
