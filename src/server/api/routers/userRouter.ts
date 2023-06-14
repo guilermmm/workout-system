@@ -66,7 +66,7 @@ export const userRouter = createTRPCRouter({
         },
         cursor: cursor ? { id: cursor } : undefined,
         include: { user: true },
-        orderBy: { id: "asc" },
+        orderBy: { email: "asc" },
       });
 
       let nextCursor: typeof cursor | undefined = undefined;
