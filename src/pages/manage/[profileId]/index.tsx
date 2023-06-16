@@ -1,9 +1,13 @@
+import { Menu } from "@headlessui/react";
+import type { Profile, User } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import { useDebounce } from "use-debounce";
 import Alert from "../../../components/Alert";
 import DatePicker from "../../../components/DatePicker";
+import DownloadPDFButton from "../../../components/DownloadPDFButton";
 import FullPage from "../../../components/FullPage";
 import Modal from "../../../components/Modal";
 import ProfilePic from "../../../components/ProfilePic";
@@ -13,6 +17,7 @@ import TextInput from "../../../components/TextInput";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
 import CheckIcon from "../../../components/icons/CheckIcon";
 import ExclamationCircleIcon from "../../../components/icons/ExclamationCircleIcon";
+import MagnifyingGlassIcon from "../../../components/icons/MagnifyingGlassIcon";
 import PencilSquareIcon from "../../../components/icons/PencilSquareIcon";
 import TrashIcon from "../../../components/icons/TrashIcon";
 import XMarkIcon from "../../../components/icons/XMarkIcon";
@@ -22,12 +27,12 @@ import {
   classList,
   getAge,
   join,
+  useEndOfScroll,
   useFormValidation,
   validateEmail,
 } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
-import DownloadPDFButton from "../../../components/DownloadPDFButton";
 import WorkoutDocument from "../../../utils/pdf";
 
 type Workout = RouterOutputs["workout"]["getMany"][number];
@@ -187,6 +192,8 @@ const Manage = () => {
       image: "" as string | null,
     });
   };
+
+  const [showCopyWorkoutModal, setShowCopyWorkoutModal] = useState(false);
 
   return (
     <FullPage>
@@ -611,6 +618,21 @@ const Manage = () => {
           O e-mail inserido já está em uso.
         </Alert>
       )}
+      {showCopyWorkoutModal && (
+        <Modal
+          onClickOutside={() => setShowCopyWorkoutModal(false)}
+          buttons={
+            <button
+              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+              onClick={() => setShowCopyWorkoutModal(false)}
+            >
+              Cancelar
+            </button>
+          }
+        >
+          <CopyWorkout onChoose={w => console.log("esse aq", w)} />
+        </Modal>
+      )}
       <div className="relative flex h-full flex-col overflow-y-auto">
         <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
           <div className="absolute left-0 top-0 right-0 h-20 bg-gold-500" />
@@ -738,12 +760,27 @@ const Manage = () => {
                   </div>
                 ))}
                 <div className="mt-4 flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
-                  <Link
-                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                    href={`/manage/${profileId}/create_workout`}
-                  >
-                    Adicionar treino
-                  </Link>
+                  <Menu as="div" className="relative w-full">
+                    <Menu.Button className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600">
+                      Adicionar treino
+                    </Menu.Button>
+                    <Menu.Items className="absolute right-0 mt-2 flex origin-top-right flex-col gap-2 rounded-md bg-white p-2 shadow-lg">
+                      <Menu.Item
+                        as={Link}
+                        href={`/manage/${profileId}/create_workout`}
+                        className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                      >
+                        Criar treino novo
+                      </Menu.Item>
+                      <Menu.Item
+                        as="button"
+                        className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                        onClick={() => setShowCopyWorkoutModal(true)}
+                      >
+                        Copiar treino existente
+                      </Menu.Item>
+                    </Menu.Items>
+                  </Menu>
                   {workoutsWithExercises.isLoading ? (
                     <div className="w-full rounded-md bg-slate-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors ">
                       Gerando pdf...
@@ -759,9 +796,9 @@ const Manage = () => {
                           workouts={workoutsWithExercises.data!}
                         />
                       }
-                      className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                      className="w-full rounded-md bg-blue-500 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
                     >
-                      Baixar Treinos
+                      <span className="px-6">Baixar Treinos</span>
                     </DownloadPDFButton>
                   )}
                 </div>
@@ -793,6 +830,126 @@ const Manage = () => {
         </div>
       </div>
     </FullPage>
+  );
+};
+
+type CopyWorkoutProps = {
+  onChoose: (workout: Workout) => void;
+};
+
+const CopyWorkout = ({ onChoose }: CopyWorkoutProps) => {
+  const [searchInput, setSearchInput] = useState("");
+
+  const [debouncedInput] = useDebounce(searchInput, 150);
+
+  const profiles = api.user.searchProfiles.useInfiniteQuery(
+    { search: debouncedInput },
+    { getNextPageParam: lastPage => lastPage.nextCursor },
+  );
+
+  const ref = useEndOfScroll<HTMLDivElement>(() => {
+    if (profiles.hasNextPage && !profiles.isFetching) {
+      void profiles.fetchNextPage();
+    }
+  });
+
+  const [chosenUser, setChosenUser] = useState<(Profile & { user: User | null }) | null>(null);
+
+  const workouts = api.workout.getMany.useQuery(
+    { profileId: chosenUser?.id ?? "" },
+    { enabled: chosenUser !== null },
+  );
+
+  const chooseUser = (profile: Profile & { user: User | null }) => {
+    setChosenUser(profile);
+    setSearchInput("");
+  };
+
+  return (
+    <div className="relative flex max-h-96 w-80 flex-col">
+      {chosenUser ? (
+        <>
+          <div className="relative m-2 flex items-center gap-2">
+            <button className="rounded-full p-2" onClick={() => setChosenUser(null)}>
+              <ArrowUturnLeftIcon className="h-5 w-5" />
+            </button>
+            <ProfilePic user={chosenUser.user} size="sm" />
+            <span className="text-sm font-semibold">
+              {chosenUser.user?.name ?? chosenUser.email}
+            </span>
+          </div>
+          <div className="grow overflow-y-auto">
+            <div className="mx-4 flex h-full flex-1 grow flex-col items-center gap-4">
+              {!workouts.data && workouts.isLoading ? (
+                <div className="flex flex-1 items-center justify-center">
+                  <Spinner className="fill-blue-600 text-gray-200" />
+                </div>
+              ) : (
+                <div className="flex w-full flex-col gap-2">
+                  {workouts.data?.map(workout => (
+                    <button
+                      key={workout.id}
+                      onClick={() => onChoose(workout)}
+                      className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                    >
+                      <div className="font-medium">{workout.name}</div>
+                      <div className="font-light">{join(workout.categories)}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="relative m-2 flex items-center gap-2">
+            <input
+              type="text"
+              className="block h-12 w-full appearance-none rounded-full pl-4 pr-12 shadow-md outline-none ring-0 focus:outline-none focus:ring-0"
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+            />
+            <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
+          </div>
+          <div className="grow overflow-y-auto" ref={ref}>
+            <div className="mx-4 flex h-full flex-1 grow flex-col items-center gap-4">
+              {!profiles.data && profiles.isLoading ? (
+                <div className="flex flex-1 items-center justify-center">
+                  <Spinner className="fill-blue-600 text-gray-200" />
+                </div>
+              ) : (
+                profiles.data && (
+                  <div className="flex w-full max-w-[32rem] flex-col gap-1 pb-4">
+                    {profiles.data.pages.flatMap(({ items }) =>
+                      items.map(profile => (
+                        <button
+                          key={profile.id}
+                          onClick={() => chooseUser(profile)}
+                          className="flex w-full grow flex-row items-center justify-between rounded-md bg-slate-50 shadow-md transition-shadow hover:shadow-xl"
+                        >
+                          <div className="flex grow items-center truncate p-1 text-left">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
+                              <ProfilePic user={profile.user} size="sm" />
+                            </div>
+                            <div className="ml-2 truncate">
+                              <div className="truncate text-sm font-medium text-slate-800">
+                                {profile.user?.name}
+                              </div>
+                              <div className="truncate text-xs text-slate-500">{profile.email}</div>
+                            </div>
+                          </div>
+                        </button>
+                      )),
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 
