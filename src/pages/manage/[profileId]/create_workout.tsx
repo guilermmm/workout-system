@@ -204,6 +204,7 @@ const CreateWorkout = () => {
             className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
             value={workout.name}
             onChange={actions.setName}
+            error={workout.name === "" ? "O nome do treino não pode ser vazio" : undefined}
           />
           <MultiSelect
             label="Dia(s)"
@@ -214,6 +215,7 @@ const CreateWorkout = () => {
             itemToString={it => weekdaysTranslation[it]}
             itemToKey={it => it}
             disabled={saving}
+            error={workout.days.length === 0 ? "Selecione pelo menos um dia" : undefined}
           />
         </div>
         {categories.isLoading ? (
