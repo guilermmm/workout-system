@@ -22,6 +22,7 @@ export type FinishedExerciseSets = (
 
 export type FinishedExercise = {
   exercise: {
+    id: string;
     name: string;
     category: string;
   };

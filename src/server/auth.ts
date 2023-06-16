@@ -96,7 +96,7 @@ export const authOptions: NextAuthOptions = {
 
     async signIn({ user }) {
       if (user.email == null) {
-        return false;
+        return "/";
       }
 
       if (user.email === env.ADMIN_EMAIL) {

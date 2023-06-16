@@ -97,4 +97,11 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 
 confirmacao de senha so serve pro front validar se é igual, pro back so manda 1
 
-- [ ] modal nas pagina de perfil tao bugando
+- [x] modal nas pagina de perfil tao bugando
+
+- [x] copiar os treino
+- [x] foto do exercicio na pagina de cadastrar/editar treino .
+- [ ] mudar reps de number p string .
+- [x] atualizar o componente modal p aceitar ReactNode .
+- [x] mensagem de finalizacao de treino bem hippie
+- [x] pagina de autenticacao fudida

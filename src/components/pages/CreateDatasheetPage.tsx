@@ -53,27 +53,31 @@ const CreateDatasheetPage = ({
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-700" />
           }
           title="Atualizar medidas"
-          text="Tem certeza que deseja atualizar as medidas?"
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  mutate(datasheet);
+                  setShowAlert(false);
+                }}
+                disabled={!valid}
+              >
+                {isLoading ? <Spinner className="h-6 w-6 text-white" /> : "Atualizar"}
+              </button>
+              {!isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowAlert(false)}
         >
-          <button
-            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              mutate(datasheet);
-              setShowAlert(false);
-            }}
-            disabled={!valid}
-          >
-            {isLoading ? <Spinner className="h-6 w-6 text-white" /> : "Atualizar"}
-          </button>
-          {!isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          Tem certeza que deseja atualizar as medidas?
         </Alert>
       )}
       <div className="flex items-center bg-gold-500 p-2">

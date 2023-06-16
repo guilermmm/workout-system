@@ -19,16 +19,12 @@ import ChevronUpIcon from "../../../components/icons/ChevronUpIcon";
 import ClockIcon from "../../../components/icons/ClockIcon";
 import ExclamationTriangleIcon from "../../../components/icons/ExclamationTriangleIcon";
 import InformationIcon from "../../../components/icons/InformationIcon";
+import PhotoIcon from "../../../components/icons/PhotoIcon";
 import { getServerAuthSession } from "../../../server/auth";
 import { classList, useFormValidation, useLocalStorage } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
-import {
-  methodExplanation,
-  methodTranslation,
-  weekdaysAbbrv,
-  weekdaysTranslation,
-} from "../../../utils/consts";
+import { methodExplanation, methodTranslation, motivationalPhrases } from "../../../utils/consts";
 
 const exerciseParser = z.object({
   id: z.string(),
@@ -394,9 +390,9 @@ const ExerciseCard = ({
 }: ExerciseCardProps) => {
   const [showAlert, setShowAlert] = useState(false);
 
-  const uncollapsable = setCollapsed === undefined;
+  const uncollapsible = setCollapsed === undefined;
 
-  const isCollapsed = exercise.collapsed && !uncollapsable;
+  const isCollapsed = exercise.collapsed && !uncollapsible;
 
   return (
     <div className="relative m-2 flex flex-col justify-between rounded-lg bg-white pt-2 shadow-md">
@@ -406,21 +402,28 @@ const ExerciseCard = ({
             <InformationIcon className="h-10 w-10 rounded-full bg-blue-200 p-2 text-blue-600" />
           }
           title={methodTranslation[exercise.method]}
-          text={methodExplanation[exercise.method]}
+          footer={
+            <button
+              className="rounded-md bg-gold-400 py-2 px-4 font-medium shadow-md"
+              onClick={() => setShowAlert(false)}
+            >
+              Entendi
+            </button>
+          }
           onClickOutside={() => setShowAlert(false)}
         >
-          <button
-            className="rounded-md bg-gold-400 py-2 px-4 font-medium shadow-md"
-            onClick={() => setShowAlert(false)}
-          >
-            Entendi
-          </button>
+          {methodExplanation[exercise.method]}
         </Alert>
       )}
-      <div className="absolute left-4 top-4">
+      <div
+        className={classList("absolute left-4 text-sm transition-all", {
+          "top-4": isCollapsed,
+          "top-2": !isCollapsed,
+        })}
+      >
         <span className="font-medium text-blue-600">{exercise.exercise.name}</span>
       </div>
-      {!uncollapsable && (
+      {!uncollapsible && (
         <button
           className={classList(
             "absolute right-2 top-2 rounded-full bg-white p-2 text-gray-400 shadow-md hover:bg-gray-300 hover:text-white",
@@ -449,18 +452,20 @@ const ExerciseCard = ({
         })}
       >
         <div className="flex flex-col px-4">
-          <div className=" flex h-10 flex-row items-center justify-between">
-            <div className="flex flex-row flex-wrap items-center">
-              <div className="opacity-0">{exercise.exercise.name}</div>
-              <div className="ml-4 text-sm text-slate-600">{exercise.exercise.category}</div>
-              <button onClick={handleInfo(exercise.exercise)} className="pl-3">
-                <InformationIcon className="h-6 w-6 text-black" />
+          <div className="flex h-10 flex-row items-center justify-between">
+            <div className="flex flex-none flex-row flex-wrap items-center">
+              <div className="flex flex-col">
+                <div className="opacity-0">{exercise.exercise.name}</div>
+                <div className="text-xs text-slate-600">{exercise.exercise.category}</div>
+              </div>
+              <button onClick={handleInfo(exercise.exercise)} className="pl-1">
+                <PhotoIcon className="h-5 w-5 text-black" />
               </button>
             </div>
             {exercise.method !== "Standard" && (
-              <div className="mr-10 text-sm">
+              <div className={classList("text-xs", { "mr-10": !uncollapsible })}>
                 <button className="flex items-center gap-1" onClick={() => setShowAlert(true)}>
-                  {methodTranslation[exercise.method]}
+                  <span className="text-right">{methodTranslation[exercise.method]}</span>
                   <InformationIcon className="h-6 w-6" />
                 </button>
               </div>
@@ -720,6 +725,7 @@ const Footer = ({
   const [state, setState] = useState<"not-started" | "started" | "finished">("not-started");
 
   const [showFinishAlert, setShowFinishAlert] = useState(false);
+  const [showFinishedAlert, setShowFinishedAlert] = useState(false);
   const [showUpdateAlert, setShowUpdateAlert] = useState(false);
 
   const finishWorkout = api.finishedWorkout.create.useMutation({
@@ -731,6 +737,7 @@ const Footer = ({
         finishedAt: new Date().toISOString(),
       });
       setShowFinishAlert(false);
+      setShowFinishedAlert(true);
       resetStorage();
     },
   });
@@ -830,41 +837,79 @@ const Footer = ({
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-600" />
           }
           title="Finalizar treino"
-          text={`Tem certeza que deseja finalizar o treino?${
-            updateChanges ? " Há alterações nos pesos dos exercícios que não foram salvas." : ""
-          }`}
-        >
-          {updateChanges ? (
+          footer={
             <>
+              {updateChanges ? (
+                <>
+                  <button
+                    className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
+                    onClick={() => {
+                      void updateChanges().then(() => finishWorkout.mutate(workout));
+                    }}
+                  >
+                    Salvar e finalizar
+                  </button>
+                  <button
+                    className="rounded-md border-1 border-red-500 bg-red-500 py-2 px-4 text-white shadow-md"
+                    onClick={() => finishWorkout.mutate(workout)}
+                  >
+                    Finalizar sem salvar
+                  </button>
+                </>
+              ) : (
+                <button
+                  className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
+                  onClick={() => finishWorkout.mutate(workout)}
+                >
+                  Confirmar
+                </button>
+              )}
               <button
-                className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
-                onClick={() => {
-                  void updateChanges().then(() => finishWorkout.mutate(workout));
-                }}
+                className="rounded-md border-1 py-2 px-4 shadow-md"
+                onClick={() => setShowFinishAlert(false)}
               >
-                Salvar e finalizar
-              </button>
-              <button
-                className="rounded-md border-1 border-red-500 bg-red-500 py-2 px-4 text-white shadow-md"
-                onClick={() => finishWorkout.mutate(workout)}
-              >
-                Finalizar sem salvar
+                Cancelar
               </button>
             </>
-          ) : (
-            <button
-              className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
-              onClick={() => finishWorkout.mutate(workout)}
-            >
-              Confirmar
-            </button>
-          )}
-          <button
-            className="rounded-md border-1 py-2 px-4 shadow-md"
-            onClick={() => setShowFinishAlert(false)}
-          >
-            Cancelar
-          </button>
+          }
+        >
+          {`Tem certeza que deseja finalizar o treino?${
+            updateChanges ? " Há alterações nos pesos dos exercícios que não foram salvas." : ""
+          }`}
+        </Alert>
+      )}
+      {showFinishedAlert && workout && (
+        <Alert
+          icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-200 p-2 text-green-600" />}
+          title="Parabéns!"
+          onClickOutside={() => setShowFinishedAlert(false)}
+          footer={
+            <>
+              <button
+                className="mx-4 rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
+                onClick={() => setShowFinishedAlert(false)}
+              >
+                Concluir
+              </button>
+              <div className="mt-2 flex w-full items-center justify-center">
+                <Image src="/logo-full.png" width={100} height={100} alt="logo" />
+              </div>
+            </>
+          }
+        >
+          <div className="mx-4">
+            <div className="mt-2 text-center">
+              {`O treino ${workout.name} foi finalizado com sucesso em ${fixTimer(
+                hours,
+              )}h ${fixTimer(minutes)}min ${fixTimer(seconds)}s!
+            `}
+            </div>
+            <div className="mb-4 mt-2  text-center font-bold">
+              {`"${
+                motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)] ?? ""
+              }"`}
+            </div>
+          </div>
         </Alert>
       )}
       {updateChanges && showUpdateAlert && (
@@ -873,22 +918,26 @@ const Footer = ({
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-600" />
           }
           title="Salvar alterações"
-          text="Tem certeza que deseja salvar as alterações nos pesos dos exercícios?"
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
+                onClick={() => {
+                  void updateChanges().then(() => setShowUpdateAlert(false));
+                }}
+              >
+                Confirmar
+              </button>
+              <button
+                className="rounded-md border-1 py-2 px-4 shadow-md"
+                onClick={() => setShowUpdateAlert(false)}
+              >
+                Cancelar
+              </button>
+            </>
+          }
         >
-          <button
-            className="rounded-md border-1 border-green-600 bg-green-600 py-2 px-4 text-white shadow-md"
-            onClick={() => {
-              void updateChanges().then(() => setShowUpdateAlert(false));
-            }}
-          >
-            Confirmar
-          </button>
-          <button
-            className="rounded-md border-1 py-2 px-4 shadow-md"
-            onClick={() => setShowUpdateAlert(false)}
-          >
-            Cancelar
-          </button>
+          Tem certeza que deseja salvar as alterações nos pesos dos exercícios?
         </Alert>
       )}
     </div>

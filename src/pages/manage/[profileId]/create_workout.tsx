@@ -1,8 +1,7 @@
-import { Method, Weekday } from "@prisma/client";
+import { Weekday } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { z } from "zod";
+import { useState } from "react";
 import Alert from "../../../components/Alert";
 import FullPage from "../../../components/FullPage";
 import MultiSelect from "../../../components/MultiSelect";
@@ -20,39 +19,9 @@ import ExclamationTriangleIcon from "../../../components/icons/ExclamationTriang
 import PlusIcon from "../../../components/icons/PlusIcon";
 import XMarkIcon from "../../../components/icons/XMarkIcon";
 import { getServerAuthSession } from "../../../server/auth";
-import { useLocalStorage } from "../../../utils";
 import { api } from "../../../utils/api";
-import { weekdaysOrder, weekdaysTranslation } from "../../../utils/consts";
-
-const exerciseParser = z.object({
-  id: z.number(),
-  exerciseId: z.string(),
-  description: z.string().nullable(),
-  method: z.nativeEnum(Method),
-  biSet: z.number().nullable(),
-  type: z.union([z.literal("reps"), z.literal("time")]),
-  sets: z.array(
-    z.object({
-      reps: z.number().min(0),
-      weightKg: z.number().min(0),
-      time: z.object({
-        minutes: z.number().min(0),
-        seconds: z.number().min(0).max(59),
-      }),
-    }),
-  ),
-  hidden: z.boolean(),
-});
-
-type Exercise = z.infer<typeof exerciseParser>;
-
-const workoutParser = z.object({
-  name: z.string(),
-  days: z.array(z.nativeEnum(Weekday)),
-  exercises: z.array(exerciseParser),
-});
-
-type ExerciseGroup = { id: number; exercises: readonly [Exercise, Exercise] };
+import { weekdaysTranslation } from "../../../utils/consts";
+import { useStoredWorkout } from "../../../utils/workout";
 
 const dragHandle = (
   <Sortable.DragHandle className="rounded-full bg-white p-2 text-gray-400 shadow-md transition-colors hover:bg-gray-300 hover:text-white">
@@ -78,151 +47,9 @@ const CreateWorkout = () => {
 
   const [isConfirmationAlertOpen, setConfirmationAlertOpen] = useState(false);
 
-  const [workout, setWorkout, resetWorkout] = useLocalStorage("create-workout", workoutParser, {
-    name: "",
-    days: [],
-    exercises: [],
-  });
-
-  const idGenerator = useRef(1);
-
-  useEffect(() => {
-    if (workout.exercises.length === 0) {
-      idGenerator.current = 1;
-    } else {
-      idGenerator.current = Math.max(...workout.exercises.map(e => e.id)) + 1;
-    }
-  }, [workout.exercises]);
+  const [{ workout, groups }, actions, resetWorkout] = useStoredWorkout("create-workout");
 
   const saving = createWorkout.isLoading;
-
-  const groups = useMemo(
-    () =>
-      workout.exercises.reduce((acc, exercise) => {
-        const isAlreadyInAGroup = acc.find(
-          g => "exercises" in g && g.exercises.find(e => e.id === exercise.id),
-        );
-        if (isAlreadyInAGroup) {
-          return acc;
-        }
-
-        if (workout.exercises.some(e => e.biSet === exercise.id)) {
-          return acc;
-        }
-
-        if (exercise.biSet !== null) {
-          const group = [exercise, workout.exercises.find(e => e.id === exercise.biSet)!] as const;
-
-          return [...acc, { id: exercise.id, exercises: group }];
-        }
-
-        return [...acc, exercise];
-      }, [] as (ExerciseGroup | Exercise)[]),
-    [workout.exercises],
-  );
-
-  const setExercises = (exercises: Exercise[] | ((exercises: Exercise[]) => Exercise[])) => {
-    const handleSetExercises = (prevExercises: Exercise[]) => {
-      let newExercises: Exercise[];
-      if (typeof exercises === "function") {
-        newExercises = exercises(prevExercises);
-      } else {
-        newExercises = exercises;
-      }
-
-      // find exercises that have a biSet
-      const exercisesWithNewBiSet = newExercises.filter(
-        e => e.biSet !== null && e.biSet !== prevExercises.find(pe => pe.id === e.id)?.biSet,
-      );
-
-      exercisesWithNewBiSet.forEach(e => {
-        // find the biSet exercise
-        const biSetExercise = newExercises.find(ne => ne.id === e.biSet)!;
-
-        // make both exercises have the same number of sets, creating new sets if needed
-        const maxSets = Math.max(e.sets.length, biSetExercise.sets.length);
-
-        for (let i = 0; i < maxSets; i++) {
-          const lastSet = e.sets.at(-1);
-          if (i >= e.sets.length) {
-            e.sets.push(
-              lastSet ? { ...lastSet } : { reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } },
-            );
-          }
-          const lastBiSetSet = biSetExercise.sets.at(-1);
-          if (i >= biSetExercise.sets.length) {
-            biSetExercise.sets.push(
-              lastBiSetSet
-                ? { ...lastBiSetSet }
-                : { reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } },
-            );
-          }
-        }
-      });
-
-      // find exercises that continue to have a biSet
-      const exercisesWithSameBiSet = newExercises.filter(
-        e => e.biSet !== null && e.biSet === prevExercises.find(pe => pe.id === e.id)?.biSet,
-      );
-
-      exercisesWithSameBiSet.forEach(e => {
-        // find the biSet exercise
-        const biSetExercise = newExercises.find(ne => ne.id === e.biSet)!;
-
-        // see if new sets have been added or removed in the exercise
-        const oldSets = prevExercises.find(pe => pe.id === e.id)!.sets.length;
-        const newSets = e.sets.length;
-
-        if (oldSets > newSets) {
-          // remove the last set from the biSet exercise
-          biSetExercise.sets.pop();
-        } else if (oldSets < newSets) {
-          // add a new set to the biSet exercise
-          const lastSet = biSetExercise.sets.at(-1);
-          biSetExercise.sets.push(
-            lastSet ? { ...lastSet } : { reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } },
-          );
-        }
-
-        // see if new sets have been added or removed in the biSet exercise
-        const oldBiSetSets = prevExercises.find(pe => pe.id === biSetExercise.id)!.sets.length;
-        const newBiSetSets = biSetExercise.sets.length;
-
-        if (oldBiSetSets > newBiSetSets) {
-          // remove the last set from the exercise
-          e.sets.pop();
-        } else if (oldBiSetSets < newBiSetSets) {
-          // add a new set to the exercise
-          const lastSet = e.sets.at(-1);
-          e.sets.push(
-            lastSet ? { ...lastSet } : { reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } },
-          );
-        }
-      });
-
-      return newExercises;
-    };
-
-    const newExercises = handleSetExercises(workout.exercises);
-
-    setWorkout(prev => ({ ...prev, exercises: newExercises }));
-  };
-
-  const handleAddExercise = () => {
-    setExercises([
-      ...workout.exercises,
-      {
-        id: idGenerator.current++,
-        exerciseId: "",
-        description: "",
-        method: Method.Standard,
-        type: "reps",
-        hidden: false,
-        sets: [{ reps: 0, weightKg: 0, time: { minutes: 0, seconds: 0 } }],
-        biSet: null,
-      },
-    ]);
-  };
 
   const handleSave = () => {
     createWorkout.mutate(
@@ -235,27 +62,26 @@ const CreateWorkout = () => {
           description: exercise.description,
           method: exercise.method,
           sets:
-            exercise.type === "reps"
-              ? exercise.sets.map(({ reps, weightKg }) => ({
+            exercise.type === "REPS"
+              ? exercise.sets.map(({ reps, weight }) => ({
                   reps,
-                  weight: weightKg * 1000,
+                  weight: weight * 1000,
                 }))
-              : exercise.sets.map(({ time, weightKg }) => ({
+              : exercise.sets.map(({ time, weight }) => ({
                   time: time.minutes * 60 + time.seconds,
-                  weight: weightKg * 1000,
+                  weight: weight * 1000,
                 })),
           index,
         })),
-        biSets: workout.exercises
-          .map((exercise, index) => ({ ...exercise, index }))
-          .filter(exercise => exercise.biSet !== null)
-          .map(exercise => {
-            const other = workout.exercises.findIndex(e => e.id === exercise.biSet);
-            return [exercise.index, other] as [number, number];
-          }),
+        biSets: workout.biSets.map(([firstId, secondId]) => {
+          const first = workout.exercises.findIndex(e => e.id === firstId)!;
+          const second = workout.exercises.findIndex(e => e.id === secondId)!;
+          return [first, second];
+        }),
       },
       {
         onSuccess: () => {
+          setConfirmationAlertOpen(false);
           resetWorkout();
           router.back();
         },
@@ -266,7 +92,7 @@ const CreateWorkout = () => {
   const handleChangeGroups = (newGroups: typeof groups) => {
     const newExercises = newGroups.flatMap(g => ("exercises" in g ? g.exercises : g));
 
-    setExercises(newExercises);
+    actions.setExercises(newExercises);
   };
 
   const canSubmit =
@@ -275,8 +101,9 @@ const CreateWorkout = () => {
     workout.exercises.length > 0 &&
     workout.exercises.every(
       e =>
-        (e.exerciseId !== "" && e.sets.every(s => s.reps > 0)) ||
-        e.sets.every(s => s.time.seconds > 0 || s.time.minutes > 0),
+        e.exerciseId !== "" &&
+        ((e.type === "REPS" && e.sets.every(s => s.reps > 0)) ||
+          (e.type === "TIME" && e.sets.every(s => s.time.seconds > 0 || s.time.minutes > 0))),
     );
 
   return (
@@ -286,15 +113,20 @@ const CreateWorkout = () => {
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
           title="Não foi possível criar o treino"
-          text="Não foi possível buscar os dados necessários para acessar esta página, verifique sua conexão e tente novamente"
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={createWorkout.reset}
+              >
+                OK
+              </button>
+            </>
+          }
           onClickOutside={() => createWorkout.reset()}
         >
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={createWorkout.reset}
-          >
-            OK
-          </button>
+          Não foi possível buscar os dados necessários para acessar esta página, verifique sua
+          conexão e tente novamente
         </Alert>
       )}
       {isConfirmationAlertOpen && (
@@ -303,30 +135,34 @@ const CreateWorkout = () => {
             <ExclamationTriangleIcon className="h-10 w-10 rounded-full bg-gold-200 p-2 text-gold-700" />
           }
           title="Criar treino"
-          text={`Tem certeza que deseja salvar o treino ${workout.name} criado para ${
-            profile.data!.user?.name ?? profile.data!.email
-          }?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={handleSave}
+                disabled={!canSubmit || saving}
+              >
+                {saving ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Salvar treino"
+                )}
+              </button>
+              <button
+                className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                onClick={() => setConfirmationAlertOpen(false)}
+              >
+                Cancelar
+              </button>
+            </>
+          }
           onClickOutside={() => setConfirmationAlertOpen(false)}
         >
-          <button
-            className="rounded-md border-1 border-blue-600 bg-blue-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={handleSave}
-            disabled={!canSubmit || saving}
-          >
-            {saving ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Salvar treino"
-            )}
-          </button>
-          <button
-            className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-            onClick={() => setConfirmationAlertOpen(false)}
-          >
-            Cancelar
-          </button>
+          {`Tem certeza que deseja salvar o treino ${workout.name} criado para ${
+            profile.data!.user?.name ?? profile.data!.email
+          }?`}
         </Alert>
       )}
       <div className="flex flex-row items-center justify-between bg-gold-500 p-2">
@@ -367,18 +203,13 @@ const CreateWorkout = () => {
             label="Nome do treino"
             className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
             value={workout.name}
-            onChange={name => setWorkout({ ...workout, name })}
+            onChange={actions.setName}
           />
           <MultiSelect
             label="Dia(s)"
             className="min-h-[3rem] w-full rounded-lg bg-white font-medium sm:w-1/2"
             options={Object.values(Weekday)}
-            onChange={days =>
-              setWorkout({
-                ...workout,
-                days: days.sort((a, b) => weekdaysOrder[a] - weekdaysOrder[b]),
-              })
-            }
+            onChange={actions.setDays}
             selected={workout.days}
             itemToString={it => weekdaysTranslation[it]}
             itemToKey={it => it}
@@ -406,14 +237,7 @@ const CreateWorkout = () => {
                         <BiSetCard
                           first={a}
                           second={b}
-                          separate={() => {
-                            setExercises(
-                              workout.exercises.map(e =>
-                                e.id === a.id ? { ...e, biSet: null } : e,
-                              ),
-                            );
-                          }}
-                          setExercises={setExercises}
+                          actions={actions}
                           categories={categories.data}
                           dragHandle={dragHandle}
                           collapsed={animating}
@@ -427,19 +251,15 @@ const CreateWorkout = () => {
                       <ExerciseCard
                         key={exercise.id}
                         exercise={exercise}
-                        onEdit={it => {
-                          setExercises(workout.exercises.map(e => (e.id === exercise.id ? it : e)));
-                        }}
-                        onDelete={() =>
-                          setExercises(workout.exercises.filter(e => e.id !== exercise.id))
-                        }
+                        actions={actions}
                         categories={categories.data}
                         otherExercises={workout.exercises.filter(
                           other =>
                             other.id !== exercise.id &&
                             other.exerciseId !== "" &&
-                            other.biSet === null &&
-                            workout.exercises.find(e => e.biSet === other.id) === undefined,
+                            workout.biSets.every(
+                              ([first, second]) => first !== other.id && second !== other.id,
+                            ),
                         )}
                         dragHandle={dragHandle}
                         collapsed={animating}
@@ -456,7 +276,7 @@ const CreateWorkout = () => {
           <div className="mb-20 flex flex-row items-center justify-center">
             <button
               className="mt-2 flex items-center gap-3 rounded-full bg-blue-500 px-6 py-2 font-medium text-white shadow-md hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500"
-              onClick={handleAddExercise}
+              onClick={actions.addExercise}
             >
               Adicionar exercício
               <PlusIcon className="h-8 w-8" />

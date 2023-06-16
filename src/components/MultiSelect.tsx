@@ -10,6 +10,7 @@ type Props<T> = {
   itemToString: (option: T) => string;
   itemToKey: (option: T) => string;
   disabled?: boolean;
+  error?: string;
 };
 
 const MultiSelect = <T,>({
@@ -21,6 +22,7 @@ const MultiSelect = <T,>({
   itemToString,
   itemToKey,
   disabled,
+  error,
 }: Props<T>) => {
   const [open, setOpen] = useState(false);
 
@@ -62,7 +64,12 @@ const MultiSelect = <T,>({
         }
         <button
           type="button"
-          className="absolute inset-0 block h-full w-full cursor-default appearance-none rounded-lg border-1 border-gray-300 bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-gray-900 text-opacity-0 focus:border-blue-600 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
+          className={classList(
+            "absolute inset-0 block h-full w-full cursor-default appearance-none rounded-lg border-1 border-gray-300 bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-gray-900 text-opacity-0 focus:border-blue-600 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50",
+            {
+              "border-red-500 ": error !== undefined,
+            },
+          )}
           onClick={() => setOpen(!open)}
           disabled={disabled}
         />
@@ -72,6 +79,7 @@ const MultiSelect = <T,>({
             {
               "top-1/2 -translate-y-1/2 scale-100": !open && !selected.length,
               "top-2 -translate-y-4 scale-75 px-2 text-blue-600": open,
+              "border-red-500 text-red-600": error !== undefined,
             },
           )}
         >

@@ -1,9 +1,13 @@
+import { Menu } from "@headlessui/react";
+import type { Profile, User } from "@prisma/client";
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import { useDebounce } from "use-debounce";
 import Alert from "../../../components/Alert";
 import DatePicker from "../../../components/DatePicker";
+import DownloadPDFButton from "../../../components/DownloadPDFButton";
 import FullPage from "../../../components/FullPage";
 import Modal from "../../../components/Modal";
 import ProfilePic from "../../../components/ProfilePic";
@@ -13,6 +17,7 @@ import TextInput from "../../../components/TextInput";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
 import CheckIcon from "../../../components/icons/CheckIcon";
 import ExclamationCircleIcon from "../../../components/icons/ExclamationCircleIcon";
+import MagnifyingGlassIcon from "../../../components/icons/MagnifyingGlassIcon";
 import PencilSquareIcon from "../../../components/icons/PencilSquareIcon";
 import TrashIcon from "../../../components/icons/TrashIcon";
 import XMarkIcon from "../../../components/icons/XMarkIcon";
@@ -22,12 +27,12 @@ import {
   classList,
   getAge,
   join,
+  useEndOfScroll,
   useFormValidation,
   validateEmail,
 } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
-import DownloadPDFButton from "../../../components/DownloadPDFButton";
 import WorkoutDocument from "../../../utils/pdf";
 
 type Workout = RouterOutputs["workout"]["getMany"][number];
@@ -188,6 +193,19 @@ const Manage = () => {
     });
   };
 
+  const [showCopyWorkoutModal, setShowCopyWorkoutModal] = useState(false);
+  const [showCopyWorkoutErrorAlert, setShowCopyWorkoutErrorAlert] = useState(false);
+
+  const updateWorkoutDate = api.user.updateWorkoutDate.useMutation();
+
+  const createWorkout = api.workout.create.useMutation({
+    onSuccess: () => {
+      updateWorkoutDate.mutate({ profileId });
+      setShowCopyWorkoutModal(false);
+      void workouts.refetch();
+    },
+  });
+
   return (
     <FullPage>
       <QueryErrorAlert queries={[profile, workouts]} />
@@ -202,68 +220,76 @@ const Manage = () => {
             />
           }
           title={profile.data?.isActive ? "Desativar usuário" : "Ativar usuário"}
-          text={`Tem certeza que deseja ${
-            profile.data.isActive ? "desativar" : "ativar"
-          } o usuário ${profile.data.user?.name ?? profile.data.email}?`}
+          footer={
+            <>
+              <button
+                className={classList(
+                  "rounded-md border-1 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50",
+                  {
+                    "border-green-600 bg-green-600": !profile.data.isActive,
+                    "border-red-600 bg-red-600": profile.data.isActive,
+                  },
+                )}
+                onClick={() => changeStatus.mutate({ profileId: profile.data.id })}
+                disabled={changeStatus.isLoading}
+              >
+                {changeStatus.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!changeStatus.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutateAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowMutateAlert(false)}
         >
-          <button
-            className={classList(
-              "rounded-md border-1 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50",
-              {
-                "border-green-600 bg-green-600": !profile.data.isActive,
-                "border-red-600 bg-red-600": profile.data.isActive,
-              },
-            )}
-            onClick={() => changeStatus.mutate({ profileId: profile.data.id })}
-            disabled={changeStatus.isLoading}
-          >
-            {changeStatus.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!changeStatus.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutateAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Tem certeza que deseja ${profile.data.isActive ? "desativar" : "ativar"} o usuário ${
+            profile.data.user?.name ?? profile.data.email
+          }?`}
         </Alert>
       )}
       {profile.data && toRemove && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-200 p-2 text-red-500" />}
           title="Excluir treino"
-          text={`Tem certeza que deseja excluir o treino ${toRemove.name} do usuário ${
-            profile.data.user?.name ?? profile.data.email
-          }?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => deleteWorkout.mutate({ id: toRemove.id })}
+                disabled={deleteWorkout.isLoading}
+              >
+                {deleteWorkout.isLoading ? (
+                  <Spinner className="h-6 w-6 fill-red-600 text-gray-200" />
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!deleteWorkout.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setToRemove(null)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setToRemove(null)}
         >
-          <button
-            className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => deleteWorkout.mutate({ id: toRemove.id })}
-            disabled={deleteWorkout.isLoading}
-          >
-            {deleteWorkout.isLoading ? (
-              <Spinner className="h-6 w-6 fill-red-600 text-gray-200" />
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!deleteWorkout.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setToRemove(null)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Tem certeza que deseja excluir o treino ${toRemove.name} do usuário ${
+            profile.data.user?.name ?? profile.data.email
+          }?`}
         </Alert>
       )}
       {showMutateProfileModal && (
@@ -325,31 +351,35 @@ const Manage = () => {
         <Alert
           icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
           title="Confirmar Atualização"
-          text={`Tem certeza que deseja realizar essas alterações?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  updateProfile.mutate({ id: profileId, email, birthdate, name: user.name });
+                }}
+              >
+                {updateProfile.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!updateProfile.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutateProfileConfirmAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowMutateProfileConfirmAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              updateProfile.mutate({ id: profileId, email, birthdate, name: user.name });
-            }}
-          >
-            {updateProfile.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!updateProfile.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutateProfileConfirmAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          Tem certeza que deseja realizar essas alterações?
         </Alert>
       )}
       {showCreateUserModal && (
@@ -437,33 +467,37 @@ const Manage = () => {
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-600" />}
           title="Confirmar Exclusão"
-          text={`Tem certeza que deseja excluir o usuário ${
-            profile.data?.user?.name ?? profile.data!.email
-          }? Todos os dados serão perdidos.`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  deleteProfile.mutate(profileId);
+                }}
+              >
+                {deleteProfile.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Excluir"
+                )}
+              </button>
+              {!deleteProfile.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutateProfileDeleteAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowMutateProfileDeleteAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              deleteProfile.mutate(profileId);
-            }}
-          >
-            {deleteProfile.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Excluir"
-            )}
-          </button>
-          {!deleteProfile.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutateProfileDeleteAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          {`Tem certeza que deseja excluir o usuário ${
+            profile.data?.user?.name ?? profile.data!.email
+          }? Todos os dados serão perdidos.`}
         </Alert>
       )}
       {showChangePasswordModal && (
@@ -532,59 +566,116 @@ const Manage = () => {
         <Alert
           icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
           title="Confirmar Atualização"
-          text={`Tem certeza que deseja alterar a senha do usuário?`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  if (
+                    !user.password ||
+                    !user.confirmPassword ||
+                    passwordError() ||
+                    confirmPasswordError()
+                  )
+                    return;
+
+                  updatePassword.mutate({
+                    userId: profile.data?.userId ?? "",
+                    newPassword: user.password,
+                  });
+                }}
+              >
+                {updateProfile.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!updateProfile.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutatePasswordAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
           onClickOutside={() => setShowMutatePasswordAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              if (
-                !user.password ||
-                !user.confirmPassword ||
-                passwordError() ||
-                confirmPasswordError()
-              )
-                return;
-
-              updatePassword.mutate({
-                userId: profile.data?.userId ?? "",
-                newPassword: user.password,
-              });
-            }}
-          >
-            {updateProfile.isLoading ? (
-              <div className="flex h-full w-full items-center justify-center">
-                <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
-              </div>
-            ) : (
-              "Confirmar"
-            )}
-          </button>
-          {!updateProfile.isLoading && (
-            <button
-              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
-              onClick={() => setShowMutatePasswordAlert(false)}
-            >
-              Cancelar
-            </button>
-          )}
+          Tem certeza que deseja alterar a senha do usuário?
         </Alert>
       )}
       {showMutateProfileErrorAlert && (
         <Alert
           icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-600" />}
           title="Erro ao atualizar"
-          text={`O e-mail inserido já está em uso.`}
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  setShowMutateProfileErrorAlert(false);
+                }}
+              >
+                Ok
+              </button>
+            </>
+          }
           onClickOutside={() => setShowMutateProfileErrorAlert(false)}
         >
-          <button
-            className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => {
-              setShowMutateProfileErrorAlert(false);
-            }}
-          >
-            Ok
-          </button>
+          O e-mail inserido já está em uso.
+        </Alert>
+      )}
+      {showCopyWorkoutModal && (
+        <Modal
+          onClickOutside={() => setShowCopyWorkoutModal(false)}
+          buttons={
+            <button
+              className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+              onClick={() => setShowCopyWorkoutModal(false)}
+            >
+              Cancelar
+            </button>
+          }
+        >
+          <CopyWorkout
+            onChoose={w =>
+              createWorkout.mutate({
+                profileId: profile.data!.id,
+                biSets: w.biSets.map(([left, right]) => [
+                  w.exercises.findIndex(e => e.id === left)!,
+                  w.exercises.findIndex(e => e.id === right)!,
+                ]),
+                exercises: w.exercises,
+                days: w.days,
+                name: w.name,
+              })
+            }
+          />
+        </Modal>
+      )}
+      {showCopyWorkoutErrorAlert && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-600" />}
+          title="Erro ao copiar treino"
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  setShowCopyWorkoutErrorAlert(false);
+                }}
+              >
+                Ok
+              </button>
+            </>
+          }
+          onClickOutside={() => setShowCopyWorkoutErrorAlert(false)}
+        >
+          Ocorreu um erro ao copiar o treino, tente novamente em instantes.
         </Alert>
       )}
       <div className="relative flex h-full flex-col overflow-y-auto">
@@ -714,12 +805,27 @@ const Manage = () => {
                   </div>
                 ))}
                 <div className="mt-4 flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
-                  <Link
-                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
-                    href={`/manage/${profileId}/create_workout`}
-                  >
-                    Adicionar treino
-                  </Link>
+                  <Menu as="div" className="relative w-full">
+                    <Menu.Button className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600">
+                      Adicionar treino
+                    </Menu.Button>
+                    <Menu.Items className="absolute right-0 mt-2 flex origin-top-right flex-col gap-2 rounded-md bg-white p-2 shadow-lg">
+                      <Menu.Item
+                        as={Link}
+                        href={`/manage/${profileId}/create_workout`}
+                        className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                      >
+                        Criar treino novo
+                      </Menu.Item>
+                      <Menu.Item
+                        as="button"
+                        className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                        onClick={() => setShowCopyWorkoutModal(true)}
+                      >
+                        Copiar treino existente
+                      </Menu.Item>
+                    </Menu.Items>
+                  </Menu>
                   {workoutsWithExercises.isLoading ? (
                     <div className="w-full rounded-md bg-slate-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors ">
                       Gerando pdf...
@@ -735,9 +841,9 @@ const Manage = () => {
                           workouts={workoutsWithExercises.data!}
                         />
                       }
-                      className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                      className="w-full rounded-md bg-blue-500 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
                     >
-                      Baixar Treinos
+                      <span className="px-6">Baixar Treinos</span>
                     </DownloadPDFButton>
                   )}
                 </div>
@@ -769,6 +875,126 @@ const Manage = () => {
         </div>
       </div>
     </FullPage>
+  );
+};
+
+type CopyWorkoutProps = {
+  onChoose: (workout: RouterOutputs["workout"]["getManyWithExercises"][number]) => void;
+};
+
+const CopyWorkout = ({ onChoose }: CopyWorkoutProps) => {
+  const [searchInput, setSearchInput] = useState("");
+
+  const [debouncedInput] = useDebounce(searchInput, 150);
+
+  const profiles = api.user.searchProfiles.useInfiniteQuery(
+    { search: debouncedInput },
+    { getNextPageParam: lastPage => lastPage.nextCursor },
+  );
+
+  const ref = useEndOfScroll<HTMLDivElement>(() => {
+    if (profiles.hasNextPage && !profiles.isFetching) {
+      void profiles.fetchNextPage();
+    }
+  });
+
+  const [chosenUser, setChosenUser] = useState<(Profile & { user: User | null }) | null>(null);
+
+  const workouts = api.workout.getManyWithExercises.useQuery(
+    { profileId: chosenUser?.id ?? "" },
+    { enabled: chosenUser !== null },
+  );
+
+  const chooseUser = (profile: Profile & { user: User | null }) => {
+    setChosenUser(profile);
+    setSearchInput("");
+  };
+
+  return (
+    <div className="relative flex max-h-96 w-80 flex-col">
+      {chosenUser ? (
+        <>
+          <div className="relative m-2 flex items-center gap-2">
+            <button className="rounded-full p-2" onClick={() => setChosenUser(null)}>
+              <ArrowUturnLeftIcon className="h-5 w-5" />
+            </button>
+            <ProfilePic user={chosenUser.user} size="sm" />
+            <span className="text-sm font-semibold">
+              {chosenUser.user?.name ?? chosenUser.email}
+            </span>
+          </div>
+          <div className="grow overflow-y-auto">
+            <div className="mx-4 flex h-full flex-1 grow flex-col items-center gap-4">
+              {!workouts.data && workouts.isLoading ? (
+                <div className="flex flex-1 items-center justify-center">
+                  <Spinner className="fill-blue-600 text-gray-200" />
+                </div>
+              ) : (
+                <div className="flex w-full flex-col gap-2">
+                  {workouts.data?.map(workout => (
+                    <button
+                      key={workout.id}
+                      onClick={() => onChoose(workout)}
+                      className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                    >
+                      <div className="font-medium">{workout.name}</div>
+                      <div className="font-light">{join(workout.categories)}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="relative m-2 flex items-center gap-2">
+            <input
+              type="text"
+              className="block h-12 w-full appearance-none rounded-full pl-4 pr-12 shadow-md outline-none ring-0 focus:outline-none focus:ring-0"
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+            />
+            <MagnifyingGlassIcon className="absolute right-4 top-3 h-6 w-6" />
+          </div>
+          <div className="grow overflow-y-auto" ref={ref}>
+            <div className="mx-4 flex h-full flex-1 grow flex-col items-center gap-4">
+              {!profiles.data && profiles.isLoading ? (
+                <div className="flex flex-1 items-center justify-center">
+                  <Spinner className="fill-blue-600 text-gray-200" />
+                </div>
+              ) : (
+                profiles.data && (
+                  <div className="flex w-full max-w-[32rem] flex-col gap-1 pb-4">
+                    {profiles.data.pages.flatMap(({ items }) =>
+                      items.map(profile => (
+                        <button
+                          key={profile.id}
+                          onClick={() => chooseUser(profile)}
+                          className="flex w-full grow flex-row items-center justify-between rounded-md bg-slate-50 shadow-md transition-shadow hover:shadow-xl"
+                        >
+                          <div className="flex grow items-center truncate p-1 text-left">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
+                              <ProfilePic user={profile.user} size="sm" />
+                            </div>
+                            <div className="ml-2 truncate">
+                              <div className="truncate text-sm font-medium text-slate-800">
+                                {profile.user?.name}
+                              </div>
+                              <div className="truncate text-xs text-slate-500">{profile.email}</div>
+                            </div>
+                          </div>
+                        </button>
+                      )),
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 

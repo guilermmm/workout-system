@@ -3,33 +3,23 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import type { ParseJsonValues, Sets } from "../../../utils/types";
 import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
-import { sleep } from "../../../utils";
 
-const validateIndexes = (workout: { exercises: { index: number }[] }) => {
-  const indexes = workout.exercises.map(exercise => exercise.index);
-  return indexes.length === new Set(indexes).size;
-};
-
-const validateBiSets = (workout: {
-  biSets: [number, number][];
-  exercises: { index: number }[];
-}) => {
+const validateBiSets = (workout: { biSets: [number, number][]; exercises: unknown[] }) => {
   const biSets = workout.biSets.flat();
-  const indexes = workout.exercises.map(exercise => exercise.index);
   const isUnique = biSets.length === new Set(biSets).size;
-  const isValid = biSets.every(index => indexes.includes(index));
+  const isValid = biSets.every(index => workout.exercises.length > index);
   return isUnique && isValid;
 };
 
 const validateBiSetsSets = (workout: {
   biSets: [number, number][];
-  exercises: { index: number; sets: unknown[] }[];
+  exercises: { sets: unknown[] }[];
 }) => {
   const biSets = workout.biSets.map(
     ([index1, index2]) =>
       [
-        workout.exercises.find(exercise => exercise.index === index1)!,
-        workout.exercises.find(exercise => exercise.index === index2)!,
+        workout.exercises.find((_, i) => i === index1)!,
+        workout.exercises.find((_, i) => i === index2)!,
       ] as const,
   );
   return biSets.every(
@@ -120,7 +110,12 @@ export const workoutRouter = createTRPCRouter({
         orderBy: { name: "asc" },
       });
 
-      return workouts as ParseJsonValues<typeof workouts>;
+      const mappedWorkouts = workouts.map(workout => ({
+        ...workout,
+        categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
+      }));
+
+      return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
     }),
 
   getManyWithExercisesBySession: userProcedure.query(async ({ ctx }) => {
@@ -130,7 +125,12 @@ export const workoutRouter = createTRPCRouter({
       orderBy: { name: "asc" },
     });
 
-    return workouts as ParseJsonValues<typeof workouts>;
+    const mappedWorkouts = workouts.map(workout => ({
+      ...workout,
+      categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
+    }));
+
+    return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
   }),
 
   create: adminProcedure
@@ -150,13 +150,11 @@ export const workoutRouter = createTRPCRouter({
                 ]),
                 description: z.string().nullish(),
                 method: z.nativeEnum(Method),
-                index: z.number().min(0),
               }),
             )
             .min(1),
           biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
         })
-        .refine(validateIndexes, "Exercise indexes must be unique")
         .refine(validateBiSets, "BiSets must be unique and refer to valid exercises")
         .refine(validateBiSetsSets, "BiSets must refer to exercises with the same number of sets"),
     )
@@ -168,7 +166,7 @@ export const workoutRouter = createTRPCRouter({
             days,
             biSets: [],
             profile: { connect: { id: profileId } },
-            exercises: { createMany: { data: exercises } },
+            exercises: { createMany: { data: exercises.map((e, index) => ({ ...e, index })) } },
           },
           include: { exercises: true },
         });
@@ -192,7 +190,6 @@ export const workoutRouter = createTRPCRouter({
           exercises: z
             .array(
               z.object({
-                id: z.string().optional(),
                 exerciseId: z.string(),
                 sets: z.union([
                   z.array(z.object({ reps: z.number().min(0), weight: z.number().min(0) })).min(1),
@@ -200,55 +197,26 @@ export const workoutRouter = createTRPCRouter({
                 ]),
                 description: z.string().nullish(),
                 method: z.nativeEnum(Method),
-                index: z.number().min(0),
               }),
             )
             .min(1),
           biSets: z.array(z.tuple([z.number().min(0), z.number().min(0)])),
         })
-        .refine(validateIndexes, "Exercise indexes must be unique")
         .refine(validateBiSets, "BiSets must be unique and refer to valid exercises")
         .refine(validateBiSetsSets, "BiSets must refer to exercises with the same number of sets"),
     )
     .mutation(async ({ ctx, input: { id: workoutId, name, days, exercises, biSets } }) => {
       await ctx.prisma.$transaction(async tx => {
-        const workout = await tx.workout.update({
-          where: { id: workoutId },
-          data: { name, days },
-          include: {
-            exercises: {
-              include: {
-                exercise: { select: { id: true, category: true, name: true, image: false } },
-              },
-            },
-          },
+        await tx.exerciseInWorkout.deleteMany({
+          where: { workoutId },
         });
-
-        const exercisesToCreate = exercises.filter(exercise => typeof exercise.id !== "string");
 
         await tx.exerciseInWorkout.createMany({
-          data: exercisesToCreate.map(({ id: _, ...exercise }) => ({ workoutId, ...exercise })),
-        });
-
-        const exercisesToUpdate = exercises.filter(exercise =>
-          workout.exercises.some(e => exercise.id === e.id),
-        );
-
-        await Promise.all(
-          exercisesToUpdate.map(async ({ id, ...exercise }) => {
-            await tx.exerciseInWorkout.update({
-              where: { id },
-              data: exercise,
-            });
-          }),
-        );
-
-        const exercisesToDelete = workout.exercises.filter(exercise =>
-          exercises.every(e => exercise.id !== e.id),
-        );
-
-        await tx.exerciseInWorkout.deleteMany({
-          where: { id: { in: exercisesToDelete.map(exercise => exercise.id) } },
+          data: exercises.map((exercise, index) => ({
+            workoutId,
+            ...exercise,
+            index,
+          })),
         });
 
         const { exercises: newExercises } = await tx.workout.findUniqueOrThrow({
@@ -267,7 +235,10 @@ export const workoutRouter = createTRPCRouter({
           newExercises.find(exercise => exercise.index === index2)!.id,
         ]);
 
-        await tx.workout.update({ where: { id: workoutId }, data: { biSets: biSetsData } });
+        await tx.workout.update({
+          where: { id: workoutId },
+          data: { name, days, biSets: biSetsData },
+        });
       });
     }),
 
