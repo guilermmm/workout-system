@@ -19,7 +19,7 @@ export default createNextApiHandler({
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: "16mb",
+      sizeLimit: "8mb",
     },
   },
 };
