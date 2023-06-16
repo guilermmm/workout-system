@@ -16,6 +16,7 @@ import PhotoIcon from "../icons/PhotoIcon";
 import PlusIcon from "../icons/PlusIcon";
 import TrashIcon from "../icons/TrashIcon";
 import XMarkIcon from "../icons/XMarkIcon";
+import Spinner from "../Spinner";
 
 type ExerciseCardProps = {
   exercise: Exercise;
@@ -81,7 +82,11 @@ const ExerciseCard = ({
           }
         >
           <h1 className="self-center font-medium">{exerciseExercise.name}</h1>
-          {selectedExerciseImage.data ? (
+          {selectedExerciseImage.isLoading ? (
+            <div className="flex h-full w-full items-center justify-center">
+              <Spinner className="m-16 h-24 w-24 fill-blue-600 text-gray-200" />
+            </div>
+          ) : selectedExerciseImage.data ? (
             <div className="relative h-72 w-72">
               <Image
                 src={selectedExerciseImage.data}
