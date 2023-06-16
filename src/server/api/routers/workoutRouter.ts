@@ -125,7 +125,12 @@ export const workoutRouter = createTRPCRouter({
       orderBy: { name: "asc" },
     });
 
-    return workouts as ParseJsonValues<typeof workouts>;
+    const mappedWorkouts = workouts.map(workout => ({
+      ...workout,
+      categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
+    }));
+
+    return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
   }),
 
   create: adminProcedure

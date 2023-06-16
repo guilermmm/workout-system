@@ -23,7 +23,6 @@ import { api, type RouterInputs, type RouterOutputs } from "../../../../utils/ap
 import { weekdaysTranslation } from "../../../../utils/consts";
 import type { Workout } from "../../../../utils/workout";
 import { useWorkout } from "../../../../utils/workout";
-import { classList } from "../../../../utils";
 
 const apiToState = (workout: RouterOutputs["workout"]["getById"]): Workout => {
   return {
