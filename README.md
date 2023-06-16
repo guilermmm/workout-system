@@ -99,9 +99,9 @@ confirmacao de senha so serve pro front validar se é igual, pro back so manda 1
 
 - [x] modal nas pagina de perfil tao bugando
 
-- [ ] ?template?
+- [x] copiar os treino
 - [x] foto do exercicio na pagina de cadastrar/editar treino .
 - [ ] mudar reps de number p string .
 - [x] atualizar o componente modal p aceitar ReactNode .
 - [x] mensagem de finalizacao de treino bem hippie
-- [ ] pagina de autenticacao fudida
+- [x] pagina de autenticacao fudida

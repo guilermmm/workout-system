@@ -23,6 +23,7 @@ import { api, type RouterInputs, type RouterOutputs } from "../../../../utils/ap
 import { weekdaysTranslation } from "../../../../utils/consts";
 import type { Workout } from "../../../../utils/workout";
 import { useWorkout } from "../../../../utils/workout";
+import { classList } from "../../../../utils";
 
 const apiToState = (workout: RouterOutputs["workout"]["getById"]): Workout => {
   return {
@@ -53,8 +54,7 @@ const stateToApi = (workout: Workout, id: string): RouterInputs["workout"]["upda
     id,
     name: workout.name,
     days: workout.days,
-    exercises: workout.exercises.map((exercise, index) => ({
-      id: typeof exercise.id === "string" ? exercise.id : undefined,
+    exercises: workout.exercises.map(exercise => ({
       exerciseId: exercise.exerciseId,
       description: exercise.description,
       method: exercise.method,
@@ -68,7 +68,6 @@ const stateToApi = (workout: Workout, id: string): RouterInputs["workout"]["upda
               time: time.minutes * 60 + time.seconds,
               weight: weight * 1000,
             })),
-      index,
     })),
     biSets: workout.biSets.map(([firstId, secondId]) => {
       const first = workout.exercises.findIndex(e => e.id === firstId)!;
@@ -238,6 +237,7 @@ const EditWorkout = () => {
             disabled={saving || originalWorkout.isLoading}
             minLength={1}
             maxLength={3}
+            error={workout.name === "" ? "O nome do treino não pode estar vazio" : undefined}
           />
           <MultiSelect
             label="Dia(s)"
@@ -248,6 +248,7 @@ const EditWorkout = () => {
             itemToString={it => weekdaysTranslation[it]}
             itemToKey={it => it}
             disabled={saving || originalWorkout.isLoading}
+            error={workout.days.length === 0 ? "O treino deve ter pelo menos um dia" : undefined}
           />
         </div>
 

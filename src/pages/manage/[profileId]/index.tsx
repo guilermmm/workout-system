@@ -194,6 +194,17 @@ const Manage = () => {
   };
 
   const [showCopyWorkoutModal, setShowCopyWorkoutModal] = useState(false);
+  const [showCopyWorkoutErrorAlert, setShowCopyWorkoutErrorAlert] = useState(false);
+
+  const updateWorkoutDate = api.user.updateWorkoutDate.useMutation();
+
+  const createWorkout = api.workout.create.useMutation({
+    onSuccess: () => {
+      updateWorkoutDate.mutate({ profileId });
+      setShowCopyWorkoutModal(false);
+      void workouts.refetch();
+    },
+  });
 
   return (
     <FullPage>
@@ -630,8 +641,42 @@ const Manage = () => {
             </button>
           }
         >
-          <CopyWorkout onChoose={w => console.log("esse aq", w)} />
+          <CopyWorkout
+            onChoose={w =>
+              createWorkout.mutate({
+                profileId: profile.data!.id,
+                biSets: w.biSets.map(([left, right]) => [
+                  w.exercises.findIndex(e => e.id === left)!,
+                  w.exercises.findIndex(e => e.id === right)!,
+                ]),
+                exercises: w.exercises,
+                days: w.days,
+                name: w.name,
+              })
+            }
+          />
         </Modal>
+      )}
+      {showCopyWorkoutErrorAlert && (
+        <Alert
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-600" />}
+          title="Erro ao copiar treino"
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  setShowCopyWorkoutErrorAlert(false);
+                }}
+              >
+                Ok
+              </button>
+            </>
+          }
+          onClickOutside={() => setShowCopyWorkoutErrorAlert(false)}
+        >
+          Ocorreu um erro ao copiar o treino, tente novamente em instantes.
+        </Alert>
       )}
       <div className="relative flex h-full flex-col overflow-y-auto">
         <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
@@ -834,7 +879,7 @@ const Manage = () => {
 };
 
 type CopyWorkoutProps = {
-  onChoose: (workout: Workout) => void;
+  onChoose: (workout: RouterOutputs["workout"]["getManyWithExercises"][number]) => void;
 };
 
 const CopyWorkout = ({ onChoose }: CopyWorkoutProps) => {
@@ -855,7 +900,7 @@ const CopyWorkout = ({ onChoose }: CopyWorkoutProps) => {
 
   const [chosenUser, setChosenUser] = useState<(Profile & { user: User | null }) | null>(null);
 
-  const workouts = api.workout.getMany.useQuery(
+  const workouts = api.workout.getManyWithExercises.useQuery(
     { profileId: chosenUser?.id ?? "" },
     { enabled: chosenUser !== null },
   );

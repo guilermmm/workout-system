@@ -110,7 +110,12 @@ export const workoutRouter = createTRPCRouter({
         orderBy: { name: "asc" },
       });
 
-      return workouts as ParseJsonValues<typeof workouts>;
+      const mappedWorkouts = workouts.map(workout => ({
+        ...workout,
+        categories: [...new Set(workout.exercises.map(exercise => exercise.exercise.category))],
+      }));
+
+      return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
     }),
 
   getManyWithExercisesBySession: userProcedure.query(async ({ ctx }) => {
@@ -180,7 +185,6 @@ export const workoutRouter = createTRPCRouter({
           exercises: z
             .array(
               z.object({
-                id: z.string().optional(),
                 exerciseId: z.string(),
                 sets: z.union([
                   z.array(z.object({ reps: z.number().min(0), weight: z.number().min(0) })).min(1),
@@ -198,47 +202,16 @@ export const workoutRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input: { id: workoutId, name, days, exercises, biSets } }) => {
       await ctx.prisma.$transaction(async tx => {
-        const workout = await tx.workout.update({
-          where: { id: workoutId },
-          data: { name, days },
-          include: {
-            exercises: {
-              include: {
-                exercise: { select: { id: true, category: true, name: true, image: false } },
-              },
-            },
-          },
+        await tx.exerciseInWorkout.deleteMany({
+          where: { workoutId },
         });
 
-        const exercisesToCreate = exercises.filter(exercise => typeof exercise.id !== "string");
-
         await tx.exerciseInWorkout.createMany({
-          data: exercisesToCreate.map(({ id: _, ...exercise }, index) => ({
+          data: exercises.map((exercise, index) => ({
             workoutId,
             ...exercise,
             index,
           })),
-        });
-
-        const exercisesToUpdate = exercises.filter(exercise =>
-          workout.exercises.some(e => exercise.id === e.id),
-        );
-
-        await Promise.all(
-          exercisesToUpdate.map(async ({ id, ...exercise }) => {
-            await tx.exerciseInWorkout.update({
-              where: { id },
-              data: exercise,
-            });
-          }),
-        );
-
-        const exercisesToDelete = workout.exercises.filter(exercise =>
-          exercises.every(e => exercise.id !== e.id),
-        );
-
-        await tx.exerciseInWorkout.deleteMany({
-          where: { id: { in: exercisesToDelete.map(exercise => exercise.id) } },
         });
 
         const { exercises: newExercises } = await tx.workout.findUniqueOrThrow({
@@ -257,7 +230,10 @@ export const workoutRouter = createTRPCRouter({
           newExercises.find(exercise => exercise.index === index2)!.id,
         ]);
 
-        await tx.workout.update({ where: { id: workoutId }, data: { biSets: biSetsData } });
+        await tx.workout.update({
+          where: { id: workoutId },
+          data: { name, days, biSets: biSetsData },
+        });
       });
     }),
 
