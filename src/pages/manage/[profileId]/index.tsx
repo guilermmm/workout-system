@@ -679,7 +679,7 @@ const Manage = () => {
           }
           onClickOutside={() => setShowCopyWorkoutErrorAlert(false)}
         >
-          Ocorreu um erro ao copiar um treino, tente novamente em instantes.
+          Ocorreu um erro ao copiar o treino, tente novamente em instantes.
         </Alert>
       )}
       <div className="relative flex h-full flex-col overflow-y-auto">
@@ -947,38 +947,40 @@ const CopyWorkout = ({ onChoose }: CopyWorkoutProps) => {
                 </div>
               ) : (
                 <div className="flex w-full flex-col gap-4 px-2">
-                  <div className="flex w-full flex-col items-center justify-center">
-                    {workouts.data?.map(workout => (
-                      <button
-                        className="group flex w-full flex-row items-center justify-center gap-2 rounded-md bg-slate-50 py-1 px-2 hover:bg-slate-200"
-                        key={workout.id}
-                        onClick={() => toggleWorkout(workout)}
-                      >
-                        <div
-                          className={classList(
-                            "h-7 w-7 flex-none border-2 text-green-500 transition-all",
-                            {
-                              "rounded-lg border-slate-400": !chosenWorkouts.find(
-                                w => w.id === workout.id,
-                              ),
-                              "rounded-2xl border-green-500": !!chosenWorkouts.find(
-                                w => w.id === workout.id,
-                              ),
-                            },
-                          )}
+                  <div className="flex max-h-60 w-full flex-col items-center justify-center overflow-y-scroll">
+                    <div className="mt-10 w-full p-2">
+                      {workouts.data?.map(workout => (
+                        <button
+                          className="group flex w-full flex-row items-center justify-center gap-2 rounded-md bg-slate-50 py-1 px-2 hover:bg-slate-200"
+                          key={workout.id}
+                          onClick={() => toggleWorkout(workout)}
                         >
-                          <div className="flex h-full w-full items-center justify-center">
-                            {chosenWorkouts.find(w => w.id === workout.id) && (
-                              <CheckIcon className="h-full w-full p-1" />
+                          <div
+                            className={classList(
+                              "h-7 w-7 flex-none border-2 text-green-500 transition-all",
+                              {
+                                "rounded-lg border-slate-400": !chosenWorkouts.find(
+                                  w => w.id === workout.id,
+                                ),
+                                "rounded-2xl border-green-500": !!chosenWorkouts.find(
+                                  w => w.id === workout.id,
+                                ),
+                              },
                             )}
+                          >
+                            <div className="flex h-full w-full items-center justify-center">
+                              {chosenWorkouts.find(w => w.id === workout.id) && (
+                                <CheckIcon className="h-full w-full p-1" />
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex w-full flex-col rounded-md bg-blue-500 px-3 py-2 text-center text-sm text-white shadow-md">
-                          <div className="font-medium">{workout.name}</div>
-                          <div className="text-xs font-light">{join(workout.categories)}</div>
-                        </div>
-                      </button>
-                    ))}
+                          <div className="flex w-full flex-col rounded-md bg-blue-500 px-3 py-2 text-center text-sm text-white shadow-md">
+                            <div className="font-medium">{workout.name}</div>
+                            <div className="text-xs font-light">{join(workout.categories)}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="w-full">
                     <button
