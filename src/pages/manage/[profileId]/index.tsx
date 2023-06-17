@@ -198,13 +198,30 @@ const Manage = () => {
 
   const updateWorkoutDate = api.user.updateWorkoutDate.useMutation();
 
-  const createWorkout = api.workout.create.useMutation({
-    onSuccess: () => {
-      updateWorkoutDate.mutate({ profileId });
-      setShowCopyWorkoutModal(false);
-      void workouts.refetch();
-    },
-  });
+  const createWorkout = api.workout.create.useMutation();
+
+  const createWorkouts = (ws: RouterOutputs["workout"]["getManyWithExercises"]) => {
+    Promise.all(
+      ws.map(w =>
+        createWorkout.mutateAsync({
+          profileId: profile.data!.id,
+          biSets: w.biSets.map(([left, right]) => [
+            w.exercises.findIndex(e => e.id === left)!,
+            w.exercises.findIndex(e => e.id === right)!,
+          ]),
+          exercises: w.exercises,
+          days: w.days,
+          name: w.name,
+        }),
+      ),
+    )
+      .catch(() => setShowCopyWorkoutErrorAlert(true))
+      .finally(() => {
+        updateWorkoutDate.mutate({ profileId });
+        setShowCopyWorkoutModal(false);
+        void workouts.refetch();
+      });
+  };
 
   return (
     <FullPage>
@@ -641,20 +658,7 @@ const Manage = () => {
             </button>
           }
         >
-          <CopyWorkout
-            onChoose={w =>
-              createWorkout.mutate({
-                profileId: profile.data!.id,
-                biSets: w.biSets.map(([left, right]) => [
-                  w.exercises.findIndex(e => e.id === left)!,
-                  w.exercises.findIndex(e => e.id === right)!,
-                ]),
-                exercises: w.exercises,
-                days: w.days,
-                name: w.name,
-              })
-            }
-          />
+          <CopyWorkout onChoose={createWorkouts} />
         </Modal>
       )}
       {showCopyWorkoutErrorAlert && (
@@ -675,7 +679,7 @@ const Manage = () => {
           }
           onClickOutside={() => setShowCopyWorkoutErrorAlert(false)}
         >
-          Ocorreu um erro ao copiar o treino, tente novamente em instantes.
+          Ocorreu um erro ao copiar um treino, tente novamente em instantes.
         </Alert>
       )}
       <div className="relative flex h-full flex-col overflow-y-auto">
@@ -879,7 +883,7 @@ const Manage = () => {
 };
 
 type CopyWorkoutProps = {
-  onChoose: (workout: RouterOutputs["workout"]["getManyWithExercises"][number]) => void;
+  onChoose: (workout: RouterOutputs["workout"]["getManyWithExercises"]) => void;
 };
 
 const CopyWorkout = ({ onChoose }: CopyWorkoutProps) => {
@@ -905,9 +909,21 @@ const CopyWorkout = ({ onChoose }: CopyWorkoutProps) => {
     { enabled: chosenUser !== null },
   );
 
+  const [chosenWorkouts, setChosenWorkouts] = useState<
+    RouterOutputs["workout"]["getManyWithExercises"]
+  >([]);
+
   const chooseUser = (profile: Profile & { user: User | null }) => {
     setChosenUser(profile);
     setSearchInput("");
+  };
+
+  const toggleWorkout = (workout: RouterOutputs["workout"]["getManyWithExercises"][number]) => {
+    if (chosenWorkouts.some(w => w.id === workout.id)) {
+      setChosenWorkouts(chosenWorkouts.filter(w => w.id !== workout.id));
+    } else {
+      setChosenWorkouts([...chosenWorkouts, workout]);
+    }
   };
 
   return (
@@ -924,23 +940,55 @@ const CopyWorkout = ({ onChoose }: CopyWorkoutProps) => {
             </span>
           </div>
           <div className="grow overflow-y-auto">
-            <div className="mx-4 flex h-full flex-1 grow flex-col items-center gap-4">
+            <div className="flex h-full flex-1 grow flex-col items-center gap-4">
               {!workouts.data && workouts.isLoading ? (
                 <div className="flex flex-1 items-center justify-center">
                   <Spinner className="fill-blue-600 text-gray-200" />
                 </div>
               ) : (
-                <div className="flex w-full flex-col gap-2">
-                  {workouts.data?.map(workout => (
+                <div className="flex w-full flex-col gap-4 px-2">
+                  <div className="flex w-full flex-col items-center justify-center">
+                    {workouts.data?.map(workout => (
+                      <button
+                        className="group flex w-full flex-row items-center justify-center gap-2 rounded-md bg-slate-50 py-1 px-2 hover:bg-slate-200"
+                        key={workout.id}
+                        onClick={() => toggleWorkout(workout)}
+                      >
+                        <div
+                          className={classList(
+                            "h-7 w-7 flex-none border-2 text-green-500 transition-all",
+                            {
+                              "rounded-lg border-slate-400": !chosenWorkouts.find(
+                                w => w.id === workout.id,
+                              ),
+                              "rounded-2xl border-green-500": !!chosenWorkouts.find(
+                                w => w.id === workout.id,
+                              ),
+                            },
+                          )}
+                        >
+                          <div className="flex h-full w-full items-center justify-center">
+                            {chosenWorkouts.find(w => w.id === workout.id) && (
+                              <CheckIcon className="h-full w-full p-1" />
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex w-full flex-col rounded-md bg-blue-500 px-3 py-2 text-center text-sm text-white shadow-md">
+                          <div className="font-medium">{workout.name}</div>
+                          <div className="text-xs font-light">{join(workout.categories)}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="w-full">
                     <button
-                      key={workout.id}
-                      onClick={() => onChoose(workout)}
-                      className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                      className="w-full rounded-full bg-blue-600 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-700 disabled:bg-gray-400"
+                      disabled={chosenWorkouts.length === 0}
+                      onClick={() => onChoose(chosenWorkouts)}
                     >
-                      <div className="font-medium">{workout.name}</div>
-                      <div className="font-light">{join(workout.categories)}</div>
+                      Copiar treinos selecionados
                     </button>
-                  ))}
+                  </div>
                 </div>
               )}
             </div>

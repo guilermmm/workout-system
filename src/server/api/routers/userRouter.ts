@@ -37,7 +37,10 @@ export const userRouter = createTRPCRouter({
     .query(async ({ ctx, input: { search } }) => {
       return ctx.prisma.adminProfile.findMany({
         where: {
-          OR: [{ user: { name: { contains: search } } }, { email: { contains: search } }],
+          OR: [
+            { user: { name: { contains: search, mode: "insensitive" } } },
+            { email: { contains: search, mode: "insensitive" } },
+          ],
         },
         include: { user: true },
       });
@@ -62,7 +65,10 @@ export const userRouter = createTRPCRouter({
       const items = await ctx.prisma.profile.findMany({
         take: limit + 1,
         where: {
-          OR: [{ user: { name: { contains: search } } }, { email: { contains: search } }],
+          OR: [
+            { user: { name: { contains: search, mode: "insensitive" } } },
+            { email: { contains: search, mode: "insensitive" } },
+          ],
         },
         cursor: cursor ? { id: cursor } : undefined,
         include: { user: true },
