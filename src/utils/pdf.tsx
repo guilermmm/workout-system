@@ -15,7 +15,7 @@ type ExerciseGroup = { id: string; exercises: readonly [Exercise, Exercise] };
 
 type Sets = (
   | { time: number; weight: number; reps: undefined }
-  | { time: undefined; weight: number; reps: number }
+  | { time: undefined; weight: number; reps: string }
 )[];
 
 export const PDFViewerWithNoSSR = dynamic(

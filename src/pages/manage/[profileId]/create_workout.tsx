@@ -102,7 +102,7 @@ const CreateWorkout = () => {
     workout.exercises.every(
       e =>
         e.exerciseId !== "" &&
-        ((e.type === "REPS" && e.sets.every(s => s.reps > 0)) ||
+        ((e.type === "REPS" && e.sets.every(s => s.reps.trim() !== "")) ||
           (e.type === "TIME" && e.sets.every(s => s.time.seconds > 0 || s.time.minutes > 0))),
     );
 

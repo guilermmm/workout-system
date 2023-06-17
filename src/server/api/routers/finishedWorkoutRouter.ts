@@ -13,7 +13,11 @@ const exerciseParser = z.object({
   sets: z
     .array(
       z.union([
-        z.object({ reps: z.number().min(0), weight: z.number().min(0), completed: z.boolean() }),
+        z.object({
+          reps: z.string().trim().min(1),
+          weight: z.number().min(0),
+          completed: z.boolean(),
+        }),
         z.object({ time: z.number().min(0), weight: z.number().min(0), completed: z.boolean() }),
       ]),
     )

@@ -38,7 +38,7 @@ const exerciseParser = z.object({
   sets: z.array(
     z.union([
       z.object({
-        reps: z.number(),
+        reps: z.string(),
         weight: z.number(),
         completed: z.boolean(),
       }),
@@ -557,7 +557,7 @@ const Set = ({ index, set, originalWeight, timerOn, setCompleted, setWeight }: S
       ) : (
         <div>
           <span className="font-medium">{set.reps}</span>
-          <span> {set.reps > 1 ? "repetições" : "repetição"}</span>
+          <span> {set.reps !== "1" ? "repetições" : "repetição"}</span>
         </div>
       )}
       {timerOn ? (

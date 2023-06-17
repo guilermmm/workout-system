@@ -4,7 +4,7 @@ import type { Simplify } from "@trpc/server";
 export type Sets = RepSet[] | TimeSet[];
 
 export type RepSet = {
-  reps: number;
+  reps: string;
   weight: number;
 };
 
@@ -16,7 +16,7 @@ export type TimeSet = {
 export type BiSets = [string, string][];
 
 export type FinishedExerciseSets = (
-  | { reps: number; weight: number; completed: boolean }
+  | { reps: string; weight: number; completed: boolean }
   | { time: number; weight: number; completed: boolean }
 )[];
 

@@ -36,7 +36,7 @@ const apiToState = (workout: RouterOutputs["workout"]["getById"]): Workout => {
       method: exercise.method,
       type: "reps" in exercise.sets[0]! ? ("REPS" as const) : ("TIME" as const),
       sets: exercise.sets.map(set => ({
-        reps: "reps" in set ? set.reps : 0,
+        reps: "reps" in set ? set.reps : "",
         weight: set.weight / 1000,
         time:
           "time" in set
@@ -156,7 +156,7 @@ const EditWorkout = () => {
     workout.exercises.every(
       e =>
         e.exerciseId !== "" &&
-        ((e.type === "REPS" && e.sets.every(s => s.reps > 0)) ||
+        ((e.type === "REPS" && e.sets.every(s => s.reps.trim() !== "")) ||
           (e.type === "TIME" && e.sets.every(s => s.time.seconds > 0 || s.time.minutes > 0))),
     );
 

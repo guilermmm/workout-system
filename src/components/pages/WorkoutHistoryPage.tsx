@@ -348,7 +348,7 @@ const ExerciseCard = ({ exercise }: { exercise: FinishedExercise }) => {
               ) : (
                 <div>
                   <span className="font-medium">{set.reps}</span>
-                  <span> {set.reps > 1 ? "repetições" : "repetição"}</span>
+                  <span> {set.reps !== "1" ? "repetições" : "repetição"}</span>
                 </div>
               )}
               <div
