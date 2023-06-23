@@ -15,7 +15,7 @@ const datasheetInputModel = z.object({
   leftArm: z.number().min(0),
   rightCalf: z.number().min(0),
   leftCalf: z.number().min(0),
-  observation: z.string().optional(),
+  observation: z.string().trim().optional(),
 });
 
 const parseRequest = (

@@ -1,3 +1,4 @@
+import type { Datasheet as DbDatasheet } from "@prisma/client";
 import type { UseTRPCQueryResult } from "@trpc/react-query/shared";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -13,11 +14,11 @@ import FullPage from "../FullPage";
 import NumberInput from "../NumberInput";
 import QueryErrorAlert from "../QueryErrorAlert";
 import Spinner from "../Spinner";
+import TextInput from "../TextInput";
 import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
 import ExclamationTriangleIcon from "../icons/ExclamationTriangleIcon";
-import TextInput from "../TextInput";
 
-type Datasheet = Record<keyof typeof dataSheetTranslation, number | string>;
+type Datasheet = Omit<DbDatasheet, "id" | "profileId" | "createdAt">;
 
 interface Props {
   isLoading: boolean;
@@ -114,7 +115,7 @@ const CreateDatasheetPage = ({
                   <NumberInput
                     className="h-10 w-full bg-white"
                     label={`${dataSheetTranslation[left]} (${dataSheetUnit[left]})`}
-                    value={datasheet[left] as number}
+                    value={datasheet[left]}
                     onChange={value => setDatasheet({ ...datasheet, [left]: value })}
                     min={0}
                     step={dataSheetStep[left]}
@@ -122,18 +123,18 @@ const CreateDatasheetPage = ({
                   <NumberInput
                     className="h-10 w-full bg-white"
                     label={`${dataSheetTranslation[right]} (${dataSheetUnit[right]})`}
-                    value={datasheet[right] as number}
+                    value={datasheet[right]}
                     onChange={value => setDatasheet({ ...datasheet, [right]: value })}
                     min={0}
                     step={dataSheetStep[right]}
                   />
                 </div>
               ))}
-              <div className="flex flex-row gap-2">
+              <div className="flex w-full">
                 <TextInput
                   className="h-10 w-full bg-white"
-                  label="Outros"
-                  value={datasheet.observation as string}
+                  label={dataSheetTranslation.observation}
+                  value={datasheet.observation}
                   onChange={value => setDatasheet({ ...datasheet, observation: value })}
                 />
               </div>

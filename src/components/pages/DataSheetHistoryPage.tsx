@@ -93,14 +93,22 @@ const DataSheetCard = ({ datasheet: datasheet }: { datasheet: Datasheet }) => {
             <div key={i} className="flex flex-row gap-2">
               <MeasurementCard
                 title={dataSheetTranslation[left]}
-                value={`${datasheet[left]} ${dataSheetUnit[left]}`}
+                value={datasheet[left]}
+                unit={dataSheetUnit[left]}
               />
               <MeasurementCard
                 title={dataSheetTranslation[right]}
-                value={`${datasheet[right]} ${dataSheetUnit[right]}`}
+                value={datasheet[right]}
+                unit={dataSheetUnit[right]}
               />
             </div>
           ))}
+          <div className="flex">
+            <MeasurementCard
+              title={dataSheetTranslation["observation"]}
+              value={datasheet.observation}
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -121,7 +121,7 @@ model Datasheet {
     rightCalf  Int
     leftCalf   Int
 
-    observation String?
+    observation String @default("")
 
     createdAt DateTime @default(now())
 

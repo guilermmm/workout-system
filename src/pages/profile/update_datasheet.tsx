@@ -39,6 +39,7 @@ const UserUpdateDatasheet = () => {
     leftArm: 0,
     rightCalf: 0,
     leftCalf: 0,
+    observation: "",
   });
 
   const createDataSheet = api.datasheet.createBySession.useMutation({
