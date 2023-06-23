@@ -15,6 +15,7 @@ const datasheetInputModel = z.object({
   leftArm: z.number().min(0),
   rightCalf: z.number().min(0),
   leftCalf: z.number().min(0),
+  observation: z.string().optional(),
 });
 
 const parseRequest = (
@@ -33,6 +34,7 @@ const parseRequest = (
     rightThigh: Math.round(datasheet.rightThigh * 10),
     leftCalf: Math.round(datasheet.leftCalf * 10),
     rightCalf: Math.round(datasheet.rightCalf * 10),
+    observation: datasheet.observation,
   };
 };
 
@@ -54,6 +56,7 @@ const parseResponse = (datasheet: Datasheet): Datasheet => {
     rightThigh: datasheet.rightThigh / 10,
     leftCalf: datasheet.leftCalf / 10,
     rightCalf: datasheet.rightCalf / 10,
+    observation: datasheet.observation,
     createdAt: datasheet.createdAt,
   };
 };

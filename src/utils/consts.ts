@@ -48,6 +48,8 @@ export const jsDateToWeekday = (date: Date): Weekday => {
 
 export type DatasheetMeasurement = keyof Omit<Datasheet, "id" | "profileId" | "createdAt">;
 
+export type DatasheetMeasurementWithoutObservation = Exclude<DatasheetMeasurement, "observation">;
+
 export const dataSheetTranslation = {
   weight: "Peso",
   height: "Altura",
@@ -61,6 +63,7 @@ export const dataSheetTranslation = {
   leftArm: "Braço Esq.",
   rightCalf: "Panturrilha Dir.",
   leftCalf: "Panturrilha Esq.",
+  observation: "Observação",
 } as const satisfies Record<DatasheetMeasurement, string>;
 
 export const dataSheetUnit = {
@@ -76,7 +79,7 @@ export const dataSheetUnit = {
   leftArm: "cm",
   rightCalf: "cm",
   leftCalf: "cm",
-} as const satisfies Record<DatasheetMeasurement, string>;
+} as const satisfies Record<DatasheetMeasurementWithoutObservation, string>;
 
 export const dataSheetStep = {
   weight: 0.01,
@@ -91,7 +94,7 @@ export const dataSheetStep = {
   leftArm: 0.1,
   rightCalf: 0.1,
   leftCalf: 0.1,
-} as const satisfies Record<DatasheetMeasurement, number>;
+} as const satisfies Record<DatasheetMeasurementWithoutObservation, number>;
 
 export const datasheetLayout = [
   ["weight", "height"],

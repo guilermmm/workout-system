@@ -15,8 +15,9 @@ import QueryErrorAlert from "../QueryErrorAlert";
 import Spinner from "../Spinner";
 import ArrowUturnLeftIcon from "../icons/ArrowUturnLeftIcon";
 import ExclamationTriangleIcon from "../icons/ExclamationTriangleIcon";
+import TextInput from "../TextInput";
 
-type Datasheet = Record<keyof typeof dataSheetTranslation, number>;
+type Datasheet = Record<keyof typeof dataSheetTranslation, number | string>;
 
 interface Props {
   isLoading: boolean;
@@ -113,7 +114,7 @@ const CreateDatasheetPage = ({
                   <NumberInput
                     className="h-10 w-full bg-white"
                     label={`${dataSheetTranslation[left]} (${dataSheetUnit[left]})`}
-                    value={datasheet[left]}
+                    value={datasheet[left] as number}
                     onChange={value => setDatasheet({ ...datasheet, [left]: value })}
                     min={0}
                     step={dataSheetStep[left]}
@@ -121,13 +122,21 @@ const CreateDatasheetPage = ({
                   <NumberInput
                     className="h-10 w-full bg-white"
                     label={`${dataSheetTranslation[right]} (${dataSheetUnit[right]})`}
-                    value={datasheet[right]}
+                    value={datasheet[right] as number}
                     onChange={value => setDatasheet({ ...datasheet, [right]: value })}
                     min={0}
                     step={dataSheetStep[right]}
                   />
                 </div>
               ))}
+              <div className="flex flex-row gap-2">
+                <TextInput
+                  className="h-10 w-full bg-white"
+                  label="Outros"
+                  value={datasheet.observation as string}
+                  onChange={value => setDatasheet({ ...datasheet, observation: value })}
+                />
+              </div>
               <button
                 disabled={!valid}
                 className="flex w-full flex-col items-center justify-center rounded-md bg-blue-500 py-3 px-6 text-center text-white shadow-md transition-colors hover:bg-blue-600  disabled:cursor-not-allowed disabled:bg-gray-400"
