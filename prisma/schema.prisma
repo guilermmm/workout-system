@@ -61,6 +61,16 @@ enum Weekday {
     Sunday
 }
 
+model WorkoutProgram {
+    id        String  @id @default(cuid())
+    profile   Profile @relation(fields: [profileId], references: [id])
+    profileId String
+    workouts  Json
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
 model Workout {
     id        String              @id @default(cuid())
     name      String
@@ -87,6 +97,7 @@ model Profile {
     finishedWorkouts  FinishedWorkout[]
     datasheets        Datasheet[]
     workoutUpdateDate DateTime?
+    workoutPrograms   WorkoutProgram[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

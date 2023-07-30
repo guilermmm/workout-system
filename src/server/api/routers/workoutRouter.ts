@@ -1,7 +1,7 @@
 import { Method, Weekday } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import type { ParseJsonValues, Sets } from "../../../utils/types";
+import type { ParseJsonValues, ParseWorkoutProgram, Sets } from "../../../utils/types";
 import { adminProcedure, createTRPCRouter, userProcedure } from "../trpc";
 
 const validateBiSets = (workout: { biSets: [number, number][]; exercises: unknown[] }) => {
@@ -48,6 +48,17 @@ export const workoutRouter = createTRPCRouter({
       }));
 
       return mappedWorkouts as ParseJsonValues<typeof mappedWorkouts>;
+    }),
+
+  getWorkoutPrograms: adminProcedure
+    .input(z.object({ profileId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const workoutPrograms = await ctx.prisma.workoutProgram.findMany({
+        where: { profileId: input.profileId },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return workoutPrograms as ParseWorkoutProgram<(typeof workoutPrograms)[number]>[];
     }),
 
   getById: adminProcedure.input(z.string()).query(async ({ ctx, input }) => {
@@ -192,6 +203,58 @@ export const workoutRouter = createTRPCRouter({
 
         await tx.workout.update({ where: { id: workout.id }, data: { biSets: biSetsData } });
       });
+    }),
+
+  save: adminProcedure
+    .input(
+      z.object({
+        workouts: z.array(z.string()),
+        profileId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const workouts = await ctx.prisma.workout.findMany({
+        where: { id: { in: input.workouts }, profileId: input.profileId },
+        include: {
+          exercises: {
+            include: {
+              exercise: { select: { name: true, category: true } },
+            },
+          },
+        },
+      });
+
+      await ctx.prisma.workoutProgram.create({
+        data: {
+          profileId: input.profileId,
+          workouts: workouts.map(workout => ({
+            id: workout.id,
+            name: workout.name,
+            days: workout.days,
+            exercises: workout.exercises.map(exercise => ({
+              id: exercise.id,
+              exercise: {
+                name: exercise.exercise.name,
+                category: exercise.exercise.category,
+              },
+              sets: exercise.sets,
+              method: exercise.method,
+              description: exercise.description,
+            })),
+            biSets: workout.biSets,
+          })),
+        },
+      });
+    }),
+
+  deleteWorkoutProgram: adminProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.prisma.workoutProgram.delete({ where: { id: input.id } });
     }),
 
   update: adminProcedure

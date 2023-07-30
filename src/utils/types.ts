@@ -62,3 +62,24 @@ export type ParsedDatasheet = Omit<Datasheet, "createdAt">;
 export type ParseFinishedWorkout<T extends { exercises: Prisma.JsonValue }> = Simplify<
   Omit<T, "exercises"> & { exercises: FinishedGroup[] }
 >;
+
+export type ParseWorkoutProgram<T extends { workouts: Prisma.JsonValue }> = Simplify<
+  Omit<T, "workouts"> & {
+    workouts: {
+      id: string;
+      name: string;
+      days: string[];
+      exercises: {
+        id: string;
+        exercise: {
+          name: string;
+          category: string;
+        };
+        sets: Sets;
+        method: Method;
+        description: string | null;
+      }[];
+      biSets: BiSets;
+    }[];
+  }
+>;

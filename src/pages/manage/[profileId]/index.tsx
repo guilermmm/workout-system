@@ -82,6 +82,7 @@ const Manage = () => {
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showMutatePasswordAlert, setShowMutatePasswordAlert] = useState(false);
   const [showMutateProfileErrorAlert, setShowMutateProfileErrorAlert] = useState(false);
+  const [showMutateSaveWorkoutAlert, setShowMutateSaveWorkoutAlert] = useState(false);
 
   const [email, setEmail] = useState(profile.data?.email ?? "");
   const [birthdate, setBirthdate] = useState<Date | null>(profile.data?.birthdate ?? null);
@@ -199,6 +200,12 @@ const Manage = () => {
   const updateWorkoutDate = api.user.updateWorkoutDate.useMutation();
 
   const createWorkout = api.workout.create.useMutation();
+
+  const saveWorkout = api.workout.save.useMutation({
+    onSuccess: () => {
+      setShowMutateSaveWorkoutAlert(false);
+    },
+  });
 
   const createWorkouts = (ws: RouterOutputs["workout"]["getManyWithExercises"]) => {
     Promise.all(
@@ -682,6 +689,44 @@ const Manage = () => {
           Ocorreu um erro ao copiar o treino, tente novamente em instantes.
         </Alert>
       )}
+      {showMutateSaveWorkoutAlert && (
+        <Alert
+          icon={<CheckIcon className="h-10 w-10 rounded-full bg-green-300 p-2 text-green-600" />}
+          title="Arquivar treino"
+          footer={
+            <>
+              <button
+                className="rounded-md border-1 bg-green-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => {
+                  saveWorkout.mutate({
+                    profileId,
+                    workouts: workoutsWithExercises.data!.map(workout => workout.id),
+                  });
+                }}
+              >
+                {saveWorkout.isLoading ? (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Spinner className="h-6 w-6 fill-blue-600 text-gray-200" />
+                  </div>
+                ) : (
+                  "Confirmar"
+                )}
+              </button>
+              {!saveWorkout.isLoading && (
+                <button
+                  className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
+                  onClick={() => setShowMutateSaveWorkoutAlert(false)}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          }
+          onClickOutside={() => setShowMutateSaveWorkoutAlert(false)}
+        >
+          Tem certeza que deseja arquivar o treino atual?
+        </Alert>
+      )}
       <div className="relative flex h-full flex-col overflow-y-auto">
         <div className="relative flex w-full flex-row items-start justify-between bg-slate-100 p-2">
           <div className="absolute left-0 top-0 right-0 h-20 bg-gold-500" />
@@ -850,6 +895,20 @@ const Manage = () => {
                       <span className="px-6">Baixar Treinos</span>
                     </DownloadPDFButton>
                   )}
+                </div>
+                <div className="flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
+                  <Link
+                    href={`/manage/${profileId}/workout_program`}
+                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                  >
+                    Treinos arquivados
+                  </Link>
+                  <button
+                    onClick={() => setShowMutateSaveWorkoutAlert(true)}
+                    className="w-full rounded-md bg-blue-500 px-6 py-3 text-center text-sm text-white shadow-md transition-colors hover:bg-blue-600"
+                  >
+                    Arquivar treino
+                  </button>
                 </div>
                 <div className="flex w-full max-w-[32rem] flex-col justify-center gap-2 sm:flex-row">
                   <button
