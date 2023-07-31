@@ -168,10 +168,8 @@ export const workoutRouter = createTRPCRouter({
               z.object({
                 exerciseId: z.string(),
                 sets: z.union([
-                  z
-                    .array(z.object({ reps: z.string().trim().min(1), weight: z.number().min(0) }))
-                    .min(1),
-                  z.array(z.object({ time: z.number().min(0), weight: z.number().min(0) })).min(1),
+                  z.array(z.object({ reps: z.string().trim().min(1), weight: z.string() })).min(1),
+                  z.array(z.object({ time: z.number().min(0), weight: z.string() })).min(1),
                 ]),
                 description: z.string().nullish(),
                 method: z.nativeEnum(Method),
@@ -269,10 +267,8 @@ export const workoutRouter = createTRPCRouter({
               z.object({
                 exerciseId: z.string(),
                 sets: z.union([
-                  z
-                    .array(z.object({ reps: z.string().trim().min(1), weight: z.number().min(0) }))
-                    .min(1),
-                  z.array(z.object({ time: z.number().min(0), weight: z.number().min(0) })).min(1),
+                  z.array(z.object({ reps: z.string().trim().min(1), weight: z.string() })).min(1),
+                  z.array(z.object({ time: z.number().min(0), weight: z.string() })).min(1),
                 ]),
                 description: z.string().nullish(),
                 method: z.nativeEnum(Method),
@@ -328,7 +324,7 @@ export const workoutRouter = createTRPCRouter({
         exercises: z.array(
           z.object({
             id: z.string(),
-            sets: z.array(z.number().min(0)),
+            sets: z.array(z.string()),
           }),
         ),
       }),

@@ -8,9 +8,9 @@ import { z } from "zod";
 import Alert from "../../../components/Alert";
 import FullPage from "../../../components/FullPage";
 import Modal from "../../../components/Modal";
-import NumberInput from "../../../components/NumberInput";
 import QueryErrorAlert from "../../../components/QueryErrorAlert";
 import Spinner from "../../../components/Spinner";
+import TextInput from "../../../components/TextInput";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
 import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
 import CheckIcon from "../../../components/icons/CheckIcon";
@@ -21,7 +21,7 @@ import ExclamationTriangleIcon from "../../../components/icons/ExclamationTriang
 import InformationIcon from "../../../components/icons/InformationIcon";
 import PhotoIcon from "../../../components/icons/PhotoIcon";
 import { getServerAuthSession } from "../../../server/auth";
-import { classList, useFormValidation, useLocalStorage } from "../../../utils";
+import { classList, useLocalStorage } from "../../../utils";
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
 import { methodExplanation, methodTranslation, motivationalPhrases } from "../../../utils/consts";
@@ -39,12 +39,12 @@ const exerciseParser = z.object({
     z.union([
       z.object({
         reps: z.string(),
-        weight: z.number(),
+        weight: z.string(),
         completed: z.boolean(),
       }),
       z.object({
         time: z.number(),
-        weight: z.number(),
+        weight: z.string(),
         completed: z.boolean(),
       }),
     ]),
@@ -376,11 +376,11 @@ const Workout = () => {
 
 type ExerciseCardProps = {
   exercise: Exercise;
-  originalWeights?: number[];
+  originalWeights?: string[];
   timerOn: boolean;
   setCollapsed?: (collapsed: boolean) => void;
   setSetCompleted: (setIndex: number) => (completed: boolean) => void;
-  setSetWeight: (setIndex: number) => (weight: number) => void;
+  setSetWeight: (setIndex: number) => (weight: string) => void;
   handleInfo: (exercise: Exercise["exercise"]) => () => void;
 };
 
@@ -503,41 +503,27 @@ const ExerciseCard = ({
 type SetProps = {
   index: number;
   set: Exercise["sets"][number];
-  originalWeight?: number;
+  originalWeight?: string;
   timerOn: boolean;
   setCompleted: (completed: boolean) => void;
-  setWeight: (weight: number) => void;
+  setWeight: (weight: string) => void;
 };
 
 const Set = ({ index, set, originalWeight, timerOn, setCompleted, setWeight }: SetProps) => {
-  const weightKg = set.weight / 1000;
-
-  const setWeightKg = (n: number) => setWeight(n * 1000);
-
-  const [weightProps] = useFormValidation(weightKg, n => {
-    if (n < 0) return "Peso deve ser maior ou igual a 0";
-    if (n % 0.5 !== 0) return "Peso deve ser múltiplo de 0,5";
-  });
-
   return (
     <div className="mx-2 mb-2 flex items-center justify-between rounded-md border-1 p-1.5 pl-3 shadow-md">
       <div className="font-medium">{index + 1}.</div>
 
       <div className="flex items-center gap-1">
         <div className="flex h-full w-20 flex-col gap-1">
-          <NumberInput
-            label="Peso (kg)"
+          <TextInput
+            label="Peso"
             className={classList("inline-block h-8 w-full bg-white text-center", {
               "font-medium": originalWeight !== undefined && set.weight !== originalWeight,
             })}
-            value={weightKg}
-            onChange={setWeightKg}
-            min={0}
-            step={0.5}
-            max={1000}
-            {...weightProps}
+            value={set.weight}
+            onChange={setWeight}
           />
-          {weightProps.error && <span className="text-xs text-red-500">{weightProps.error}</span>}
         </div>
         {originalWeight !== undefined && originalWeight !== set.weight ? (
           <button className="rounded-full p-2" onClick={() => setWeight(originalWeight)}>
@@ -584,7 +570,7 @@ const MemoedSet = memo(Set);
 type BiSetCardProps = {
   first: Exercise;
   second: Exercise;
-  originalWeights: { id: string; sets: number[] }[];
+  originalWeights: { id: string; sets: string[] }[];
   timerOn: boolean;
   setExercises: (
     ids: string[],
@@ -610,7 +596,7 @@ const BiSetCard = ({
     }));
   };
 
-  const setSetWeight = (id: string) => (setIndex: number) => (weight: number) => {
+  const setSetWeight = (id: string) => (setIndex: number) => (weight: string) => {
     setExercises([id])(e => ({
       sets: e.sets.map((set, i) => (i === setIndex ? { ...set, weight } : set)),
     }));

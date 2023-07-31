@@ -11,6 +11,7 @@ import NumberInput from "../NumberInput";
 import Select from "../Select";
 import Spinner from "../Spinner";
 import TextArea from "../TextArea";
+import TextInput from "../TextInput";
 import ChevronDownIcon from "../icons/ChevronDownIcon";
 import ChevronUpIcon from "../icons/ChevronUpIcon";
 import PhotoIcon from "../icons/PhotoIcon";
@@ -332,11 +333,6 @@ const SetCard = ({ exercise, set, index, actions, disabled }: SetProps) => {
     if (n.trim() === "") return "Repetições não pode ser vazio";
   });
 
-  const [weightProps] = useFormValidation(set.weight, n => {
-    if (n < 0) return "Peso deve ser maior ou igual a 0";
-    if (n % 0.5 !== 0) return "Peso deve ser múltiplo de 0,5";
-  });
-
   const [minutesProps] = useFormValidation(set.time.minutes, n => {
     if (n < 0) return "Minutos deve ser maior ou igual a 0";
     if (n % 1 !== 0) return "Minutos deve ser inteiro";
@@ -400,18 +396,13 @@ const SetCard = ({ exercise, set, index, actions, disabled }: SetProps) => {
           </>
         )}
         <div className="flex h-full grow flex-col gap-1">
-          <NumberInput
-            label="Peso (kg)"
+          <TextInput
+            label="Peso"
             className="w-full bg-white"
             value={set.weight}
-            onChange={n => actions.setSetWeight(exercise.id, index, n)}
-            min={0}
-            step={0.5}
-            max={1000}
+            onChange={w => actions.setSetWeight(exercise.id, index, w)}
             disabled={disabled}
-            {...weightProps}
           />
-          {weightProps.error && <span className="text-xs text-red-500">{weightProps.error}</span>}
         </div>
       </div>
       {exercise.sets.length !== 1 && (

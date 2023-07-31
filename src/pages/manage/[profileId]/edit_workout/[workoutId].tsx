@@ -37,7 +37,7 @@ const apiToState = (workout: RouterOutputs["workout"]["getById"]): Workout => {
       type: "reps" in exercise.sets[0]! ? ("REPS" as const) : ("TIME" as const),
       sets: exercise.sets.map(set => ({
         reps: "reps" in set ? set.reps : "",
-        weight: set.weight / 1000,
+        weight: set.weight,
         time:
           "time" in set
             ? { minutes: Math.floor(set.time / 60), seconds: set.time % 60 }
@@ -61,11 +61,11 @@ const stateToApi = (workout: Workout, id: string): RouterInputs["workout"]["upda
         exercise.type === "REPS"
           ? exercise.sets.map(({ reps, weight }) => ({
               reps,
-              weight: weight * 1000,
+              weight,
             }))
           : exercise.sets.map(({ time, weight }) => ({
               time: time.minutes * 60 + time.seconds,
-              weight: weight * 1000,
+              weight,
             })),
     })),
     biSets: workout.biSets.map(([firstId, secondId]) => {

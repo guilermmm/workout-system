@@ -14,8 +14,8 @@ type Exercise = Workout["exercises"][number];
 type ExerciseGroup = { id: string; exercises: readonly [Exercise, Exercise] };
 
 type Sets = (
-  | { time: number; weight: number; reps: undefined }
-  | { time: undefined; weight: number; reps: string }
+  | { time: number; weight: string; reps: undefined }
+  | { time: undefined; weight: string; reps: string }
 )[];
 
 export const PDFViewerWithNoSSR = dynamic(
@@ -296,7 +296,7 @@ function ExerciseCard({ exercise }: { exercise: Exercise }) {
         style={{ width: "20%", display: "flex", alignItems: "center", justifyContent: "center" }}
       >
         {groups.map(({ set }, i) => (
-          <Text key={i}>{set.weight / 1000}kg</Text>
+          <Text key={i}>{set.weight}</Text>
         ))}
       </View>
 

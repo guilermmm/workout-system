@@ -10,7 +10,7 @@ async function transformReps() {
     })) as {
       id: string;
       sets: {
-        reps: number;
+        reps: string;
         weight: number;
       }[];
     }[];
@@ -22,8 +22,8 @@ async function transformReps() {
             where: { id: exercise.id },
             data: {
               sets: exercise.sets.map(set => ({
-                reps: String(set.reps),
-                weight: set.weight,
+                reps: set.reps,
+                weight: set.weight === 0 ? "" : `${set.weight / 1000} kg`,
               })),
             },
           });

@@ -65,11 +65,11 @@ const CreateWorkout = () => {
             exercise.type === "REPS"
               ? exercise.sets.map(({ reps, weight }) => ({
                   reps,
-                  weight: weight * 1000,
+                  weight,
                 }))
               : exercise.sets.map(({ time, weight }) => ({
                   time: time.minutes * 60 + time.seconds,
-                  weight: weight * 1000,
+                  weight,
                 })),
           index,
         })),

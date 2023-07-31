@@ -335,7 +335,7 @@ const ExerciseCard = ({ exercise }: { exercise: FinishedExercise }) => {
               <div className="font-medium">{i + 1}.</div>
               <div className="flex items-center gap-1">
                 <span>Peso: </span>
-                <span className="font-medium">{set.weight / 1000}kg</span>
+                <span className="font-medium">{set.weight}</span>
               </div>
               {"time" in set ? (
                 <div>

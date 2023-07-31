@@ -10,7 +10,7 @@ export type Id = z.infer<typeof idParser>;
 
 export const setParser = z.object({
   reps: z.string().trim().min(1),
-  weight: z.number().min(0),
+  weight: z.string(),
   time: z.object({
     minutes: z.number().min(0),
     seconds: z.number().min(0).max(59),
@@ -60,7 +60,7 @@ type WorkoutAction =
   | ["ADD_SET", Id]
   | ["REMOVE_SET", [Id, number]]
   | ["SET_SET_REPS", [Id, number, string]]
-  | ["SET_SET_WEIGHT", [Id, number, number]]
+  | ["SET_SET_WEIGHT", [Id, number, string]]
   | ["SET_SET_TIME", [Id, number, { minutes: number; seconds: number }]]
   | ["CREATE_BISET", [Id, Id]]
   | ["DESTROY_BISET", Id]
@@ -87,7 +87,7 @@ const workoutReducer: Reducer<Workout, WorkoutAction> = (workout, [type, payload
         description: "",
         method: Method.Standard,
         type: "REPS",
-        sets: [{ reps: "", weight: 0, time: { minutes: 0, seconds: 0 } }],
+        sets: [{ reps: "", weight: "", time: { minutes: 0, seconds: 0 } }],
         hidden: false,
       };
       return { ...workout, exercises: [...workout.exercises, newExercise] };
@@ -179,7 +179,7 @@ const workoutReducer: Reducer<Workout, WorkoutAction> = (workout, [type, payload
                 ...exercise.sets,
                 lastSet
                   ? { ...lastSet }
-                  : { reps: "", weight: 0, time: { minutes: 0, seconds: 0 } },
+                  : { reps: "", weight: "", time: { minutes: 0, seconds: 0 } },
               ],
             };
           }
@@ -288,14 +288,14 @@ const workoutReducer: Reducer<Workout, WorkoutAction> = (workout, [type, payload
         Array(maxLength - first.sets.length).fill(
           lastSetFirst
             ? { ...lastSetFirst }
-            : { reps: "", weight: 0, time: { minutes: 0, seconds: 0 } },
+            : { reps: "", weight: "", time: { minutes: 0, seconds: 0 } },
         ),
       );
       const secondSets = second.sets.concat(
         Array(maxLength - second.sets.length).fill(
           lastSetSecond
             ? { ...lastSetSecond }
-            : { reps: "", weight: 0, time: { minutes: 0, seconds: 0 } },
+            : { reps: "", weight: "", time: { minutes: 0, seconds: 0 } },
         ),
       );
 
@@ -399,7 +399,7 @@ export const useWorkout = () => {
       removeSet: (id: Id, index: number) => dispatch(["REMOVE_SET", [id, index]]),
       setSetReps: (id: Id, index: number, reps: string) =>
         dispatch(["SET_SET_REPS", [id, index, reps]]),
-      setSetWeight: (id: Id, index: number, weight: number) =>
+      setSetWeight: (id: Id, index: number, weight: string) =>
         dispatch(["SET_SET_WEIGHT", [id, index, weight]]),
       setSetTime: (id: Id, index: number, time: { minutes: number; seconds: number }) =>
         dispatch(["SET_SET_TIME", [id, index, time]]),

@@ -5,19 +5,19 @@ export type Sets = RepSet[] | TimeSet[];
 
 export type RepSet = {
   reps: string;
-  weight: number;
+  weight: string;
 };
 
 export type TimeSet = {
   time: number;
-  weight: number;
+  weight: string;
 };
 
 export type BiSets = [string, string][];
 
 export type FinishedExerciseSets = (
-  | { reps: string; weight: number; completed: boolean }
-  | { time: number; weight: number; completed: boolean }
+  | { reps: string; weight: string; completed: boolean }
+  | { time: number; weight: string; completed: boolean }
 )[];
 
 export type FinishedExercise = {
