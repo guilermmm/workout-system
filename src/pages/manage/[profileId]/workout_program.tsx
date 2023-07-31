@@ -1,22 +1,22 @@
+import type { Method } from "@prisma/client";
 import type { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useRouter } from "next/router";
+import { useMemo, useState } from "react";
+import Alert from "../../../components/Alert";
 import ErrorPage from "../../../components/ErrorPage";
+import FullPage from "../../../components/FullPage";
+import Modal from "../../../components/Modal";
+import Spinner from "../../../components/Spinner";
 import AdminNavbar from "../../../components/admin/Navbar";
+import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
+import InformationIcon from "../../../components/icons/InformationIcon";
+import XMarkIcon from "../../../components/icons/XMarkIcon";
 import { env } from "../../../env/server.mjs";
 import { getServerAuthSession } from "../../../server/auth";
-import { api } from "../../../utils/api";
-import FullPage from "../../../components/FullPage";
-import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
-import Spinner from "../../../components/Spinner";
-import { useState } from "react";
-import Modal from "../../../components/Modal";
-import Alert from "../../../components/Alert";
-import ListBulletIcon from "../../../components/icons/ListBulletIcon";
-import InformationIcon from "../../../components/icons/InformationIcon";
-import { methodExplanation, methodTranslation } from "../../../utils/consts";
-import { FinishedExercise, Sets } from "../../../utils/types";
-import { Method } from "@prisma/client";
 import { classList } from "../../../utils";
+import { api } from "../../../utils/api";
+import { methodExplanation, methodTranslation } from "../../../utils/consts";
+import type { Sets } from "../../../utils/types";
 
 const WorkoutProgram = ({
   isSuperUser,
@@ -37,10 +37,50 @@ const WorkoutProgram = ({
     },
   });
 
-  const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
-  const [selectedWorkout, setSelectedWorkout] = useState<string | null>(null);
+  const [selectedProgramId, setSelectedProgram] = useState<string | null>(null);
+  const [selectedWorkoutId, setSelectedWorkout] = useState<string | null>(null);
 
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+
+  const selectedProgram = useMemo(
+    () => data?.find(d => d.id === selectedProgramId),
+    [data, selectedProgramId],
+  );
+
+  const selectedWorkout = useMemo(
+    () => selectedProgram?.workouts.find(d => d.id === selectedWorkoutId),
+    [selectedProgram, selectedWorkoutId],
+  );
+
+  type Exercise = NonNullable<typeof selectedWorkout>["exercises"][number];
+  type ExerciseGroup = { id: string; exercises: readonly [Exercise, Exercise] };
+
+  const exerciseGroups = useMemo(
+    () =>
+      selectedWorkout?.exercises.reduce((acc, exercise) => {
+        const isAlreadyInAGroup = acc.find(
+          g => "exercises" in g && g.exercises.find(e => e.id === exercise.id),
+        );
+        if (isAlreadyInAGroup) {
+          return acc;
+        }
+
+        if (selectedWorkout.biSets.some(([, b]) => b === exercise.id)) {
+          return acc;
+        }
+
+        const biSet = selectedWorkout.biSets.find(([a]) => a === exercise.id);
+        if (biSet) {
+          const [, b] = biSet;
+          const group = [exercise, selectedWorkout.exercises.find(e => e.id === b)!] as const;
+
+          return [...acc, { id: exercise.id, exercises: group }];
+        }
+
+        return [...acc, exercise];
+      }, [] as (ExerciseGroup | Exercise)[]),
+    [selectedWorkout],
+  );
 
   if (isError) return <ErrorPage />;
 
@@ -53,18 +93,23 @@ const WorkoutProgram = ({
               <button
                 className="rounded-md border-1 bg-slate-50 py-2 px-4 shadow-md"
                 onClick={() => {
-                  setSelectedProgram(null);
-                  setSelectedWorkout(null);
+                  if (selectedWorkout) {
+                    setSelectedWorkout(null);
+                  } else {
+                    setSelectedProgram(null);
+                  }
                 }}
               >
-                Fechar
+                Voltar
               </button>
-              <button
-                onClick={() => setShowDeleteAlert(true)}
-                className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md"
-              >
-                Excluir
-              </button>
+              {!selectedWorkoutId && (
+                <button
+                  onClick={() => setShowDeleteAlert(true)}
+                  className="rounded-md border-1 border-red-600 bg-red-600 py-2 px-4 text-white shadow-md"
+                >
+                  Excluir
+                </button>
+              )}
             </div>
           }
           onClickOutside={() => setSelectedProgram(null)}
@@ -73,39 +118,33 @@ const WorkoutProgram = ({
             <div className="flex max-h-full w-full max-w-xl flex-col gap-4 rounded-md bg-slate-50">
               <div className="ml-2 flex justify-between gap-2 text-center font-medium">
                 <h2 className="font-medium">
-                  Treino{" "}
-                  <b>
-                    {
-                      data
-                        ?.find(d => d.id === selectedProgram)
-                        ?.workouts.find(w => w.id === selectedWorkout)?.name
-                    }
-                  </b>
+                  Treino <b>{selectedWorkout?.name}</b>
                 </h2>
               </div>
               <div className="flex w-full grow flex-col items-center overflow-y-auto">
                 <div className="flex w-full flex-col gap-2">
-                  {data
-                    ?.find(d => d.id === selectedProgram)
-                    ?.workouts.map((group, i) => {
-                      if ("exercises" in group) {
-                        const [first, second] = group.exercises;
-                        return (
-                          <div key={i} className="m-2 flex flex-col rounded-xl bg-blue-500 pt-2">
-                            <div className="flex flex-col">
-                              <div className="">
-                                <span className="p-3 font-medium text-gray-50">Bi-set</span>
-                              </div>
-                              <div className="flex flex-col items-stretch">
-                                <ExerciseCard exercise={first} />
-                                <ExerciseCard exercise={second} />
-                              </div>
+                  {exerciseGroups?.map(group => {
+                    if ("exercises" in group) {
+                      const [first, second] = group.exercises;
+                      return (
+                        <div
+                          key={first.id}
+                          className="m-2 flex flex-col rounded-xl bg-blue-500 pt-2"
+                        >
+                          <div className="flex flex-col">
+                            <div className="">
+                              <span className="p-3 font-medium text-gray-50">Bi-set</span>
+                            </div>
+                            <div className="flex flex-col items-stretch">
+                              <ExerciseCard exercise={first} />
+                              <ExerciseCard exercise={second} />
                             </div>
                           </div>
-                        );
-                      }
-                      return <ExerciseCard key={i} exercise={group} />;
-                    })}
+                        </div>
+                      );
+                    }
+                    return <ExerciseCard key={group.id} exercise={group} />;
+                  })}
                 </div>
               </div>
             </div>
@@ -113,24 +152,20 @@ const WorkoutProgram = ({
             <div>
               <div className="px-4 pb-2">
                 {`Treinos registrados em ${
-                  data
-                    ?.find(workoutProgram => workoutProgram.id === selectedProgram)
-                    ?.createdAt.toLocaleDateString("pt-BR") ?? ""
+                  selectedProgram.createdAt.toLocaleDateString("pt-BR") ?? ""
                 }`}
               </div>
               <div className="flex flex-col gap-2">
-                {data
-                  ?.find(workoutProgram => workoutProgram.id === selectedProgram)
-                  ?.workouts.map(workout => (
-                    <div key={workout.id} className="flex flex-col gap-2">
-                      <button
-                        onClick={() => setSelectedWorkout(workout.id)}
-                        className="w-full rounded-lg bg-blue-500 p-4 text-left text-white shadow-md hover:shadow-lg"
-                      >
-                        Treino {workout.name}
-                      </button>
-                    </div>
-                  ))}
+                {selectedProgram.workouts.map(workout => (
+                  <div key={workout.id} className="flex flex-col gap-2">
+                    <button
+                      onClick={() => setSelectedWorkout(workout.id)}
+                      className="w-full rounded-lg bg-blue-500 p-4 text-left text-white shadow-md hover:shadow-lg"
+                    >
+                      Treino {workout.name}
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -143,9 +178,7 @@ const WorkoutProgram = ({
           footer={
             <>
               <button
-                onClick={() =>
-                  deleteProgram.mutate({ id: data?.find(d => d.id === selectedProgram)?.id ?? "" })
-                }
+                onClick={() => deleteProgram.mutate({ id: selectedProgramId ?? "" })}
                 className="rounded-md border-1 bg-red-600 py-2 px-4 text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {deleteProgram.isLoading ? (
@@ -166,7 +199,7 @@ const WorkoutProgram = ({
               )}
             </>
           }
-          icon={<ListBulletIcon className="fill-blue-500" />}
+          icon={<XMarkIcon className="h-10 w-10 rounded-full bg-red-300 p-2 text-red-500" />}
         >
           <div>Tem certeza que deseja excluir o treino arquivado?</div>
         </Alert>
