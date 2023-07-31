@@ -122,7 +122,7 @@ const WorkoutProgram = ({
                 </h2>
               </div>
               <div className="flex w-full grow flex-col items-center overflow-y-auto">
-                <div className="flex w-full flex-col gap-2">
+                <div className="flex max-h-80 w-full flex-col gap-2 overflow-y-scroll">
                   {exerciseGroups?.map(group => {
                     if ("exercises" in group) {
                       const [first, second] = group.exercises;
@@ -155,7 +155,7 @@ const WorkoutProgram = ({
                   selectedProgram.createdAt.toLocaleDateString("pt-BR") ?? ""
                 }`}
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex max-h-80 flex-col gap-2 overflow-y-scroll">
                 {selectedProgram.workouts.map(workout => (
                   <div key={workout.id} className="flex flex-col gap-2">
                     <button
