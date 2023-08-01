@@ -9,8 +9,8 @@ import Alert from "../../../components/Alert";
 import FullPage from "../../../components/FullPage";
 import Modal from "../../../components/Modal";
 import QueryErrorAlert from "../../../components/QueryErrorAlert";
+import SmallTextInput from "../../../components/SmallTextInput";
 import Spinner from "../../../components/Spinner";
-import TextInput from "../../../components/TextInput";
 import ArrowUturnLeftIcon from "../../../components/icons/ArrowUturnLeftIcon";
 import CheckCircleIcon from "../../../components/icons/CheckCircleIcon";
 import CheckIcon from "../../../components/icons/CheckIcon";
@@ -516,7 +516,7 @@ const Set = ({ index, set, originalWeight, timerOn, setCompleted, setWeight }: S
 
       <div className="flex items-center gap-1">
         <div className="flex h-full w-20 flex-col gap-1">
-          <TextInput
+          <SmallTextInput
             label="Peso"
             className={classList("inline-block h-8 w-full bg-white text-center", {
               "font-medium": originalWeight !== undefined && set.weight !== originalWeight,

@@ -1,6 +1,6 @@
 import { prisma } from "../src/server/db";
 
-async function transformReps() {
+async function transformWeights() {
   await prisma.$transaction(
     async tx => {
       const exercises = (await tx.exerciseInWorkout.findMany({
@@ -10,25 +10,39 @@ async function transformReps() {
         },
       })) as {
         id: string;
-        sets: {
-          reps: string;
-          weight: number;
-        }[];
+        sets: (
+          | {
+              reps: string;
+              weight: string | number;
+            }
+          | {
+              time: number;
+              weight: string | number;
+            }
+        )[];
       }[];
 
       for (const exercise of exercises) {
         if (exercise.sets.length) {
-          if ("reps" in exercise.sets[0]!) {
-            await tx.exerciseInWorkout.update({
-              where: { id: exercise.id },
-              data: {
-                sets: exercise.sets.map(set => ({
-                  reps: set.reps,
-                  weight: set.weight === 0 ? "" : `${set.weight / 1000} kg`,
-                })),
-              },
-            });
-          }
+          await tx.exerciseInWorkout.update({
+            where: { id: exercise.id },
+            data: {
+              sets: exercise.sets.map(set => {
+                const weight =
+                  typeof set.weight === "string"
+                    ? set.weight
+                    : set.weight === 0
+                    ? ""
+                    : `${set.weight / 1000} kg`;
+
+                if ("reps" in set) {
+                  return { reps: set.reps, weight };
+                } else {
+                  return { time: set.time, weight };
+                }
+              }),
+            },
+          });
         }
       }
     },
@@ -38,4 +52,4 @@ async function transformReps() {
   );
 }
 
-void transformReps();
+void transformWeights();
