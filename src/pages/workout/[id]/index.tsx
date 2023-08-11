@@ -460,22 +460,26 @@ const ExerciseCard = ({
           <div className="flex h-10 flex-row items-center justify-between">
             <div className="flex flex-none flex-row flex-wrap items-center">
               <div className="flex flex-col">
-                <div className="opacity-0">{exercise.exercise.name}</div>
+                <div className="opacity-0">{exercise.exercise.name}asdasd</div>
                 <div className="text-xs text-slate-600">{exercise.exercise.category}</div>
               </div>
-              <button onClick={handleInfo(exercise.exercise)} className="pl-1">
-                <PhotoIcon className="h-5 w-5 text-black" />
-              </button>
             </div>
           </div>
-          {exercise.method !== "Standard" && (
-            <div className={classList("text-xs", { "mr-10": !uncollapsible })}>
-              <button className="flex items-center gap-1" onClick={() => setShowAlert(true)}>
-                <span className="text-right">{methodTranslation[exercise.method]}</span>
-                <InformationIcon className="h-6 w-6" />
-              </button>
-            </div>
-          )}
+          <div className="flex justify-between">
+            {exercise.method !== "Standard" ? (
+              <div className={classList("text-xs", { "mr-10": !uncollapsible })}>
+                <button className="flex items-center gap-1" onClick={() => setShowAlert(true)}>
+                  <span className="text-right">{methodTranslation[exercise.method]}</span>
+                  <InformationIcon className="h-6 w-6" />
+                </button>
+              </div>
+            ) : (
+              <div />
+            )}
+            <button onClick={handleInfo(exercise.exercise)} className="pr-[2px] pt-2">
+              <PhotoIcon className="h-5 w-5 text-black" />
+            </button>
+          </div>
         </div>
         {exercise.description && (
           <div className="mx-2 mb-2 rounded-md border-1 p-2 text-sm text-slate-800 shadow-inner">
