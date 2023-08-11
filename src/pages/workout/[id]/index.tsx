@@ -467,15 +467,15 @@ const ExerciseCard = ({
                 <PhotoIcon className="h-5 w-5 text-black" />
               </button>
             </div>
-            {exercise.method !== "Standard" && (
-              <div className={classList("text-xs", { "mr-10": !uncollapsible })}>
-                <button className="flex items-center gap-1" onClick={() => setShowAlert(true)}>
-                  <span className="text-right">{methodTranslation[exercise.method]}</span>
-                  <InformationIcon className="h-6 w-6" />
-                </button>
-              </div>
-            )}
           </div>
+          {exercise.method !== "Standard" && (
+            <div className={classList("text-xs", { "mr-10": !uncollapsible })}>
+              <button className="flex items-center gap-1" onClick={() => setShowAlert(true)}>
+                <span className="text-right">{methodTranslation[exercise.method]}</span>
+                <InformationIcon className="h-6 w-6" />
+              </button>
+            </div>
+          )}
         </div>
         {exercise.description && (
           <div className="mx-2 mb-2 rounded-md border-1 p-2 text-sm text-slate-800 shadow-inner">
