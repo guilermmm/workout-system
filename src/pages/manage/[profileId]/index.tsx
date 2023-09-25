@@ -34,6 +34,7 @@ import {
 import type { RouterOutputs } from "../../../utils/api";
 import { api } from "../../../utils/api";
 import WorkoutDocument from "../../../utils/pdf";
+import { weekdaysAbbrv } from "../../../utils/consts";
 
 type Workout = RouterOutputs["workout"]["getMany"][number];
 
@@ -833,7 +834,13 @@ const Manage = () => {
                     >
                       <div className="grow">
                         <div className="text-xl">
-                          Treino <span className="font-medium">{workout.name}</span>
+                          Treino{" "}
+                          <span className="font-medium">
+                            {workout.name} -{" "}
+                            {workout.days
+                              .map(day => capitalize(weekdaysAbbrv[day].toLowerCase()))
+                              .join(", ")}
+                          </span>
                         </div>
                         <div className="text-sm font-light opacity-90">
                           {capitalize(join(workout.categories))}
