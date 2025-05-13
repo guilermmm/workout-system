@@ -1,12 +1,16 @@
-# Create T3 App
+# Workout System
 
 This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
 
-## What's next? How do I make an app with this?
+## Descrição
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- Sistema de gerenciamento de treinos para professores e alunos, onde o professor pode criar treinos personalizados para seus alunos, acompanhar o progresso deles e fornecer feedback. Os alunos podem visualizar seus treinos, registrar seu progresso e se comunicar com o professor.
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+- O sistema é dividido em duas áreas principais: a área do professor e a área do aluno. Na área do professor, o instrutor pode criar treinos, gerenciar alunos e acompanhar o progresso deles. Na área do aluno, o aluno pode visualizar seus treinos, registrar seu progresso e se comunicar com o professor.
+
+- O sistema é responsivo e pode ser acessado de qualquer dispositivo, incluindo smartphones e tablets. O design é moderno e intuitivo, facilitando a navegação e o uso do sistema.
+
+## Stack
 
 - [Next.js](https://nextjs.org)
 - [NextAuth.js](https://next-auth.js.org)
@@ -14,18 +18,39 @@ If you are not familiar with the different technologies used in this project, pl
 - [Tailwind CSS](https://tailwindcss.com)
 - [tRPC](https://trpc.io)
 
-## Learn More
+## Screenshots
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+### Área do aluno
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+Login             |  Página principal
+:-------------------------:|:-------------------------:
+![Login](/img/login.png)  |  ![Área do aluno](/img/treinos-aluno.png)
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+Treino ativo             |  Treino Finalizado
+:-------------------------:|:-------------------------:
+![Treino Ativo](/img/treino-aluno.png)  |  ![Treino Finalizado](/img/treino-finalizado.png)
 
-## How do I deploy this?
+Dashboard             |  Medidas
+:-------------------------:|:-------------------------:
+![Treino Ativo](/img/medidas-aluno.png)  |  ![Treino Finalizado](/img/medidas-professor.png)
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+Histórico de treinos            |  Medidas
+:-------------------------:|:-------------------------:
+![Treino Ativo](/img/historico-treino.png)  |  ![Treino Finalizado](/img/medidas-professor.png)
+
+### Área do professor
+
+Página do aluno           |  Edição do treino
+:-------------------------:|:-------------------------:
+![Treino Ativo](/img/aluno-professor.png)  |  ![Treino Finalizado](/img/treino-professor.png)
+
+Alunos         |  Edição de exercícios
+:-------------------------:|:-------------------------:
+![Treino Ativo](/img/menu-professor.png)  |  ![Treino Finalizado](/img/exercicios-professor.png)
+
+Edição de exercício         |  Histórico de treinos do aluno
+:-------------------------:|:-------------------------:
+![Treino Ativo](/img/exercicio-professor.png)  |  ![Treino Finalizado](/img/historico-treino-professor.png)
 
 ## BRAINSTORM
 
@@ -100,8 +125,7 @@ confirmacao de senha so serve pro front validar se é igual, pro back so manda 1
 - [x] modal nas pagina de perfil tao bugando
 
 - [x] copiar os treino
-- [x] foto do exercicio na pagina de cadastrar/editar treino .
-- [ ] mudar reps de number p string .
-- [x] atualizar o componente modal p aceitar ReactNode .
+- [x] foto do exercicio na pagina de cadastrar/editar treino
+- [x] atualizar o componente modal p aceitar ReactNode
 - [x] mensagem de finalizacao de treino bem hippie
 - [x] pagina de autenticacao fudida
